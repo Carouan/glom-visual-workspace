@@ -95,7 +95,7 @@ function globRegex(pattern){
 }
 function exclusionPatterns(workspace=state.workspace){return Array.isArray(workspace?.excludes)?workspace.excludes.map(normalizeExcludePattern).filter(Boolean):[]}
 function pathExcluded(path,workspace=state.workspace){
-  if(!path)return false;const p=String(path).replace(/\\\\/g,"/");
+  if(!path)return false;const p=String(path).replace(/\\/g,"/");
   return exclusionPatterns(workspace).some(rule=>{if(rule.endsWith("/**")){const base=rule.slice(0,-3).replace(/\/$/,"");if(p===base||p.startsWith(base+"/"))return true}if(!/[?*]/.test(rule))return p===rule||p.startsWith(rule+"/");try{return globRegex(rule).test(p)}catch{return false}})
 }
 function markExclusions(resources,workspace=state.workspace){resources.forEach(r=>{r.excluded=!!(r.path&&pathExcluded(r.path,workspace))});return resources}
