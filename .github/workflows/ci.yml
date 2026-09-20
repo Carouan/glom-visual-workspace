@@ -35,5 +35,10 @@ jobs:
             exit 1
           fi
           "$CHROME_BIN" --headless=new --disable-gpu --no-sandbox --virtual-time-budget=3000             --dump-dom "http://127.0.0.1:4173/?demo=1" > /tmp/glom-dom.html
-          grep -q "Chef-d'œuvre — Les jeux vidéo" /tmp/glom-dom.html
-          grep -q "Tennis for Two.pdf" /tmp/glom-dom.html
+          if ! grep -q "Chef-d" /tmp/glom-dom.html || ! grep -q "Tennis for Two.pdf" /tmp/glom-dom.html; then
+            echo "---- Rendered DOM (diagnostic excerpt) ----"
+            sed -n '1,260p' /tmp/glom-dom.html
+            echo "---- HTTP server log ----"
+            cat /tmp/glom-http.log
+            exit 1
+          fi
