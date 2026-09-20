@@ -531,7 +531,7 @@ function makeNode(n,r){
   e.onclick=x=>{x.stopPropagation();if(state.linkSource&&state.linkSource!==n.id){manualEdge(state.linkSource,n.id);state.linkSource=null;ui.hint.textContent="Lien créé";render();return}select(n.id)};e.ondblclick=x=>{x.stopPropagation();openResource(r)};e.onpointerdown=x=>dragNode(x,n,e);return e
 }
 function renderEdges(){
-  if(!state.view)return;
+  if(!state.view)return;ui.edges.replaceChildren();
   const NS="http://www.w3.org/2000/svg",hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)&&!resource(n.resourceId)?.excluded).map(n=>[n.id,n]));
   const boxes=[...map.values()].map(n=>{const b=nodeBox(n);return{x:n.x,y:n.y,w:b.w,h:b.h}});
   if(boxes.length){
