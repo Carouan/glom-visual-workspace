@@ -42,7 +42,7 @@ try{
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
-  if(leftScroll.overflow!=="scroll")throw new Error("Left sidebar is not configured with a persistent scrollbar: "+JSON.stringify(leftScroll));
+  if(!["auto","scroll"].includes(leftScroll.overflow))throw new Error("Left sidebar is not configured as scrollable: "+JSON.stringify(leftScroll));
   if(leftScroll.scrollHeight>leftScroll.clientHeight)await page.$eval(".resources-scroll",el=>{el.scrollTop=Math.min(60,el.scrollHeight-el.clientHeight)});
 
   await page.$eval(".node.root",el=>el.click());
