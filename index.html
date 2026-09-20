@@ -11,16 +11,37 @@
   <title>G.L.O.M. Visual Workspace</title>
 </head>
 <body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M3 7.5h6l2 2h10v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7.5v-2a2 2 0 0 1 2-2h4l2 2h5a2 2 0 0 1 2 2"/></symbol>
+    <symbol id="i-workspace" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-plus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+    <symbol id="i-folder-plus" viewBox="0 0 24 24"><path d="M3 6.5h6l2 2h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v6M9 14h6"/></symbol>
+    <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M8.5 15.5C7 14.3 6 12.6 6 10.5a6 6 0 1 1 12 0c0 2.1-1 3.8-2.5 5-.8.7-1.2 1.3-1.3 2H9.8c-.1-.7-.5-1.3-1.3-2z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M8.5 15.5 15.5 8.5"/><path d="m7 17-2 2a4 4 0 0 1-5.7-5.7l3-3A4 4 0 0 1 8 10"/><path d="m17 7 2-2a4 4 0 0 1 5.7 5.7l-3 3A4 4 0 0 1 16 14"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M9 10h12"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="m5 3 13 8-6 2-2 6z"/></symbol>
+    <symbol id="i-frame" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-shape" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><circle cx="17" cy="7" r="4"/><path d="m12 21 5-8 5 8z"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 2-2 5 5"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h4a5 5 0 0 0 5-5c0-3-4-5-9-5z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.8" r=".8"/><circle cx="15" cy="7.2" r=".8"/></symbol>
+    <symbol id="i-relation" viewBox="0 0 24 24"><circle cx="6" cy="17" r="2"/><circle cx="18" cy="7" r="2"/><path d="M8 16c4-1 4-7 8-8"/><path d="m13 7 3 1 1-3"/></symbol>
+  </svg>
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">G</span>
       <div><strong>G.L.O.M. Visual Workspace</strong><small id="workspaceName">Aucun workspace ouvert</small></div>
     </div>
     <nav class="toolbar" aria-label="Commandes principales">
-      <button id="openBtn" class="primary">📂 Ouvrir</button>
+      <button id="openBtn" class="primary"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg><span class="button-label">Ouvrir</span></button>
 
       <details class="toolbar-menu" data-menu>
-        <summary>Workspace ▾</summary>
+        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-workspace"></use></svg><span>Workspace</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
           <button id="newWorkspaceBtn">🆕 Nouveau workspace</button>
           <button id="recentBtn">🕘 Workspaces récents</button>
@@ -32,33 +53,33 @@
       </details>
 
       <details class="toolbar-menu" data-menu>
-        <summary>Insertion ▾</summary>
+        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-plus-circle"></use></svg><span>Insertion</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
-          <button id="folderBtn" disabled>📁 Nouveau dossier</button>
-          <button id="ideaBtn" disabled>💡 Nouvelle idée</button>
-          <button id="urlBtn" disabled>🔗 Lien web</button>
+          <button id="folderBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg><span class="button-label">Nouveau dossier</span></button>
+          <button id="ideaBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Nouvelle idée</span></button>
+          <button id="urlBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-link"></use></svg><span class="button-label">Lien web</span></button>
         </div>
       </details>
 
       <details class="toolbar-menu" data-menu>
-        <summary>Vue ▾</summary>
+        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-eye"></use></svg><span>Vue</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
-          <button id="fitBtn" disabled>⊙ Recentrer / ajuster</button>
-          <button id="autoLayoutBtn" disabled>🧭 Réorganiser la carte</button>
+          <button id="fitBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-focus"></use></svg><span class="button-label">Recentrer / ajuster</span></button>
+          <button id="autoLayoutBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-layout"></use></svg><span class="button-label">Réorganiser la carte</span></button>
         </div>
       </details>
 
       <details class="toolbar-menu" data-menu>
-        <summary>Exporter ▾</summary>
+        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-export"></use></svg><span>Exporter</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
-          <button id="exportBtn" disabled>🖨 Exports et impression…</button>
+          <button id="exportBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-export"></use></svg><span class="button-label">Exports et impression…</span></button>
         </div>
       </details>
 
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.3</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.4</span></div>
   </header>
 
   <main class="shell">
@@ -87,16 +108,16 @@
 
       <div id="viewport" class="viewport hidden">
         <div id="mapPalette" class="map-palette" aria-label="Outils de la mindmap">
-          <button id="mapSelectBtn" class="active" type="button" title="Sélection / déplacement" aria-label="Sélection">↖</button>
+          <button id="mapSelectBtn" class="active" type="button" title="Sélection / déplacement" aria-label="Sélection"><svg class="ui-icon" aria-hidden="true"><use href="#i-pointer"></use></svg></button>
           <span class="palette-divider"></span>
-          <button id="mapFolderBtn" type="button" title="Créer un dossier enfant" aria-label="Créer un dossier">📁</button>
-          <button id="mapIdeaBtn" type="button" title="Créer une idée" aria-label="Créer une idée">💡</button>
-          <button id="mapRelationBtn" type="button" title="Créer une relation depuis le nœud sélectionné" aria-label="Créer une relation">↗</button>
-          <button id="mapFrameBtn" type="button" title="Créer ou retirer un cadre de branche" aria-label="Cadre de branche">▣</button>
+          <button id="mapFolderBtn" type="button" title="Créer un dossier enfant" aria-label="Créer un dossier"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg></button>
+          <button id="mapIdeaBtn" type="button" title="Créer une idée" aria-label="Créer une idée"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg></button>
+          <button id="mapRelationBtn" type="button" title="Créer une relation depuis le nœud sélectionné" aria-label="Créer une relation"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg></button>
+          <button id="mapFrameBtn" type="button" title="Créer ou retirer un cadre de branche" aria-label="Cadre de branche"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg></button>
           <span class="palette-divider"></span>
-          <button id="mapShapeBtn" type="button" disabled title="Formes libres — prévu en V0.3.x" aria-label="Forme libre à venir">◇</button>
-          <button id="mapTextBtn" type="button" disabled title="Texte libre — prévu en V0.3.x" aria-label="Texte libre à venir">T</button>
-          <button id="mapImageBtn" type="button" disabled title="Image libre — prévu en V0.3.x" aria-label="Image libre à venir">🖼️</button>
+          <button id="mapShapeBtn" type="button" disabled title="Formes libres — prévu en V0.3.x" aria-label="Forme libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg></button>
+          <button id="mapTextBtn" type="button" disabled title="Texte libre — prévu en V0.3.x" aria-label="Texte libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-text"></use></svg></button>
+          <button id="mapImageBtn" type="button" disabled title="Image libre — prévu en V0.3.x" aria-label="Image libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
         </div>
         <div id="world" class="world">
           <div id="frames"></div>
@@ -114,7 +135,7 @@
         <div id="noSelection" class="no-selection">👆<p>Sélectionnez un nœud pour modifier son titre d'affichage, ses tags et ses notes.</p></div>
         <form id="form" class="form hidden">
           <details class="inspector-section" open>
-            <summary>📋 Détails</summary>
+            <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-file-text"></use></svg><span class="button-label">Détails</span></summary>
             <div class="details-grid">
               <label>Titre d'affichage<input id="title" type="text"></label>
               <label>Type<code id="kind"></code></label>
@@ -127,17 +148,17 @@
           </details>
 
           <details class="inspector-section" id="contextActionsSection" open>
-            <summary>⚡ Actions</summary>
+            <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-zap"></use></svg><span class="button-label">Actions</span></summary>
             <div class="context-actions">
-              <button type="button" id="contextFolderBtn">📁 Dossier enfant</button>
-              <button type="button" id="contextIdeaBtn">💡 Idée liée</button>
-              <button type="button" id="contextRelationBtn">↗ Relation</button>
-              <button type="button" id="contextFrameBtn">▣ Cadre de branche</button>
+              <button type="button" id="contextFolderBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg><span class="button-label">Dossier enfant</span></button>
+              <button type="button" id="contextIdeaBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Idée liée</span></button>
+              <button type="button" id="contextRelationBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg><span class="button-label">Relation</span></button>
+              <button type="button" id="contextFrameBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre de branche</span></button>
             </div>
           </details>
 
         <details class="inspector-section" open>
-          <summary>🎨 Style du nœud</summary>
+          <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-palette"></use></svg><span class="button-label">Style du nœud</span></summary>
           <div class="style-grid">
             <label>Icône / emoji<input id="nodeIcon" type="text" maxlength="8" placeholder="Auto"></label>
             <label>Taille du texte
@@ -182,7 +203,7 @@
         </details>
 
         <details class="inspector-section" id="branchFrameSection">
-          <summary>🖍️ Cadre de branche</summary>
+          <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre de branche</span></summary>
           <div class="frame-controls">
             <button type="button" id="frameToggleBtn">＋ Créer un cadre autour de cette branche</button>
             <div id="frameFields" class="style-grid hidden">
