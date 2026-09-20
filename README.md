@@ -4,7 +4,7 @@
 
 G.L.O.M. Visual Workspace est un **workspace visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.9.**
+**Version stable actuelle : v0.3.10.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -40,7 +40,7 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - copier / coller / réinitialiser un style ;
 - déplacement d'une branche comme groupe en conservant les positions relatives ;
 - cadres de branche avec titre, fond, opacité, bordure et typographie ;
-- objets graphiques libres : rectangle, ellipse, losange et annotation texte ;
+- objets graphiques libres : rectangle, ellipse, losange, annotation texte et image référencée depuis le workspace ;
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
 - relations sélectionnables directement sur la carte, nommées et stylables : couleur, épaisseur, trait, flèches et courbure ;
@@ -122,7 +122,7 @@ La compatibilité est détectée à l'exécution : G.L.O.M. ne suppose pas qu'un
 - un fichier renommé ou déplacé **hors de G.L.O.M.** peut perdre son association avec ses métadonnées ;
 - une seule mindmap est actuellement active par workspace ;
 - pas encore de sélection multiple ;
-- les images libres sur le canvas ne sont pas encore implémentées ;
+- les images libres peuvent référencer une image existante du workspace ; l’import d’une image propre à la vue (`.glom/attachments/`) n’est pas encore implémenté ;
 - pas encore de fusion multi-utilisateur ni de résolution de conflits ;
 - les très gros workspaces sont scannés jusqu'au garde-fou actuel, mais l'indexation et le rendu progressifs restent prévus pour V0.5.
 
@@ -130,9 +130,9 @@ La compatibilité est détectée à l'exécution : G.L.O.M. ne suppose pas qu'un
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.9 :
+Priorités après v0.3.10 :
 
-- terminer le mindmapping avancé : images libres, plusieurs cartes, sélection multiple, cadres/groupes avancés et layouts supplémentaires ;
+- terminer le mindmapping avancé : plusieurs cartes, sélection multiple, cadres/groupes avancés, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
 - améliorer la robustesse et retrouver les fichiers déplacés/renommés en V0.5 ;
 - préparer synchronisation et résolution de conflits en V0.6.
