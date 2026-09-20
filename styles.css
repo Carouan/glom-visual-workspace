@@ -197,7 +197,7 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
   .toolbar-menu>summary,.toolbar>button{padding-inline:.48rem;font-size:.8rem}
 }
 @media(max-width:900px){
-  .toolbar{flex-wrap:wrap;overflow:visible}
+  .toolbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;padding-bottom:.12rem}
   .toolbar-menu-panel{position:fixed;top:var(--top);left:.6rem!important;right:.6rem!important;min-width:0;max-height:55vh;overflow:auto}
   .map-palette{left:.5rem;top:4.1rem}
 }
