@@ -16,9 +16,10 @@ const ui={
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn"),collapseResourcesBtn:el("collapseResourcesBtn"),collapseInspectorBtn:el("collapseInspectorBtn"),restoreResourcesBtn:el("restoreResourcesBtn"),restoreInspectorBtn:el("restoreInspectorBtn")
 };
 const state={
-  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,selectedVisual:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false}
+  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,selectedVisual:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
 };
-const FORMAT=1,APP="0.3.7",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.8",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const SCAN_MAX_ENTRIES=20000,SCAN_MAX_DEPTH=48,SCAN_YIELD_EVERY=250;
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -68,6 +69,16 @@ function isImageResource(r){if(!r||r.type!=="file")return false;const e=(r.path|
 function defaultNodeStyle(r){return{icon:"",fontSize:14,width:240,height:74,fontFamily:"system",fontWeight:"650",italic:false,textAlign:"left",textColor:"#172033",backgroundColor:"#ffffff",borderColor:TYPE_COLORS[r?.type]||"#d8deea",borderWidth:1,shape:"rounded",locked:false,moveBranch:false,showImage:false}}
 function effectiveNodeStyle(n,r){return Object.assign(defaultNodeStyle(r),n&&n.style||{})}
 function nodeBox(n){const r=n&&resource(n.resourceId),s=effectiveNodeStyle(n,r);return{w:Math.max(140,Number(s.width)||240),h:Math.max(60,Number(s.height)||74)}}
+function edgeGeometry(a,b){
+  const ab=nodeBox(a),bb=nodeBox(b),ac={x:a.x+ab.w/2,y:a.y+ab.h/2},bc={x:b.x+bb.w/2,y:b.y+bb.h/2},dx=bc.x-ac.x,dy=bc.y-ac.y;
+  const vertical=Math.abs(dy)>Math.abs(dx)*1.15;
+  if(vertical){
+    const dir=dy>=0?1:-1,sx=ac.x,sy=dy>=0?a.y+ab.h:a.y,tx=bc.x,ty=dy>=0?b.y:b.y+bb.h,bend=Math.max(48,Math.abs(ty-sy)*.42);
+    return{sx,sy,tx,ty,d:"M "+sx+" "+sy+" C "+sx+" "+(sy+dir*bend)+", "+tx+" "+(ty-dir*bend)+", "+tx+" "+ty,axis:"vertical"}
+  }
+  const dir=dx>=0?1:-1,sx=dx>=0?a.x+ab.w:a.x,sy=ac.y,tx=dx>=0?b.x:b.x+bb.w,ty=bc.y,bend=Math.max(48,Math.abs(tx-sx)*.42);
+  return{sx,sy,tx,ty,d:"M "+sx+" "+sy+" C "+(sx+dir*bend)+" "+sy+", "+(tx-dir*bend)+" "+ty+", "+tx+" "+ty,axis:"horizontal"}
+}
 function nodeRadius(shape){return shape==="rectangle"?"2px":shape==="pill"?"999px":"12px"}
 function hexToRgba(hex,alpha){const h=String(hex||"#ffffff").replace("#","");const v=h.length===3?h.split("").map(x=>x+x).join(""):h;const n=parseInt(v,16);if(!Number.isFinite(n))return"rgba(255,255,255,"+alpha+")";return"rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+alpha+")"}
 function clearNodeImageCache(){state.imageUrls.forEach(u=>URL.revokeObjectURL(u));state.imageUrls.clear()}
@@ -148,19 +159,25 @@ async function dirByParts(root,parts,create){let d=root;for(const part of parts)
 async function readJson(root,path){try{const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name),f=await h.getFile();return JSON.parse(await f.text())}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e);return null}}
 async function writeJson(root,path,obj){const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,true),h=await d.getFileHandle(name,{create:true}),w=await h.createWritable();await w.write(JSON.stringify(obj,null,2)+"\n");await w.close()}
 async function scan(root,workspace=null){
-  const entries=[];let truncated=false;
+  const entries=[];let truncated=false,reason="",visited=0,lastProgress=0;
+  async function yieldProgress(path){
+    if(entries.length-lastProgress<SCAN_YIELD_EVERY)return;
+    lastProgress=entries.length;setStatus("Scan… "+new Intl.NumberFormat("fr-BE").format(entries.length)+" éléments"+(path?" · "+path:""));
+    await new Promise(resolve=>setTimeout(resolve,0))
+  }
   async function walk(d,b,depth){
-    if(depth>10||entries.length>=1200){truncated=true;return}
+    if(depth>SCAN_MAX_DEPTH){truncated=true;reason="profondeur";return}
+    if(entries.length>=SCAN_MAX_ENTRIES){truncated=true;reason="volume";return}
     const arr=[];for await(const pair of d.entries()){if(!IGNORED.has(pair[0]))arr.push(pair)}
     arr.sort((a,b)=>a[1].kind!==b[1].kind?(a[1].kind==="directory"?-1:1):a[0].localeCompare(b[0],undefined,{numeric:true}));
     for(const pair of arr){
-      if(entries.length>=1200){truncated=true;return}
-      const path=b?b+"/"+pair[0]:pair[0];if(pathExcluded(path,workspace))continue;
-      if(pair[1].kind==="directory"){entries.push({type:"folder",path,name:pair[0],size:null,lastModified:null});await walk(pair[1],path,depth+1)}
-      else{const file=await pair[1].getFile();entries.push({type:"file",path,name:pair[0],size:file.size,lastModified:file.lastModified})}
+      if(entries.length>=SCAN_MAX_ENTRIES){truncated=true;reason="volume";return}
+      const path=b?b+"/"+pair[0]:pair[0];if(pathExcluded(path,workspace))continue;visited++;
+      if(pair[1].kind==="directory"){entries.push({type:"folder",path,name:pair[0],size:null,lastModified:null});await yieldProgress(path);await walk(pair[1],path,depth+1)}
+      else{const file=await pair[1].getFile();entries.push({type:"file",path,name:pair[0],size:file.size,lastModified:file.lastModified});await yieldProgress(path)}
     }
   }
-  await walk(root,"",0);return{entries,truncated}
+  await walk(root,"",0);return{entries,truncated,reason,visited,limit:SCAN_MAX_ENTRIES,maxDepth:SCAN_MAX_DEPTH}
 }
 async function permission(handle,user){
   try{
@@ -228,7 +245,7 @@ function newDraftWorkspace(){
   const raw=prompt("Nom du nouveau workspace :","Nouveau workspace");if(raw===null)return;
   const name=(raw||"").trim()||"Nouveau workspace";clearNodeImageCache();
   const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
-  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,linkSource:null,canWrite:false,dirty:true});
+  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
   initTreeExpansion();show();fit();setStatus("Workspace brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
 }
 async function addFolder(){
@@ -282,18 +299,18 @@ async function openWorkspace(){
 }
 async function loadHandle(h,user){
   clearNodeImageCache();setStatus("Lecture du workspace…");const w0=await readJson(h,WS),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name);if(!Array.isArray(w.excludes))w.excludes=[];const s=await scan(h,w),r0=await readJson(h,RES),v0=await readJson(h,VIEW),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),v=mergeView(v0,r),can=await permission(h,user);
-  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0});initTreeExpansion();
-  try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated)alert("Le scan a atteint la limite de sécurité de la V0.1.");if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false);
+  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0,scanTruncated:s.truncated});initTreeExpansion();
+  try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated){setDirty(false);setStatus("Scan partiel : limite "+(s.reason==="profondeur"?"de profondeur ("+s.maxDepth+")":"de volume ("+new Intl.NumberFormat("fr-BE").format(s.limit)+" éléments)")+" atteinte. Rien n’a été réécrit dans .glom ; utilisez les exclusions puis rescanner.","bad")}else if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false);
   rememberRecentWorkspace(h,w)
 }
 async function loadFallback(files){
   if(!files||!files.length)return;clearNodeImageCache();setStatus("Import du dossier…");const m=await fallbackMetadata(files),provisional=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace("Workspace importé");if(!Array.isArray(provisional.excludes))provisional.excludes=[];const s=fallbackScan(files,provisional),w=m.workspace&&m.workspace.format==="glom-workspace"?provisional:Object.assign(provisional,{name:s.rootName}),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),v=mergeView(m.view,r);
-  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:false,dirty:false});initTreeExpansion();show();fit();setStatus("Mode compatibilité — export manuel")
+  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Mode compatibilité — export manuel")
 }
 function demo(){
   clearNodeImageCache();const w=newWorkspace("Chef-d'œuvre — Les jeux vidéo");w.id="demo-marjolaine";const raw=[["folder","Histoire"],["folder","Histoire/Premiers jeux"],["file","Histoire/Premiers jeux/Tennis for Two.pdf"],["file","Histoire/Premiers jeux/Spacewar-notes.md"],["folder","Game design"],["file","Game design/Fiche de concept.md"],["folder","Level design"],["file","Level design/Plan niveau 1.png"],["folder","Mon jeu"],["folder","Mon jeu/Sprites"],["file","Mon jeu/Sprites/personnage.png"],["folder","Sources"],["file","Sources/Bibliographie.md"]].map(x=>({type:x[0],path:x[1],name:base(x[1])}));
   const r=reconcile(w,raw,[]),idea={id:"v-"+uuid(),type:"virtual",title:"💡 Pourquoi un jeu est-il amusant ?",tags:["question"],notes:"À relier au game design et aux playtests."},url={id:"u-"+uuid(),type:"url",title:"Brookhaven — Tennis for Two",url:"https://www.bnl.gov/about/history/firstvideo.php",tags:["source"],notes:""};r.push(idea,url);const v=freshView(r);const ni=nodeFrom(v,idea.id),nu=nodeFrom(v,url.id);if(ni){ni.x=1000;ni.y=680}if(nu){nu.x=1300;nu.y=220}const gd=r.find(x=>x.path==="Game design"),tf=r.find(x=>x.path&&x.path.includes("Tennis for Two"));if(gd&&ni)v.edges.push({id:"m-"+uuid(),from:"n-"+gd.id,to:ni.id,kind:"manual"});if(tf&&nu)v.edges.push({id:"m-"+uuid(),from:"n-"+tf.id,to:nu.id,kind:"manual"});
-  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:false,dirty:false});initTreeExpansion();show();fit();setStatus("Démo locale")
+  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Démo locale")
 }
 function nodeFrom(v,rid){return v.nodes.find(n=>n.resourceId===rid)}
 function applyCurrentExclusions(){
@@ -326,10 +343,13 @@ function excludeSelectedResource(){
   if(addExclusionRule(r.path)){state.selected=null;render();setStatus("Ressource exclue du workspace","ok")}
 }
 async function rescan(){
-  if(state.mode==="fallback"){ui.folderFallback.click();return}if(state.mode!=="fs"||!state.handle)return;setStatus("Rescan…");const s=await scan(state.handle,state.workspace);state.resources=reconcile(state.workspace,s.entries,state.resources);state.view=mergeView(state.view,state.resources);setDirty(true);render();if(s.truncated)alert("Scan partiel : limite de sécurité atteinte.")
+  if(state.mode==="fallback"){ui.folderFallback.click();return}if(state.mode!=="fs"||!state.handle)return;
+  setStatus("Rescan…");const s=await scan(state.handle,state.workspace);state.resources=reconcile(state.workspace,s.entries,state.resources);state.view=mergeView(state.view,state.resources);state.scanTruncated=s.truncated;render();
+  if(s.truncated){setDirty(false);setStatus("Scan partiel : garde-fou atteint. Rien n’a été réécrit dans .glom ; ajoutez des exclusions puis rescanner.","bad")}
+  else{setDirty(true);setStatus("Rescan terminé — "+new Intl.NumberFormat("fr-BE").format(s.entries.length)+" éléments","ok")}
 }
 async function save(quiet){
-  if(!state.workspace||!state.view)return;clearTimeout(state.saveTimer);const now=new Date().toISOString();state.workspace.updatedAt=now;state.view.updatedAt=now;const rp={format:"glom-resources",version:1,workspaceId:state.workspace.id,updatedAt:now,resources:state.resources};
+  if(!state.workspace||!state.view)return;if(state.mode==="fs"&&state.scanTruncated){setStatus("Enregistrement .glom bloqué : le scan est partiel. Réduisez le workspace avec des exclusions puis rescanner.","bad");return}clearTimeout(state.saveTimer);const now=new Date().toISOString();state.workspace.updatedAt=now;state.view.updatedAt=now;const rp={format:"glom-resources",version:1,workspaceId:state.workspace.id,updatedAt:now,resources:state.resources};
   if(state.mode==="fs"&&state.handle&&state.canWrite){try{if(!quiet)setStatus("Enregistrement…");await Promise.all([writeJson(state.handle,WS,state.workspace),writeJson(state.handle,RES,rp),writeJson(state.handle,VIEW,state.view)]);setDirty(false);return}catch(e){state.canWrite=false;setStatus("Écriture impossible — export manuel","bad");if(!quiet)alert("Impossible d'écrire dans .glom : "+(e.message||e))}}
   const exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views:{"main-mindmap":state.view}};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
 }
@@ -507,7 +527,13 @@ function makeNode(n,r){
   e.onclick=x=>{x.stopPropagation();if(state.linkSource&&state.linkSource!==n.id){manualEdge(state.linkSource,n.id);state.linkSource=null;ui.hint.textContent="Lien créé";render();return}select(n.id)};e.ondblclick=x=>{x.stopPropagation();openResource(r)};e.onpointerdown=x=>dragNode(x,n,e);return e
 }
 function renderEdges(){
-  if(!state.view)return;const hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)&&!resource(n.resourceId)?.excluded).map(n=>[n.id,n]));state.view.edges.forEach(ed=>{const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;const ar=resource(a.resourceId),br=resource(b.resourceId),ab=nodeBox(a),bb=nodeBox(b),sx=a.x+ab.w,sy=a.y+ab.h/2,tx=b.x,ty=b.y+bb.h/2,dx=Math.max(70,Math.abs(tx-sx)*.45),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M "+sx+" "+sy+" C "+(sx+dx)+" "+sy+", "+(tx-dx)+" "+ty+", "+tx+" "+ty);p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));ui.edges.appendChild(p)})
+  if(!state.view)return;
+  const hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)&&!resource(n.resourceId)?.excluded).map(n=>[n.id,n]));
+  state.view.edges.forEach(ed=>{
+    const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;
+    const ar=resource(a.resourceId),br=resource(b.resourceId),g=edgeGeometry(a,b),p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",g.d);p.dataset.axis=g.axis;p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));ui.edges.appendChild(p)
+  })
 }
 function centralDropCandidate(clientX,clientY,sourceNodeId){
   const sourceNode=node(sourceNodeId),source=sourceNode&&resource(sourceNode.resourceId);if(!source)return null;

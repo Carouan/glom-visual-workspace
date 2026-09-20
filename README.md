@@ -22,6 +22,8 @@ La V0.3 transforme le prototype en **workspace visuel réellement éditable** : 
 - objets graphiques libres : rectangles, ellipses, losanges et annotations texte ;
 - exclusions de fichiers/dossiers par chemin ou motif sans suppression locale ;
 - aperçu Markdown rendu + source, édition locale des `.md`/`.txt` et création directe de nouveaux fichiers texte ;
+- scan de workspaces nettement plus volumineux avec progression non bloquante ;
+- connecteurs qui choisissent automatiquement leurs bords gauche/droite ou haut/bas selon la géométrie de la carte ;
 - canvas libre indépendant du format A4, nœuds redimensionnables et déplacement rigide d’une branche complète ;
 - titres de cadres directement éditables avec typographie personnalisable ;
 - export d’un template ZIP contenant l’arborescence et `.glom/` ;

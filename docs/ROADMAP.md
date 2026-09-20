@@ -177,6 +177,18 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - contrôles typographiques cohérents pour titres de nœuds, annotations texte et titres de cadres ;
 - option **Déplacer cette branche comme un groupe** : le déplacement du nœud racine conserve les positions relatives de tous ses descendants.
 
+### V0.3.8 — gros workspaces et routage adaptatif
+
+- remplacement de la limite historique V0.1 de 1 200 éléments / profondeur 10 ;
+- scan jusqu'à **20 000 éléments** et profondeur **48** avant garde-fou ;
+- progression non modale pendant les scans volumineux afin de garder l'interface réactive ;
+- si le véritable garde-fou est atteint, avertissement dans la barre d'état au lieu d'une boîte de dialogue bloquante ;
+- connecteurs adaptatifs :
+  - gauche/droite lorsque les nœuds sont principalement disposés horizontalement ;
+  - haut/bas lorsque la relation est principalement verticale ;
+- les connecteurs partent du milieu du bord pertinent de chaque boîte ;
+- exports SVG/PNG/PDF utilisant le même routage adaptatif.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
