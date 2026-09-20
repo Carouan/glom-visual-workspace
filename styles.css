@@ -353,3 +353,10 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 }
 .details-grid .check-row input{width:18px;height:18px}
 .visual-object.text{justify-content:flex-start}
+
+/* V0.3.7 hit testing: logical layers must not impose a 1px hit-test box */
+#visualObjects,#nodes,#frames{display:contents}
+.visual-object{z-index:2}
+.node{z-index:3}
+.branch-frame{z-index:0}
+.branch-frame-title{z-index:4}
