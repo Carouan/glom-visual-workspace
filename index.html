@@ -97,7 +97,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.8</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.9</span></div>
   </header>
 
   <main class="shell">
@@ -187,6 +187,40 @@
           </details>
           <div class="form-actions">
             <button type="button" id="deleteVisualBtn" class="danger"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg><span class="button-label">Supprimer l’objet</span></button>
+          </div>
+        </form>
+
+        <form id="edgeForm" class="form hidden">
+          <details class="inspector-section" open>
+            <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg><span class="button-label">Relation</span></summary>
+            <div class="details-grid">
+              <label>Type<code id="edgeKind">—</code></label>
+              <label>Libellé<input id="edgeLabel" type="text" placeholder="Relation sans nom"></label>
+              <label>Couleur<input id="edgeColor" type="color" value="#3b82f6"></label>
+              <label>Épaisseur
+                <div class="range-row"><input id="edgeWidth" type="range" min="1" max="10" step="0.5" value="2.5"><output id="edgeWidthValue">2.5 px</output></div>
+              </label>
+              <label>Style de trait
+                <select id="edgeLineStyle">
+                  <option value="solid">Plein</option>
+                  <option value="dashed">Pointillé</option>
+                  <option value="dotted">Points</option>
+                </select>
+              </label>
+              <label>Flèche
+                <select id="edgeArrow">
+                  <option value="none">Aucune</option>
+                  <option value="end">Vers la cible</option>
+                  <option value="both">Aux deux extrémités</option>
+                </select>
+              </label>
+              <label>Courbure
+                <div class="range-row"><input id="edgeCurvature" type="range" min="0" max="100" step="1" value="42"><output id="edgeCurvatureValue">42 %</output></div>
+              </label>
+            </div>
+          </details>
+          <div class="form-actions">
+            <button type="button" id="deleteEdgeBtn" class="danger">🗑️ Supprimer la relation</button>
           </div>
         </form>
 
