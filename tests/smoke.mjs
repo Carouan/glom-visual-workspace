@@ -97,6 +97,8 @@ try{
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const zipReady=await page.$eval("#zipWorkspaceBtn",el=>!el.disabled);
   if(!zipReady)throw new Error("Workspace ZIP export is not available for a draft workspace");
+  await page.click("#zipWorkspaceBtn");
+  await page.waitForFunction(()=>document.getElementById("status")?.textContent?.includes("Template ZIP créé"),{timeout:5000});
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
