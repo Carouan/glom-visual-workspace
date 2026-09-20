@@ -280,28 +280,46 @@ async function copyDirectoryHandle(srcHandle,targetDir,name){
     if(child.kind==="directory")await copyDirectoryHandle(child,dest,childName);else await copyFileHandle(child,dest,childName)
   }
 }
-async function moveResource(source,target){
-  if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return;
-  if(!(await ensureWritePermission()))return;
-  if(source.type==="folder"&&(target.path===source.path||target.path.startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return}
-  const sourceParentPath=parentPath(source.path),targetPath=target.path||"";
-  if(sourceParentPath===targetPath)return;
-  const name=base(source.path),sourceParent=await dirByParts(state.handle,sourceParentPath.split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,targetPath.split("/").filter(Boolean),false);
-  if(await entryExists(targetDir,name)){alert("Un élément nommé « "+name+" » existe déjà dans ce dossier.");return}
-  setStatus("Déplacement de « "+name+" »…");
-  try{
-    if(source.type==="file"){const h=await sourceParent.getFileHandle(name);await copyFileHandle(h,targetDir,name);await sourceParent.removeEntry(name)}
-    else{const h=await sourceParent.getDirectoryHandle(name);await copyDirectoryHandle(h,targetDir,name);await sourceParent.removeEntry(name,{recursive:true})}
-  }catch(e){console.error(e);setStatus("Déplacement impossible","bad");alert("Impossible de déplacer cet élément : "+(e.message||e));return}
-  const oldPath=source.path,newPath=targetPath?targetPath+"/"+name:name,prefix=oldPath+"/";
-  state.resources.forEach(r=>{if(r.path===oldPath)r.path=newPath;else if(r.path&&r.path.startsWith(prefix))r.path=newPath+r.path.slice(oldPath.length)});
+function reparentPlan(source,target){
+  if(!source||!target||!["file","folder"].includes(source.type)||!["root","folder"].includes(target.type)||source.id===target.id)return null;
+  if(source.type==="folder"&&(target.path===source.path||(target.path||"").startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return null}
+  const oldPath=source.path,targetPath=target.path||"",name=base(oldPath),newPath=targetPath?targetPath+"/"+name:name;
+  if(parentPath(oldPath)===targetPath)return null;
+  if(state.resources.some(r=>r.id!==source.id&&["file","folder"].includes(r.type)&&!r.missing&&r.path===newPath)){alert("Un élément nommé « "+name+" » existe déjà dans ce dossier.");return null}
+  return{oldPath,targetPath,name,newPath,prefix:oldPath+"/"}
+}
+function applyReparentModel(source,target,plan){
+  if(!plan)return false;
+  state.resources.forEach(r=>{if(r.path===plan.oldPath)r.path=plan.newPath;else if(r.path&&r.path.startsWith(plan.prefix))r.path=plan.newPath+r.path.slice(plan.oldPath.length)});
   applyFolderSizes(state.resources);
   const movedNode=nodeForResource(source.id),targetNode=nodeForResource(target.id);
   if(movedNode&&targetNode){
     state.view.edges=state.view.edges.filter(e=>!(e.kind==="hierarchy"&&e.to===movedNode.id));
     state.view.edges.push({id:"h-"+target.id+"-"+source.id,from:targetNode.id,to:movedNode.id,kind:"hierarchy"})
   }
-  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderInspector();setStatus("Déplacement terminé","ok")
+  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderFrames(hiddenNodes());renderInspector();return true
+}
+async function moveResource(source,target){
+  if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return false;
+  const plan=reparentPlan(source,target);if(!plan)return false;
+  if(!(await ensureWritePermission()))return false;
+  const sourceParent=await dirByParts(state.handle,parentPath(source.path).split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,plan.targetPath.split("/").filter(Boolean),false);
+  if(await entryExists(targetDir,plan.name)){alert("Un élément nommé « "+plan.name+" » existe déjà dans ce dossier.");return false}
+  setStatus("Déplacement de « "+plan.name+" »…");
+  try{
+    if(source.type==="file"){const h=await sourceParent.getFileHandle(plan.name);await copyFileHandle(h,targetDir,plan.name);await sourceParent.removeEntry(plan.name)}
+    else{const h=await sourceParent.getDirectoryHandle(plan.name);await copyDirectoryHandle(h,targetDir,plan.name);await sourceParent.removeEntry(plan.name,{recursive:true})}
+  }catch(e){console.error(e);setStatus("Déplacement impossible","bad");alert("Impossible de déplacer cet élément : "+(e.message||e));return false}
+  applyReparentModel(source,target,plan);setStatus("Déplacement terminé","ok");return true
+}
+function canCentralReparent(source,target){
+  return["fs","demo","draft"].includes(state.mode)&&source&&target&&["file","folder"].includes(source.type)&&["root","folder"].includes(target.type)&&source.id!==target.id
+}
+async function reparentFromMindmap(source,target){
+  if(!canCentralReparent(source,target))return false;
+  if(state.mode==="fs")return moveResource(source,target);
+  const plan=reparentPlan(source,target);if(!plan)return false;
+  const ok=applyReparentModel(source,target,plan);if(ok)setStatus("Arborescence mise à jour depuis la mindmap","ok");return ok
 }
 function children(id){return state.view?state.view.edges.filter(e=>e.kind==="hierarchy"&&e.from===id).map(e=>e.to):[]}
 function hiddenNodes(){const h=new Set();function hide(id){children(id).forEach(c=>{h.add(c);hide(c)})}(state.view&&state.view.nodes||[]).forEach(n=>{if(n.collapsed)hide(n.id)});return h}
