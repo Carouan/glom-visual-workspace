@@ -499,15 +499,26 @@ function renderMap(){
 function renderVisualObjects(){
   if(!state.view)return;(state.view.objects||[]).forEach(o=>ui.visualObjects.appendChild(makeVisualObject(o)))
 }
+function imageResourceForObject(o){
+  if(!o||o.type!=="image")return null;
+  return resource(o.resourceId)||state.resources.find(r=>r.path&&r.path===o.path)||null
+}
+async function attachVisualImage(container,o){
+  const r=imageResourceForObject(o);if(!r)return;
+  const url=await imageUrlFor(r);if(!url||!container.isConnected)return;
+  container.replaceChildren();const img=document.createElement("img");img.className="visual-image";img.src=url;img.alt=r.title||base(r.path);img.draggable=false;img.style.objectFit=o.fit||"contain";img.style.opacity=String(Math.max(.1,Math.min(1,(Number(o.opacity)||100)/100)));img.style.borderRadius=(Math.max(0,Number(o.radius)||0))+"px";container.append(img)
+}
 function makeVisualObject(o){
   const e=document.createElement("div");e.className="visual-object "+o.type+(o.id===state.selectedVisual?" selected":"");e.dataset.visual=o.id;e.style.left=o.x+"px";e.style.top=o.y+"px";e.style.width=o.w+"px";e.style.height=o.h+"px";
   if(o.type==="shape"){
     e.classList.add(o.shape||"rectangle");e.style.backgroundColor=o.fill||"#e0e7ff";e.style.borderColor=o.stroke||"#6366f1";
+  }else if(o.type==="image"){
+    const r=imageResourceForObject(o),placeholder=document.createElement("div");placeholder.className="visual-image-placeholder";placeholder.textContent=r&&r.missing?"Image absente":"Chargement de l’image…";e.append(placeholder);e.style.borderRadius=(Math.max(0,Number(o.radius)||0))+"px";attachVisualImage(e,o)
   }else{
     e.textContent=o.text||"Texte";e.style.color=o.textColor||"#172033";e.style.fontSize=(Number(o.fontSize)||18)+"px";e.style.fontFamily=FONT_STACKS[o.fontFamily]||FONT_STACKS.system;e.style.fontWeight=o.fontWeight||"500";e.style.fontStyle=o.italic?"italic":"normal";e.style.textAlign=o.textAlign||"left";e.style.justifyContent=o.textAlign==="center"?"center":o.textAlign==="right"?"flex-end":"flex-start";
   }
   e.onclick=ev=>{ev.stopPropagation();selectVisual(o.id)};
-  e.ondblclick=ev=>{ev.stopPropagation();if(o.type==="text"){const v=prompt("Texte de l’annotation :",o.text||"");if(v!==null){o.text=v;setDirty();renderMap();renderInspector()}}};
+  e.ondblclick=ev=>{ev.stopPropagation();if(o.type==="text"){const v=prompt("Texte de l’annotation :",o.text||"");if(v!==null){o.text=v;setDirty();renderMap();renderInspector()}}else if(o.type==="image"){const r=imageResourceForObject(o);if(r)openResource(r)}};
   e.onpointerdown=ev=>dragVisualObject(ev,o,e);return e
 }
 function dragVisualObject(ev,o,e){
