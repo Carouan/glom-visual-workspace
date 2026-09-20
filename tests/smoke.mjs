@@ -60,6 +60,10 @@ try{
     const row=[...document.querySelectorAll(".tree-row")].find(r=>r.querySelector(".tree-label")?.textContent==="Game design");
     return row?.style.getPropertyValue("--depth")==="2"
   },{timeout:5000});
+
+  // Return to the root before testing inspector-driven styling.
+  await page.$eval(".node.root",el=>el.click());
+  await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
   await page.$eval("#nodeIcon",el=>{el.value="⭐";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootIcon=await page.$eval(".node.root .node-icon",el=>el.textContent||"");
   if(!rootIcon.includes("⭐"))throw new Error("Custom node icon was not rendered: "+rootIcon);
