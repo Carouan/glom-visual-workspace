@@ -80,7 +80,7 @@ async function imageUrlFor(r){
 }
 function newWorkspace(name){const now=new Date().toISOString();return{format:"glom-workspace",version:FORMAT,appVersion:APP,id:uuid(),name:name||"Nouveau workspace",createdAt:now,updatedAt:now,defaultView:"views/main-mindmap.json",excludes:[]}}
 function parentPath(path){if(!path||!path.includes("/"))return"";return path.slice(0,path.lastIndexOf("/"))}
-function normalizeExcludePattern(raw){return String(raw||"").trim().replace(/\\\\/g,"/").replace(/^\.\//,"").replace(/^\/+|\/+$/g,"")}
+function normalizeExcludePattern(raw){return String(raw||"").trim().replace(/\\/g,"/").replace(/^\.\//,"").replace(/^\/+|\/+$/g,"")}
 function globRegex(pattern){
   const p=normalizeExcludePattern(pattern);let out="";
   for(let i=0;i<p.length;i++){
@@ -96,7 +96,7 @@ function globRegex(pattern){
 function exclusionPatterns(workspace=state.workspace){return Array.isArray(workspace?.excludes)?workspace.excludes.map(normalizeExcludePattern).filter(Boolean):[]}
 function pathExcluded(path,workspace=state.workspace){
   if(!path)return false;const p=String(path).replace(/\\\\/g,"/");
-  return exclusionPatterns(workspace).some(rule=>{if(!/[?*]/.test(rule))return p===rule||p.startsWith(rule+"/");try{return globRegex(rule).test(p)}catch{return false}})
+  return exclusionPatterns(workspace).some(rule=>{if(rule.endsWith("/**")){const base=rule.slice(0,-3).replace(/\/$/,"");if(p===base||p.startsWith(base+"/"))return true}if(!/[?*]/.test(rule))return p===rule||p.startsWith(rule+"/");try{return globRegex(rule).test(p)}catch{return false}})
 }
 function markExclusions(resources,workspace=state.workspace){resources.forEach(r=>{r.excluded=!!(r.path&&pathExcluded(r.path,workspace))});return resources}
 function parentOf(r,list){
@@ -626,7 +626,7 @@ function previewDemo(r){
 function transform(){if(!state.view)return;ui.world.style.transform="translate("+state.view.pan.x+"px,"+state.view.pan.y+"px) scale("+state.view.zoom+")";ui.zoomValue.textContent=Math.round(state.view.zoom*100)+"%"}
 function zoom(z,anchor){if(!state.view)return;const old=state.view.zoom,n=Math.min(2.2,Math.max(.2,z));if(anchor){const r=ui.viewport.getBoundingClientRect(),lx=anchor.x-r.left,ly=anchor.y-r.top,wx=(lx-state.view.pan.x)/old,wy=(ly-state.view.pan.y)/old;state.view.pan.x=lx-wx*n;state.view.pan.y=ly-wy*n}state.view.zoom=n;transform();setDirty()}
 function focus(id){const n=node(id);if(!n)return;const r=ui.viewport.getBoundingClientRect();state.view.pan.x=r.width/2-(n.x+120)*state.view.zoom;state.view.pan.y=r.height/2-(n.y+37)*state.view.zoom;transform()}
-function fit(){if(!state.view||!state.view.nodes.length)return;const h=hiddenNodes(),a=state.view.nodes.filter(n=>!h.has(n.id));if(!a.length)return;const minX=Math.min.apply(null,a.map(n=>n.x)),minY=Math.min.apply(null,a.map(n=>n.y)),maxX=Math.max.apply(null,a.map(n=>n.x+240)),maxY=Math.max.apply(null,a.map(n=>n.y+82)),r=ui.viewport.getBoundingClientRect();if(!r.width)return;const pad=90,z=Math.min(1.15,Math.max(.2,Math.min((r.width-pad*2)/Math.max(1,maxX-minX),(r.height-pad*2)/Math.max(1,maxY-minY))));state.view.zoom=z;state.view.pan.x=(r.width-(maxX-minX)*z)/2-minX*z;state.view.pan.y=(r.height-(maxY-minY)*z)/2-minY*z;transform()}
+function fit(){if(!state.view||!state.view.nodes.length)return;const h=hiddenNodes(),a=state.view.nodes.filter(n=>!h.has(n.id)&&!resource(n.resourceId)?.excluded);if(!a.length)return;const minX=Math.min.apply(null,a.map(n=>n.x)),minY=Math.min.apply(null,a.map(n=>n.y)),maxX=Math.max.apply(null,a.map(n=>n.x+240)),maxY=Math.max.apply(null,a.map(n=>n.y+82)),r=ui.viewport.getBoundingClientRect();if(!r.width)return;const pad=90,z=Math.min(1.15,Math.max(.2,Math.min((r.width-pad*2)/Math.max(1,maxX-minX),(r.height-pad*2)/Math.max(1,maxY-minY))));state.view.zoom=z;state.view.pan.x=(r.width-(maxX-minX)*z)/2-minX*z;state.view.pan.y=(r.height-(maxY-minY)*z)/2-minY*z;transform()}
 function autoLayout(){
   if(!state.view)return;const auto=freshView(state.resources),byResource=new Map(auto.nodes.map(n=>[n.resourceId,n]));
   state.view.nodes.forEach(n=>{if(effectiveNodeStyle(n,resource(n.resourceId)).locked)return;const p=byResource.get(n.resourceId);if(p){n.x=p.x;n.y=p.y}});
