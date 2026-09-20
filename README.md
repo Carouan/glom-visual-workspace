@@ -2,51 +2,65 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-G.L.O.M. Visual Workspace est un prototype de **workspace visuel local-first** : vos vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags et les liens.
+G.L.O.M. Visual Workspace est un **workspace visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-La V0.3 transforme le prototype en **workspace visuel réellement éditable** : explorateur de fichiers, consultation locale des ressources et mindmap stylable restent synchronisés sans enfermer les documents. La V0.3.2 ajoute aussi la construction d’un workspace depuis zéro et la synchronisation de la hiérarchie depuis la carte centrale.
+**Version stable actuelle : v0.3.8.**
 
-## Fonctionnalités V0.3
+Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
-- PWA statique et installable lorsque le navigateur le permet ;
-- ouverture d'un dossier via File System Access API sur les navigateurs compatibles ;
-- mode de compatibilité par import de dossier lorsque l'accès direct n'est pas disponible ;
-- scan récursif des fichiers et dossiers ;
-- mindmap générée automatiquement depuis l'arborescence ;
-- déplacement libre des nœuds, zoom, pan, recentrage et repli des branches ;
-- explorateur de fichiers repliable avec glisser-déposer physique lorsque l'écriture est autorisée ;
-- glisser-déposer d’un nœud fichier/dossier sur un dossier directement dans la mindmap pour modifier l’arborescence ;
-- création d’un workspace vide et ajout visuel de dossiers ;
-- barre supérieure compacte en menus et palette flottante dédiée aux outils de mindmapping ;
-- panneaux latéraux Ressources/Détails rabattables indépendamment ;
-- objets graphiques libres : rectangles, ellipses, losanges et annotations texte ;
-- exclusions de fichiers/dossiers par chemin ou motif sans suppression locale ;
-- aperçu Markdown rendu + source, édition locale des `.md`/`.txt` et création directe de nouveaux fichiers texte ;
-- scan de workspaces nettement plus volumineux avec progression non bloquante ;
-- connecteurs qui choisissent automatiquement leurs bords gauche/droite ou haut/bas selon la géométrie de la carte ;
-- canvas libre indépendant du format A4, nœuds redimensionnables et déplacement rigide d’une branche complète ;
-- titres de cadres directement éditables avec typographie personnalisable ;
-- export d’un template ZIP contenant l’arborescence et `.glom/` ;
-- matérialisation d’un workspace brouillon/démo dans un dossier local ;
+## Ce que fait déjà G.L.O.M.
+
+### Workspace et fichiers
+
+- PWA statique, sans build obligatoire ;
+- ouverture d'un dossier via File System Access API lorsque le navigateur le permet ;
+- mode de compatibilité par import de dossier sinon ;
+- scan récursif avec progression non bloquante ;
+- garde-fou actuel : 20 000 éléments et profondeur 48 ;
+- explorateur de fichiers repliable ;
+- déplacement physique de fichiers/dossiers par glisser-déposer après permission d'écriture ;
+- déplacement hiérarchique depuis la mindmap avec mise à jour de l'arborescence ;
+- création de dossiers depuis G.L.O.M. ;
+- création locale de fichiers `.txt` et `.md` ;
+- édition directe des fichiers texte et Markdown ;
+- exclusions persistantes par chemin ou motif (`*.bak`, `nppBackup/**`, etc.) sans supprimer les fichiers ;
 - workspaces récents via IndexedDB ;
-- export de la mindmap en SVG/PNG A4 et impression/PDF ;
+- création d'un workspace vide puis matérialisation en vraie arborescence locale ;
+- export d'un template ZIP contenant la structure et `.glom/`.
+
+### Mindmap et whiteboard
+
+- mindmap générée depuis l'arborescence ;
+- canvas libre, non borné par le format A4 ;
+- déplacement, zoom, pan, recentrage et repli de branches ;
+- nœuds redimensionnables ;
+- styles de nœud : police, taille, graisse, italique, alignement, couleurs, bordure et forme ;
+- icône/emoji personnalisé et aperçu d'une image dans un nœud ;
+- verrouillage de position ;
+- copier / coller / réinitialiser un style ;
+- déplacement d'une branche comme groupe en conservant les positions relatives ;
+- cadres de branche avec titre, fond, opacité, bordure et typographie ;
+- objets graphiques libres : rectangle, ellipse, losange et annotation texte ;
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
-- tags et notes ;
-- styles par nœud : police, taille, graisse, italique, alignement, couleurs, bordure et forme ;
-- icône/emoji personnalisé et aperçu des ressources image dans les nœuds ;
-- verrouillage d'un nœud, copier/coller/réinitialiser un style ;
-- cadres colorés autour d'une branche avec titre, fond et opacité ;
-- réorganisation automatique de la carte en respectant les nœuds verrouillés ;
-- viewer local modulaire : images, PDF, audio, vidéo, texte/code, Markdown rendu, JSON structuré, CSV/TSV, DOCX, tableurs et ZIP ;
+- connecteurs adaptatifs : gauche/droite ou haut/bas selon la géométrie réelle des nœuds ;
+- auto-layout de base en respectant les nœuds verrouillés ;
+- panneaux Ressources et Détails rabattables indépendamment.
+
+### Consultation et export
+
+- viewer local modulaire : images, PDF, audio, vidéo, texte/code, Markdown rendu, JSON, CSV/TSV, DOCX, tableurs et ZIP ;
 - galerie de contenu pour les dossiers ;
-- persistance dans .glom/ lorsque l'écriture est autorisée ;
-- export JSON portable sinon ;
-- cache PWA hors ligne de l'application ;
+- aperçu Markdown + source + édition ;
+- export de la carte en SVG et PNG ;
+- impression / PDF A4 portrait ou paysage ;
+- calcul du rendu à partir des limites réelles du contenu, sans limiter le canvas à une page ;
+- export JSON portable lorsque l'écriture directe n'est pas possible ;
+- cache PWA hors ligne du cœur de l'application.
 
 ## Principe d'architecture
 
-~~~
+~~~text
 Mon-workspace/
 ├── Histoire/
 ├── Game-design/
@@ -59,70 +73,80 @@ Mon-workspace/
         └── main-mindmap.json
 ~~~
 
-Les documents restent des fichiers ordinaires. Le dossier .glom/ ne contient que les métadonnées et les vues.
+Les documents restent des fichiers ordinaires. `.glom/` contient uniquement la couche G.L.O.M. : métadonnées et vues.
 
-**Règle structurante : supprimer .glom/ ne doit jamais supprimer ni rendre inutilisables les vrais fichiers.**
+**Invariant principal : supprimer `.glom/` ne doit jamais supprimer ni rendre inutilisables les fichiers utilisateur.**
 
-Voir docs/ARCHITECTURE.md pour le modèle de données.
+Les chemins stockés dans G.L.O.M. sont relatifs au workspace. Les permissions propres au navigateur restent locales au navigateur et ne sont pas écrites dans `.glom/`.
+
+Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour le modèle de données et [docs/ROADMAP.md](docs/ROADMAP.md) pour la suite.
 
 ## Tester localement
 
-Aucun build n'est nécessaire. Servez simplement le dossier via HTTP ou HTTPS.
-
-Avec Python :
+Aucun build n'est nécessaire. Il suffit de servir le dépôt en HTTP/HTTPS.
 
 ~~~bash
 python -m http.server 8080
 ~~~
 
-Puis ouvrez http://localhost:8080
+Puis ouvrir :
 
-Vous pouvez aussi charger directement la démo avec :
-
+~~~text
+http://localhost:8080
 ~~~
+
+Démo directe :
+
+~~~text
 http://localhost:8080/?demo=1
 ~~~
 
 ## Déploiement GitHub Pages
 
-Le workflow .github/workflows/pages.yml publie automatiquement le dépôt lors d'un push sur main.
+Le workflow `.github/workflows/pages.yml` publie automatiquement `main`.
 
-Dans Settings → Pages, utilisez **GitHub Actions** comme source si GitHub ne l'active pas automatiquement au premier déploiement.
+Dans **Settings → Pages**, la source doit être **GitHub Actions**.
 
 ## Compatibilité
 
-Deux modes sont prévus :
+Deux modes existent :
 
-1. **Accès direct** : si showDirectoryPicker() est disponible, la PWA lit le dossier et peut écrire .glom/ après permission explicite.
-2. **Mode compatibilité** : sinon, l'utilisateur importe un dossier via le sélecteur du navigateur. Les vues sont alors exportées manuellement en JSON.
+1. **Accès direct** : si `showDirectoryPicker()` est disponible, G.L.O.M. lit le dossier et peut écrire les fichiers locaux et `.glom/` après permission explicite.
+2. **Mode compatibilité** : sinon, l'utilisateur importe un dossier via le sélecteur du navigateur. Les opérations nécessitant une écriture locale sont alors désactivées ou remplacées par un export.
 
-La compatibilité est détectée à l'exécution. La V0.1 ne suppose donc pas qu'une plateforme donnée expose systématiquement les mêmes API.
+La compatibilité est détectée à l'exécution : G.L.O.M. ne suppose pas qu'une plateforme expose toujours les mêmes API.
 
 ## Limites connues
 
-- un renommage ou déplacement effectué hors de l'application peut casser l'association avec les annotations ;
+- un fichier renommé ou déplacé **hors de G.L.O.M.** peut perdre son association avec ses métadonnées ;
+- une seule mindmap est actuellement active par workspace ;
+- pas encore de sélection multiple ;
+- les relations ne sont pas encore nommées/stylables individuellement ;
+- les images libres sur le canvas ne sont pas encore implémentées ;
 - pas encore de fusion multi-utilisateur ni de résolution de conflits ;
-- une seule vue mindmap pour le moment ;
-- le scan est limité volontairement pour éviter qu'un dossier énorme bloque l'interface.
+- les très gros workspaces sont scannés jusqu'au garde-fou actuel, mais l'indexation et le rendu progressifs restent prévus pour V0.5.
 
 ## Roadmap
 
-La roadmap détaillée est maintenue dans [docs/ROADMAP.md](docs/ROADMAP.md) et dans les issues GitHub.
+La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Axes principaux :
+Priorités après v0.3.8 :
 
-- V0.2.x : enrichir le viewer, miniatures et nouveaux formats ;
-- V0.3.x : compléter le mindmapping avancé — cartes multiples, relations stylables, objets libres, sélection multiple et layouts supplémentaires ;
-- V0.4 : métadonnées avancées, Kanban, timeline et graphe ;
-- V0.5 : robustesse et suivi des fichiers déplacés/renommés ;
-- V0.6 : synchronisation et gestion des conflits ;
-- plus tard : plugins, scripts, templates et API d'extensions.
-
-## Licence
-
-MIT — voir LICENSE.
-
+- terminer le mindmapping avancé : relations stylables, images libres, plusieurs cartes, sélection multiple, cadres/groupes avancés et layouts supplémentaires ;
+- enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
+- améliorer la robustesse et retrouver les fichiers déplacés/renommés en V0.5 ;
+- préparer synchronisation et résolution de conflits en V0.6.
 
 ## Dépendances viewer chargées à la demande
 
-Les viewers Office utilisent des bibliothèques libres chargées uniquement lorsqu'un format en a besoin : Mammoth (DOCX, BSD-2-Clause), @keep-lts/xlsx (tableurs, Apache-2.0) et fflate (ZIP, MIT). Le cœur de l'application reste statique et les fichiers utilisateur ne sont pas envoyés à un service distant. Une étape V0.2.x prévoit de vendoriser ces dépendances pour un fonctionnement hors-ligne complet.
+Les viewers Office utilisent des bibliothèques libres chargées lorsqu'un format en a besoin :
+
+- Mammoth — DOCX — BSD-2-Clause ;
+- @keep-lts/xlsx — tableurs — Apache-2.0 ;
+- fflate — ZIP — MIT.
+
+Le cœur de l'application reste statique et les fichiers utilisateur ne sont pas envoyés à un service distant. La vendorisation de ces dépendances reste prévue pour renforcer le fonctionnement hors ligne.
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).
