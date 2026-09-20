@@ -50,7 +50,7 @@ function applyPanelState(){
   ui.restoreInspectorBtn.classList.toggle("hidden",!state.panels.right);
   setButtonLabel(ui.toggleResourcesBtn,state.panels.left?"Afficher Ressources":"Masquer Ressources");
   setButtonLabel(ui.toggleInspectorBtn,state.panels.right?"Afficher Détails":"Masquer Détails");
-  requestAnimationFrame(()=>{if(state.view)fit()})
+  requestAnimationFrame(()=>transform())
 }
 function setPanelCollapsed(side,value){
   state.panels[side]=!!value;savePanelPrefs();applyPanelState()
@@ -399,7 +399,8 @@ function makeVisualObject(o){
   e.onpointerdown=ev=>dragVisualObject(ev,o,e);return e
 }
 function dragVisualObject(ev,o,e){
-  if(ev.button!==0)return;ev.stopPropagation();selectVisual(o.id);
+  if(ev.button!==0)return;ev.stopPropagation();
+  if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
   const s={x:ev.clientX,y:ev.clientY,ox:o.x,oy:o.y};let moved=false;e.setPointerCapture&&e.setPointerCapture(ev.pointerId);
   function mv(x){const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;o.x=Math.max(0,s.ox+dx);o.y=Math.max(0,s.oy+dy);e.style.left=o.x+"px";e.style.top=o.y+"px"}
   function end(){e.removeEventListener("pointermove",mv);e.removeEventListener("pointerup",end);e.removeEventListener("pointercancel",end);if(moved)setDirty()}
@@ -641,7 +642,7 @@ function wire(){
   ui.copyStyleBtn.onclick=copyNodeStyle;ui.pasteStyleBtn.onclick=pasteNodeStyle;ui.resetStyleBtn.onclick=resetNodeStyle;ui.frameToggleBtn.onclick=toggleBranchFrame;[ui.frameTitle,ui.frameBorderColor,ui.frameBackgroundColor,ui.frameOpacity,ui.frameBorderStyle].forEach(x=>x.addEventListener("input",updateBranchFrame));
   ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;[ui.visualText,ui.visualShape,ui.visualWidth,ui.visualHeight,ui.visualFontSize,ui.visualTextColor,ui.visualFill,ui.visualStroke].forEach(x=>x.addEventListener("input",updateVisualObject));ui.deleteVisualBtn.onclick=deleteVisualObject;
   ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
-  ui.showResourcesBtn.onclick=()=>ui.resourcesPanel.classList.toggle("open");ui.showInspectorBtn.onclick=()=>ui.inspectorPanel.classList.toggle("open");ui.collapseResourcesBtn.onclick=()=>setPanelCollapsed("left",true);ui.collapseInspectorBtn.onclick=()=>setPanelCollapsed("right",true);ui.restoreResourcesBtn.onclick=()=>setPanelCollapsed("left",false);ui.restoreInspectorBtn.onclick=()=>setPanelCollapsed("right",false);ui.toggleResourcesBtn.onclick=()=>setPanelCollapsed("left",!state.panels.left);ui.toggleInspectorBtn.onclick=()=>setPanelCollapsed("right",!state.panels.right);document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove("open"));
+  ui.showResourcesBtn.onclick=()=>ui.resourcesPanel.classList.toggle("open");ui.showInspectorBtn.onclick=()=>ui.inspectorPanel.classList.toggle("open");ui.collapseResourcesBtn.onclick=()=>setPanelCollapsed("left",true);ui.collapseInspectorBtn.onclick=()=>setPanelCollapsed("right",true);ui.restoreResourcesBtn.onclick=()=>setPanelCollapsed("left",false);ui.restoreInspectorBtn.onclick=()=>setPanelCollapsed("right",false);ui.toggleResourcesBtn.onclick=()=>{if(innerWidth<=900)ui.resourcesPanel.classList.toggle("open");else setPanelCollapsed("left",!state.panels.left)};ui.toggleInspectorBtn.onclick=()=>{if(innerWidth<=900)ui.inspectorPanel.classList.toggle("open");else setPanelCollapsed("right",!state.panels.right)};document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove("open"));
   window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save(false)}if((e.key==="Delete"||e.key==="Backspace")&&state.selectedVisual&&!e.target.matches("input,textarea,select")){e.preventDefault();deleteVisualObject()}if(e.key==="Escape"){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";closeToolbarMenus();closePanels();renderInspector();updateActionStates()}});window.addEventListener("resize",()=>{if(innerWidth>900)closePanels()})
 }
 async function init(){
