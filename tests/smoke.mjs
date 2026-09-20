@@ -31,6 +31,12 @@ try{
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
+  await page.$eval(".toolbar-menu:first-of-type > summary",el=>el.click());
+  await page.waitForSelector(".toolbar-menu:first-of-type[open]",{timeout:3000});
+  const workspaceMenuOpen=await page.$eval(".toolbar-menu:first-of-type",el=>el.open);
+  if(!workspaceMenuOpen)throw new Error("Workspace command menu did not open");
+  await page.mouse.click(5,5);
+  await page.waitForFunction(()=>![...document.querySelectorAll("[data-menu]")].some(m=>m.open),{timeout:3000});
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
@@ -84,26 +90,26 @@ try{
   await page.waitForSelector(".branch-frame",{timeout:5000});
   const frameCount=await page.$eval(".branch-frame",els=>els.length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
-  await page.click("#exportBtn");
+  await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);
   if(!exportReady)throw new Error("Export dialog did not initialize");
   await page.click("#exportClose");
-  await page.click("#recentBtn");
+  await page.$eval("#recentBtn",el=>el.click());
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
   await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
   await page.click("#recentClose");
 
   // A workspace can be started from scratch and populated visually with folders.
   page.once("dialog",d=>d.accept("Workspace vierge test"));
-  await page.click("#newWorkspaceBtn");
+  await page.$eval("#newWorkspaceBtn",el=>el.click());
   await page.waitForFunction(()=>document.getElementById("workspaceName")?.textContent==="Workspace vierge test",{timeout:5000});
   page.once("dialog",d=>d.accept("Recherche"));
-  await page.click("#folderBtn");
+  await page.click("#mapFolderBtn");
   await page.waitForFunction(()=>[...document.querySelectorAll(".tree-label")].some(el=>el.textContent==="Recherche"),{timeout:5000});
   const draftNode=await page.$eval(".node.folder .node-title",el=>el.textContent||"");
   if(draftNode!=="Recherche")throw new Error("Folder created from scratch was not rendered: "+draftNode);
-  await page.click("#exportBtn");
+  await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const zipReady=await page.$eval("#zipWorkspaceBtn",el=>!el.disabled);
   if(!zipReady)throw new Error("Workspace ZIP export is not available for a draft workspace");
