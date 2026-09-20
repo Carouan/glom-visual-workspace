@@ -17,6 +17,7 @@ La V0.3 transforme le prototype en **workspace visuel réellement éditable** : 
 - explorateur de fichiers repliable avec glisser-déposer physique lorsque l'écriture est autorisée ;
 - glisser-déposer d’un nœud fichier/dossier sur un dossier directement dans la mindmap pour modifier l’arborescence ;
 - création d’un workspace vide et ajout visuel de dossiers ;
+- barre supérieure compacte en menus et palette flottante dédiée aux outils de mindmapping ;
 - export d’un template ZIP contenant l’arborescence et `.glom/` ;
 - matérialisation d’un workspace brouillon/démo dans un dossier local ;
 - workspaces récents via IndexedDB ;

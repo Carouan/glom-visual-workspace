@@ -16,24 +16,49 @@
       <span class="brand-mark">G</span>
       <div><strong>G.L.O.M. Visual Workspace</strong><small id="workspaceName">Aucun workspace ouvert</small></div>
     </div>
-    <nav class="toolbar">
-      <button id="openBtn" class="primary">📂 Ouvrir un workspace</button>
-      <button id="newWorkspaceBtn">🆕 Nouveau</button>
-      <button id="recentBtn">🕘 Récents</button>
-      <button id="demoBtn">🧪 Démo</button>
-      <button id="scanBtn" disabled>↻ Rescanner</button>
-      <button id="saveBtn" disabled>💾 Enregistrer</button>
-      <button id="exportBtn" disabled>🖨 Exporter</button>
-      <span class="sep"></span>
-      <button id="folderBtn" disabled>＋ Dossier</button>
-      <button id="ideaBtn" disabled>＋ Idée</button>
-      <button id="urlBtn" disabled>🔗 Lien</button>
-      <button id="fitBtn" disabled>⊙ Recentrer</button>
-      <button id="autoLayoutBtn" disabled>🧭 Réorganiser</button>
+    <nav class="toolbar" aria-label="Commandes principales">
+      <button id="openBtn" class="primary">📂 Ouvrir</button>
+
+      <details class="toolbar-menu" data-menu>
+        <summary>Workspace ▾</summary>
+        <div class="toolbar-menu-panel">
+          <button id="newWorkspaceBtn">🆕 Nouveau workspace</button>
+          <button id="recentBtn">🕘 Workspaces récents</button>
+          <button id="demoBtn">🧪 Charger la démo</button>
+          <span class="menu-divider"></span>
+          <button id="scanBtn" disabled>↻ Rescanner le dossier</button>
+          <button id="saveBtn" disabled>💾 Enregistrer</button>
+        </div>
+      </details>
+
+      <details class="toolbar-menu" data-menu>
+        <summary>Insertion ▾</summary>
+        <div class="toolbar-menu-panel">
+          <button id="folderBtn" disabled>📁 Nouveau dossier</button>
+          <button id="ideaBtn" disabled>💡 Nouvelle idée</button>
+          <button id="urlBtn" disabled>🔗 Lien web</button>
+        </div>
+      </details>
+
+      <details class="toolbar-menu" data-menu>
+        <summary>Vue ▾</summary>
+        <div class="toolbar-menu-panel">
+          <button id="fitBtn" disabled>⊙ Recentrer / ajuster</button>
+          <button id="autoLayoutBtn" disabled>🧭 Réorganiser la carte</button>
+        </div>
+      </details>
+
+      <details class="toolbar-menu" data-menu>
+        <summary>Exporter ▾</summary>
+        <div class="toolbar-menu-panel">
+          <button id="exportBtn" disabled>🖨 Exports et impression…</button>
+        </div>
+      </details>
+
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.2</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.3</span></div>
   </header>
 
   <main class="shell">
@@ -61,6 +86,18 @@
       </div>
 
       <div id="viewport" class="viewport hidden">
+        <div id="mapPalette" class="map-palette" aria-label="Outils de la mindmap">
+          <button id="mapSelectBtn" class="active" type="button" title="Sélection / déplacement" aria-label="Sélection">↖</button>
+          <span class="palette-divider"></span>
+          <button id="mapFolderBtn" type="button" title="Créer un dossier enfant" aria-label="Créer un dossier">📁</button>
+          <button id="mapIdeaBtn" type="button" title="Créer une idée" aria-label="Créer une idée">💡</button>
+          <button id="mapRelationBtn" type="button" title="Créer une relation depuis le nœud sélectionné" aria-label="Créer une relation">↗</button>
+          <button id="mapFrameBtn" type="button" title="Créer ou retirer un cadre de branche" aria-label="Cadre de branche">▣</button>
+          <span class="palette-divider"></span>
+          <button id="mapShapeBtn" type="button" disabled title="Formes libres — prévu en V0.3.x" aria-label="Forme libre à venir">◇</button>
+          <button id="mapTextBtn" type="button" disabled title="Texte libre — prévu en V0.3.x" aria-label="Texte libre à venir">T</button>
+          <button id="mapImageBtn" type="button" disabled title="Image libre — prévu en V0.3.x" aria-label="Image libre à venir">🖼️</button>
+        </div>
         <div id="world" class="world">
           <div id="frames"></div>
           <svg id="edges" width="8000" height="8000"></svg>
@@ -86,6 +123,16 @@
               <label>Dernière modification<code id="modified">—</code></label>
               <label>Tags <small>(séparés par des virgules)</small><input id="tags" type="text"></label>
               <label>Notes<textarea id="notes" rows="6"></textarea></label>
+            </div>
+          </details>
+
+          <details class="inspector-section" id="contextActionsSection" open>
+            <summary>⚡ Actions</summary>
+            <div class="context-actions">
+              <button type="button" id="contextFolderBtn">📁 Dossier enfant</button>
+              <button type="button" id="contextIdeaBtn">💡 Idée liée</button>
+              <button type="button" id="contextRelationBtn">↗ Relation</button>
+              <button type="button" id="contextFrameBtn">▣ Cadre de branche</button>
             </div>
           </details>
 
