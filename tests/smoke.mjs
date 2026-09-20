@@ -25,6 +25,10 @@ try{
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);
   if(!exportReady)throw new Error("Export dialog did not initialize");
+  await page.click("#exportClose");
+  await page.click("#recentBtn");
+  await page.waitForSelector("#recentDialog[open]",{timeout:5000});
+  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
 }finally{
