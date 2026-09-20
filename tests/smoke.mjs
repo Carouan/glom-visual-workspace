@@ -132,6 +132,15 @@ try{
   await page.$eval("#backgroundColor",el=>{el.value="#fff3bf";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootBg=await page.$eval(".node.root",el=>getComputedStyle(el).backgroundColor);
   if(!rootBg.includes("255"))throw new Error("Node background style did not apply: "+rootBg);
+
+  // Node geometry is editable and range controls are not padded away from their endpoints.
+  await page.$eval("#nodeWidth",el=>{el.value="420";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#nodeHeight",el=>{el.value="120";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const rootGeometry=await page.$eval(".node.root",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height}));
+  if(rootGeometry.w!=="420px"||rootGeometry.h!=="120px")throw new Error("Variable node geometry failed: "+JSON.stringify(rootGeometry));
+  const sliderCheck=await page.evaluate(()=>({fontMax:document.getElementById("fontSize").max,borderMax:document.getElementById("borderWidth").max,padding:getComputedStyle(document.getElementById("fontSize")).paddingLeft}));
+  if(Number(sliderCheck.fontMax)<72||Number(sliderCheck.borderMax)<12||sliderCheck.padding!=="0px")throw new Error("Range controls are still artificially constrained: "+JSON.stringify(sliderCheck));
+
   await page.$eval("#frameToggleBtn",el=>el.click());
   await page.waitForSelector(".branch-frame",{timeout:5000});
   const frameCount=await page.$eval(".branch-frame",els=>els.length);
