@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.6")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.7")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
