@@ -1,22 +1,23 @@
-let viewerApi=null,viewerLoadFailed=false,exporterApi=null;
+let viewerApi=null,viewerLoadFailed=false,exporterApi=null,recentApi=null;
+async function getRecentApi(){if(recentApi)return recentApi;try{recentApi=await import("./workspaces/recent.js");return recentApi}catch(e){console.error("Recent workspaces module failed to load",e);return null}}
 async function getExporterApi(){if(exporterApi)return exporterApi;try{exporterApi=await import("./exporters/mindmap.js");return exporterApi}catch(e){console.error("Exporter module failed to load",e);setStatus("Export image/PDF indisponible","bad");return null}}
 async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)return null;try{viewerApi=await import("./viewers/index.js");return viewerApi}catch(e){viewerLoadFailed=true;console.error("Viewer module failed to load",e);setStatus("Viewer avancé indisponible — fonctions principales actives","bad");return null}}
 function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.clearPreview()}catch(e){console.warn(e)}}
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),
-  openBtn:el("openBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),
+  openBtn:el("openBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
   noSelection:el("noSelection"),form:el("form"),selectionKind:el("selectionKind"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),
   openResource:el("openResource"),linkBtn:el("linkBtn"),collapseBtn:el("collapseBtn"),deleteBtn:el("deleteBtn"),
-  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),
+  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn")
 };
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null
 };
-const FORMAT=1,APP="0.2.2",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.2.3",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -119,7 +120,8 @@ async function openWorkspace(){
 async function loadHandle(h,user){
   setStatus("Lecture du workspace…");const s=await scan(h),w0=await readJson(h,WS),r0=await readJson(h,RES),v0=await readJson(h,VIEW),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),v=mergeView(v0,r),can=await permission(h,user);
   Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0});initTreeExpansion();
-  try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated)alert("Le scan a atteint la limite de sécurité de la V0.1.");if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false)
+  try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated)alert("Le scan a atteint la limite de sécurité de la V0.1.");if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false);
+  rememberRecentWorkspace(h,w)
 }
 async function loadFallback(files){
   if(!files||!files.length)return;setStatus("Import du dossier…");const s=fallbackScan(files),m=await fallbackMetadata(files),w=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace(s.rootName),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),v=mergeView(m.view,r);
@@ -283,6 +285,44 @@ function zoom(z,anchor){if(!state.view)return;const old=state.view.zoom,n=Math.m
 function focus(id){const n=node(id);if(!n)return;const r=ui.viewport.getBoundingClientRect();state.view.pan.x=r.width/2-(n.x+120)*state.view.zoom;state.view.pan.y=r.height/2-(n.y+37)*state.view.zoom;transform()}
 function fit(){if(!state.view||!state.view.nodes.length)return;const h=hiddenNodes(),a=state.view.nodes.filter(n=>!h.has(n.id));if(!a.length)return;const minX=Math.min.apply(null,a.map(n=>n.x)),minY=Math.min.apply(null,a.map(n=>n.y)),maxX=Math.max.apply(null,a.map(n=>n.x+240)),maxY=Math.max.apply(null,a.map(n=>n.y+82)),r=ui.viewport.getBoundingClientRect();if(!r.width)return;const pad=90,z=Math.min(1.15,Math.max(.2,Math.min((r.width-pad*2)/Math.max(1,maxX-minX),(r.height-pad*2)/Math.max(1,maxY-minY))));state.view.zoom=z;state.view.pan.x=(r.width-(maxX-minX)*z)/2-minX*z;state.view.pan.y=(r.height-(maxY-minY)*z)/2-minY*z;transform()}
 function panStart(ev){if(!state.view||ev.button!==0||ev.target.closest(".node"))return;const s={x:ev.clientX,y:ev.clientY,px:state.view.pan.x,py:state.view.pan.y};ui.viewport.classList.add("panning");function mv(x){state.view.pan.x=s.px+x.clientX-s.x;state.view.pan.y=s.py+x.clientY-s.y;transform()}function end(){ui.viewport.classList.remove("panning");ui.viewport.removeEventListener("pointermove",mv);ui.viewport.removeEventListener("pointerup",end);ui.viewport.removeEventListener("pointercancel",end);setDirty()}ui.viewport.addEventListener("pointermove",mv);ui.viewport.addEventListener("pointerup",end);ui.viewport.addEventListener("pointercancel",end)}
+async function rememberRecentWorkspace(handle,workspace){
+  try{const api=await getRecentApi();if(api)await api.rememberWorkspace(handle,workspace)}catch(e){console.warn("Unable to remember workspace",e)}
+}
+async function openRecentWorkspace(entry){
+  if(!entry?.handle)return;
+  if(state.dirty){
+    if(state.mode==="fs"&&state.canWrite)await save(true);
+    else if(!confirm("Des modifications ne sont pas enregistrées/exportées. Changer de workspace quand même ?"))return
+  }
+  try{
+    let granted=true;
+    if(entry.handle.queryPermission){const q=await entry.handle.queryPermission({mode:"readwrite"});granted=q==="granted";if(!granted&&entry.handle.requestPermission)granted=(await entry.handle.requestPermission({mode:"readwrite"}))==="granted"}
+    if(!granted){alert("L’accès à ce dossier n’a pas été autorisé.");return}
+    ui.recentDialog.close();await loadHandle(entry.handle,false)
+  }catch(e){console.error(e);alert("Impossible de rouvrir ce workspace : "+(e.message||e))}
+}
+async function renderRecentWorkspaces(){
+  ui.recentList.replaceChildren();
+  const api=await getRecentApi();
+  if(!api){const p=document.createElement("p");p.className="recent-empty";p.textContent="Le stockage local des workspaces récents n’est pas disponible.";ui.recentList.append(p);return}
+  let rows=[];try{rows=await api.listRecentWorkspaces()}catch(e){console.warn(e)}
+  if(!rows.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucun workspace récent. Ouvrez d’abord un dossier local.";ui.recentList.append(p);return}
+  rows.forEach(entry=>{
+    const row=document.createElement("div");row.className="recent-item";
+    const text=document.createElement("div"),name=document.createElement("strong"),date=document.createElement("small");
+    name.textContent=entry.name||"Workspace";date.textContent=entry.lastOpenedAt?"Ouvert "+new Intl.DateTimeFormat("fr-BE",{dateStyle:"medium",timeStyle:"short"}).format(new Date(entry.lastOpenedAt)):"";
+    text.append(name,date);
+    const actions=document.createElement("div");actions.className="recent-actions";
+    const open=document.createElement("button");open.type="button";open.textContent=state.workspace?.id===entry.id?"↻ Recharger":"📂 Ouvrir";open.onclick=()=>openRecentWorkspace(entry);
+    const forget=document.createElement("button");forget.type="button";forget.textContent="Oublier";forget.onclick=async()=>{try{await api.forgetWorkspace(entry.id);await renderRecentWorkspaces()}catch(e){console.warn(e)}};
+    actions.append(open,forget);row.append(text,actions);ui.recentList.append(row)
+  })
+}
+async function openRecentDialog(){
+  if(!supportsFS()){alert("Les workspaces récents nécessitent l’accès direct aux dossiers de ce navigateur.");return}
+  if(!ui.recentDialog.open)ui.recentDialog.showModal();
+  await renderRecentWorkspaces()
+}
 async function openExportDialog(){
   if(!state.workspace||!state.view)return;
   setStatus("Préparation de l’export…");
@@ -305,7 +345,7 @@ function runExport(kind){
 }
 function closePanels(){ui.resourcesPanel.classList.remove("open");ui.inspectorPanel.classList.remove("open")}
 function wire(){
-  ui.openBtn.onclick=openWorkspace;ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
+  ui.openBtn.onclick=openWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node")){state.selected=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;
   ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
@@ -316,7 +356,7 @@ async function init(){
   document.documentElement.dataset.glomBoot="starting";
   try{
     wire();
-    if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier"}
+    if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier";ui.recentBtn.disabled=true;ui.recentBtn.title="Non disponible avec ce navigateur"}
     if("serviceWorker"in navigator){try{await navigator.serviceWorker.register("./sw.js",{scope:"./"})}catch(e){console.warn(e)}}
     if(new URLSearchParams(location.search).get("demo")==="1")demo();
     document.documentElement.dataset.glomBoot="ok"
