@@ -25,9 +25,9 @@ try{
   if(version.trim()!=="v0.3.3")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
-  const menuCount=await page.$eval(".toolbar-menu",els=>els.length);
+  const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
   if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
-  const visibleTopCommands=await page.$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
+  const visibleTopCommands=await page.$$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
@@ -45,7 +45,7 @@ try{
 
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
-  const contextualActions=await page.$eval(".context-actions button",els=>els.length);
+  const contextualActions=await page.$$eval(".context-actions button",els=>els.length);
   if(contextualActions!==4)throw new Error("Contextual action group is incomplete: "+contextualActions);
   const relationEnabled=await page.$eval("#mapRelationBtn",el=>!el.disabled);
   if(!relationEnabled)throw new Error("Relation tool should be enabled for a selected node");
@@ -88,7 +88,7 @@ try{
   if(!rootBg.includes("255"))throw new Error("Node background style did not apply: "+rootBg);
   await page.$eval("#frameToggleBtn",el=>el.click());
   await page.waitForSelector(".branch-frame",{timeout:5000});
-  const frameCount=await page.$eval(".branch-frame",els=>els.length);
+  const frameCount=await page.$$eval(".branch-frame",els=>els.length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
   await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
