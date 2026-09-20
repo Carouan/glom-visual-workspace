@@ -27,10 +27,11 @@
       <button id="ideaBtn" disabled>＋ Idée</button>
       <button id="urlBtn" disabled>🔗 Lien</button>
       <button id="fitBtn" disabled>⊙ Recentrer</button>
+      <button id="autoLayoutBtn" disabled>🧭 Réorganiser</button>
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.2.4</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.0</span></div>
   </header>
 
   <main class="shell">
@@ -59,6 +60,7 @@
 
       <div id="viewport" class="viewport hidden">
         <div id="world" class="world">
+          <div id="frames"></div>
           <svg id="edges" width="8000" height="8000"></svg>
           <div id="nodes"></div>
         </div>
@@ -77,7 +79,71 @@
         <label>Taille<code id="size">—</code></label>
         <label>Dernière modification<code id="modified">—</code></label>
         <label>Tags <small>(séparés par des virgules)</small><input id="tags" type="text"></label>
-        <label>Notes<textarea id="notes" rows="8"></textarea></label>
+        <label>Notes<textarea id="notes" rows="6"></textarea></label>
+
+        <details class="inspector-section" open>
+          <summary>🎨 Style du nœud</summary>
+          <div class="style-grid">
+            <label>Icône / emoji<input id="nodeIcon" type="text" maxlength="8" placeholder="Auto"></label>
+            <label>Taille du texte
+              <div class="range-row"><input id="fontSize" type="range" min="10" max="28" step="1" value="14"><output id="fontSizeValue">14 px</output></div>
+            </label>
+            <label>Police
+              <select id="fontFamily">
+                <option value="system">Système</option>
+                <option value="rounded">Arrondie</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Monospace</option>
+              </select>
+            </label>
+            <label>Graisse
+              <select id="fontWeight">
+                <option value="500">Normale</option>
+                <option value="650">Semi-gras</option>
+                <option value="800">Gras</option>
+              </select>
+            </label>
+            <label>Alignement
+              <select id="textAlign"><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select>
+            </label>
+            <label class="check-row"><input id="fontItalic" type="checkbox"> Italique</label>
+            <label>Texte<input id="textColor" type="color" value="#172033"></label>
+            <label>Fond<input id="backgroundColor" type="color" value="#ffffff"></label>
+            <label>Bordure<input id="borderColor" type="color" value="#d8deea"></label>
+            <label>Épaisseur bordure
+              <div class="range-row"><input id="borderWidth" type="range" min="0" max="6" step="1" value="1"><output id="borderWidthValue">1 px</output></div>
+            </label>
+            <label>Forme
+              <select id="nodeShape"><option value="rounded">Arrondie</option><option value="rectangle">Rectangle</option><option value="pill">Capsule</option></select>
+            </label>
+            <label class="check-row"><input id="nodeLocked" type="checkbox"> Verrouiller la position</label>
+            <label id="imageToggleLabel" class="check-row hidden"><input id="showNodeImage" type="checkbox"> Afficher l’image dans le nœud</label>
+          </div>
+          <div class="mini-actions">
+            <button type="button" id="copyStyleBtn">📋 Copier style</button>
+            <button type="button" id="pasteStyleBtn" disabled>📌 Coller style</button>
+            <button type="button" id="resetStyleBtn">↺ Réinitialiser</button>
+          </div>
+        </details>
+
+        <details class="inspector-section" id="branchFrameSection">
+          <summary>🖍️ Cadre de branche</summary>
+          <div class="frame-controls">
+            <button type="button" id="frameToggleBtn">＋ Créer un cadre autour de cette branche</button>
+            <div id="frameFields" class="style-grid hidden">
+              <label>Titre du cadre<input id="frameTitle" type="text" placeholder="Nom du groupe"></label>
+              <label>Couleur du cadre<input id="frameBorderColor" type="color" value="#6366f1"></label>
+              <label>Couleur de fond<input id="frameBackgroundColor" type="color" value="#eef2ff"></label>
+              <label>Opacité du fond
+                <div class="range-row"><input id="frameOpacity" type="range" min="0" max="40" step="1" value="10"><output id="frameOpacityValue">10 %</output></div>
+              </label>
+              <label>Style
+                <select id="frameBorderStyle"><option value="solid">Plein</option><option value="dashed">Pointillé</option></select>
+              </label>
+            </div>
+          </div>
+        </details>
+
         <div class="form-actions">
           <button type="button" id="openResource">👁️ Ouvrir / prévisualiser</button>
           <button type="button" id="linkBtn">⛓️ Relier à…</button>
