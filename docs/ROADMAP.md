@@ -151,6 +151,20 @@ Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est des
 
 L'outil **Image libre** reste réservé pour une étape suivante : sa persistance doit être conçue sans enfermer ou dupliquer silencieusement les fichiers utilisateur.
 
+### V0.3.6 — fichiers texte, Markdown et exclusions
+
+- exclusions persistantes de fichiers/dossiers sans suppression physique ;
+- exclusion rapide depuis le panneau de détails ;
+- gestion centralisée des règles dans **Workspace → Exclusions** ;
+- règles exactes et motifs simples comme `*.bak` ou `nppBackup/**` ;
+- les exclusions sont enregistrées dans `.glom/workspace.json` ;
+- les ressources exclues ne sont plus affichées, exportées ou comptées dans les tailles du workspace ;
+- aperçu Markdown rendu par défaut, avec onglet **Source** ;
+- édition directe des fichiers `.md` et `.txt` ;
+- enregistrement dans le vrai fichier local via File System Access ;
+- création directe d'un fichier texte ou Markdown dans le dossier sélectionné ;
+- mise à jour immédiate de l'arborescence et de la mindmap sans rescan complet.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
