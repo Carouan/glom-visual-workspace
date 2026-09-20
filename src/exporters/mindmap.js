@@ -92,6 +92,11 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
       const fs=Math.max(8,Number(o.fontSize)||18),lines=wrapText(o.text||"Texte",Math.max(10,Math.floor(w/(fs*.56))),Math.max(1,Math.floor(h/(fs*1.25)))),family=FONT_STACKS[o.fontFamily]||FONT_STACKS.system,anchor=o.textAlign==="center"?"middle":o.textAlign==="right"?"end":"start",tx=o.textAlign==="center"?x+w/2:o.textAlign==="right"?x+w-8:x+8;
       return `<g>${lines.map((line,i)=>`<text x="${tx}" y="${y+fs+4+i*fs*1.2}" text-anchor="${anchor}" font-family="${xml(family)}" font-size="${fs}" font-weight="${xml(o.fontWeight||"500")}" font-style="${o.italic?"italic":"normal"}" fill="${xml(o.textColor||"#172033")}">${xml(line)}</text>`).join("")}</g>`
     }
+    if(o.type==="image"){
+      const opacity=Math.max(.1,Math.min(1,(Number(o.opacity)||100)/100)),radius=Math.max(0,Number(o.radius)||0),fit=o.fit||"contain",preserve=fit==="fill"?"none":fit==="cover"?"xMidYMid slice":"xMidYMid meet",href=o.dataUrl||"",clipId="imgclip-"+String(o.id||"image").replace(/[^a-zA-Z0-9_-]/g,"");
+      if(!href)return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="#f1f5f9" stroke="#cbd5e1"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="12" fill="#64748b">Image indisponible</text></g>`;
+      return `<g opacity="${opacity}"><defs><clipPath id="${clipId}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}"/></clipPath></defs><image x="${x}" y="${y}" width="${w}" height="${h}" href="${xml(href)}" preserveAspectRatio="${preserve}" clip-path="url(#${clipId})"/></g>`
+    }
     const fill=xml(o.fill||"#e0e7ff"),stroke=xml(o.stroke||"#6366f1");
     if(o.shape==="ellipse")return `<ellipse cx="${x+w/2}" cy="${y+h/2}" rx="${w/2}" ry="${h/2}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
     if(o.shape==="diamond")return `<polygon points="${x+w/2},${y} ${x+w},${y+h/2} ${x+w/2},${y+h} ${x},${y+h/2}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
@@ -125,7 +130,7 @@ export async function exportPng(name,view,resources,options){
   }finally{URL.revokeObjectURL(u)}
 }
 export function printA4(title,view,resources,options){
-  const orientation=options?.orientation||"landscape",svg=buildMindmapSvg(view,resources,{...options,orientation}),w=window.open("","_blank");
+  const orientation=options?.orientation||"landscape",svg=buildMindmapSvg(view,resources,{...options,orientation}),w=options?.targetWindow||window.open("","_blank");
   if(!w)throw new Error("La fenêtre d'impression a été bloquée par le navigateur.");
   const safeTitle=xml(title||"Mindmap");w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeTitle}</title><style>@page{size:A4 ${orientation};margin:8mm}html,body{margin:0;padding:0;background:#fff}body{display:grid;place-items:center}svg{width:100%;height:auto;max-height:calc(100vh - 16mm)}@media print{svg{width:100%;height:auto;max-height:none}}</style></head><body>${svg}<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),200));<\/script></body></html>`);w.document.close()
 }

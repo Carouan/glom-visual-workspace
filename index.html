@@ -97,7 +97,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.9</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.10</span></div>
   </header>
 
   <main class="shell">
@@ -137,7 +137,7 @@
           <span class="palette-divider"></span>
           <button id="mapShapeBtn" type="button" title="Ajouter une forme libre" aria-label="Ajouter une forme"><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg></button>
           <button id="mapTextBtn" type="button" title="Ajouter une annotation texte" aria-label="Ajouter du texte"><svg class="ui-icon" aria-hidden="true"><use href="#i-text"></use></svg></button>
-          <button id="mapImageBtn" type="button" disabled title="Image libre — prévu en V0.3.x" aria-label="Image libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
+          <button id="mapImageBtn" type="button" title="Ajouter une image libre depuis le workspace" aria-label="Ajouter une image libre"><svg class="ui-icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
         </div>
         <div id="world" class="world">
           <div id="frames"></div>
@@ -183,6 +183,16 @@
               <label id="visualTextColorLabel">Couleur du texte<input id="visualTextColor" type="color" value="#172033"></label>
               <label id="visualFillLabel">Fond<input id="visualFill" type="color" value="#e0e7ff"></label>
               <label id="visualStrokeLabel">Bordure<input id="visualStroke" type="color" value="#6366f1"></label>
+              <label id="visualImageSourceLabel" class="hidden">Source<code id="visualImageSource">—</code></label>
+              <label id="visualImageFitLabel" class="hidden">Ajustement
+                <select id="visualImageFit"><option value="contain">Contenir</option><option value="cover">Recadrer</option><option value="fill">Étirer</option></select>
+              </label>
+              <label id="visualImageOpacityLabel" class="hidden">Opacité
+                <div class="range-row"><input id="visualImageOpacity" type="range" min="10" max="100" step="1" value="100"><output id="visualImageOpacityValue">100 %</output></div>
+              </label>
+              <label id="visualImageRadiusLabel" class="hidden">Coins
+                <div class="range-row"><input id="visualImageRadius" type="range" min="0" max="60" step="1" value="8"><output id="visualImageRadiusValue">8 px</output></div>
+              </label>
             </div>
           </details>
           <div class="form-actions">
@@ -375,6 +385,14 @@
           <button id="materializeBtn" type="button">📁 Créer sur disque</button>
         </div>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="imageObjectDialog" class="small-dialog">
+    <header><div><strong>Ajouter une image libre</strong><small>Référence un fichier image déjà présent dans le workspace</small></div><button id="imageObjectClose">×</button></header>
+    <div class="image-picker-panel">
+      <label class="search"><span>⌕</span><input id="imageObjectSearch" type="search" placeholder="Nom ou chemin de l’image…"></label>
+      <div id="imageObjectList" class="image-picker-list"></div>
     </div>
   </dialog>
 

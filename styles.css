@@ -386,3 +386,25 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 #edgeForm .details-grid{padding-bottom:.8rem}
 #edgeForm select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text)}
 #edgeForm input[type="text"]{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text)}
+
+/* V0.3.10 — free image objects */
+.visual-object.image{
+  overflow:hidden;
+  background:linear-gradient(45deg,var(--surface2) 25%,transparent 25%) 0 0/18px 18px,
+             linear-gradient(-45deg,var(--surface2) 25%,transparent 25%) 0 9px/18px 18px,
+             linear-gradient(45deg,transparent 75%,var(--surface2) 75%) 9px -9px/18px 18px,
+             linear-gradient(-45deg,transparent 75%,var(--surface2) 75%) -9px 0/18px 18px;
+  border:1px solid var(--border);
+}
+.visual-image{width:100%;height:100%;display:block;pointer-events:none;user-select:none}
+.visual-image-placeholder{width:100%;height:100%;display:grid;place-items:center;padding:1rem;color:var(--muted);font-size:.8rem;text-align:center}
+.image-picker-panel{padding:1rem;display:grid;gap:.75rem;min-width:min(620px,82vw)}
+.image-picker-list{display:grid;gap:.4rem;max-height:55vh;overflow:auto}
+.image-picker-item{display:grid;grid-template-columns:58px minmax(0,1fr);gap:.7rem;align-items:center;text-align:left;padding:.5rem;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.image-picker-item:hover{background:var(--surface2);border-color:var(--primary)}
+.image-picker-item>span:last-child{display:grid;gap:.15rem;min-width:0}
+.image-picker-item strong,.image-picker-item small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.image-picker-item small{color:var(--muted)}
+.image-picker-thumb{width:58px;height:44px;border-radius:7px;overflow:hidden;background:var(--surface2);display:grid;place-items:center}
+.image-picker-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+#visualImageSource{overflow-wrap:anywhere}

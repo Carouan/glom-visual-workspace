@@ -10,15 +10,15 @@ const ui={
   openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),visualObjects:el("visualObjects"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
-  noSelection:el("noSelection"),form:el("form"),visualForm:el("visualForm"),edgeForm:el("edgeForm"),selectionKind:el("selectionKind"),edgeKind:el("edgeKind"),edgeLabel:el("edgeLabel"),edgeColor:el("edgeColor"),edgeWidth:el("edgeWidth"),edgeWidthValue:el("edgeWidthValue"),edgeLineStyle:el("edgeLineStyle"),edgeArrow:el("edgeArrow"),edgeCurvature:el("edgeCurvature"),edgeCurvatureValue:el("edgeCurvatureValue"),deleteEdgeBtn:el("deleteEdgeBtn"),visualKind:el("visualKind"),visualTextLabel:el("visualTextLabel"),visualText:el("visualText"),visualShapeLabel:el("visualShapeLabel"),visualShape:el("visualShape"),visualWidth:el("visualWidth"),visualHeight:el("visualHeight"),visualFontSizeLabel:el("visualFontSizeLabel"),visualFontSize:el("visualFontSize"),visualFontFamilyLabel:el("visualFontFamilyLabel"),visualFontFamily:el("visualFontFamily"),visualFontWeightLabel:el("visualFontWeightLabel"),visualFontWeight:el("visualFontWeight"),visualTextAlignLabel:el("visualTextAlignLabel"),visualTextAlign:el("visualTextAlign"),visualItalicLabel:el("visualItalicLabel"),visualItalic:el("visualItalic"),visualTextColorLabel:el("visualTextColorLabel"),visualTextColor:el("visualTextColor"),visualFillLabel:el("visualFillLabel"),visualFill:el("visualFill"),visualStrokeLabel:el("visualStrokeLabel"),visualStroke:el("visualStroke"),deleteVisualBtn:el("deleteVisualBtn"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),nodeIcon:el("nodeIcon"),fontSize:el("fontSize"),fontSizeValue:el("fontSizeValue"),nodeWidth:el("nodeWidth"),nodeWidthValue:el("nodeWidthValue"),nodeHeight:el("nodeHeight"),nodeHeightValue:el("nodeHeightValue"),fontFamily:el("fontFamily"),fontWeight:el("fontWeight"),textAlign:el("textAlign"),fontItalic:el("fontItalic"),textColor:el("textColor"),backgroundColor:el("backgroundColor"),borderColor:el("borderColor"),borderWidth:el("borderWidth"),borderWidthValue:el("borderWidthValue"),nodeShape:el("nodeShape"),nodeLocked:el("nodeLocked"),moveBranch:el("moveBranch"),imageToggleLabel:el("imageToggleLabel"),showNodeImage:el("showNodeImage"),copyStyleBtn:el("copyStyleBtn"),pasteStyleBtn:el("pasteStyleBtn"),resetStyleBtn:el("resetStyleBtn"),branchFrameSection:el("branchFrameSection"),frameToggleBtn:el("frameToggleBtn"),frameFields:el("frameFields"),frameTitle:el("frameTitle"),frameFontSize:el("frameFontSize"),frameFontSizeValue:el("frameFontSizeValue"),frameFontFamily:el("frameFontFamily"),frameFontWeight:el("frameFontWeight"),frameItalic:el("frameItalic"),frameTextColor:el("frameTextColor"),frameBorderColor:el("frameBorderColor"),frameBackgroundColor:el("frameBackgroundColor"),frameOpacity:el("frameOpacity"),frameOpacityValue:el("frameOpacityValue"),frameBorderStyle:el("frameBorderStyle"),
+  noSelection:el("noSelection"),form:el("form"),visualForm:el("visualForm"),edgeForm:el("edgeForm"),selectionKind:el("selectionKind"),edgeKind:el("edgeKind"),edgeLabel:el("edgeLabel"),edgeColor:el("edgeColor"),edgeWidth:el("edgeWidth"),edgeWidthValue:el("edgeWidthValue"),edgeLineStyle:el("edgeLineStyle"),edgeArrow:el("edgeArrow"),edgeCurvature:el("edgeCurvature"),edgeCurvatureValue:el("edgeCurvatureValue"),deleteEdgeBtn:el("deleteEdgeBtn"),visualKind:el("visualKind"),visualTextLabel:el("visualTextLabel"),visualText:el("visualText"),visualShapeLabel:el("visualShapeLabel"),visualShape:el("visualShape"),visualWidth:el("visualWidth"),visualHeight:el("visualHeight"),visualFontSizeLabel:el("visualFontSizeLabel"),visualFontSize:el("visualFontSize"),visualFontFamilyLabel:el("visualFontFamilyLabel"),visualFontFamily:el("visualFontFamily"),visualFontWeightLabel:el("visualFontWeightLabel"),visualFontWeight:el("visualFontWeight"),visualTextAlignLabel:el("visualTextAlignLabel"),visualTextAlign:el("visualTextAlign"),visualItalicLabel:el("visualItalicLabel"),visualItalic:el("visualItalic"),visualTextColorLabel:el("visualTextColorLabel"),visualTextColor:el("visualTextColor"),visualFillLabel:el("visualFillLabel"),visualFill:el("visualFill"),visualStrokeLabel:el("visualStrokeLabel"),visualStroke:el("visualStroke"),visualImageSourceLabel:el("visualImageSourceLabel"),visualImageSource:el("visualImageSource"),visualImageFitLabel:el("visualImageFitLabel"),visualImageFit:el("visualImageFit"),visualImageOpacityLabel:el("visualImageOpacityLabel"),visualImageOpacity:el("visualImageOpacity"),visualImageOpacityValue:el("visualImageOpacityValue"),visualImageRadiusLabel:el("visualImageRadiusLabel"),visualImageRadius:el("visualImageRadius"),visualImageRadiusValue:el("visualImageRadiusValue"),deleteVisualBtn:el("deleteVisualBtn"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),nodeIcon:el("nodeIcon"),fontSize:el("fontSize"),fontSizeValue:el("fontSizeValue"),nodeWidth:el("nodeWidth"),nodeWidthValue:el("nodeWidthValue"),nodeHeight:el("nodeHeight"),nodeHeightValue:el("nodeHeightValue"),fontFamily:el("fontFamily"),fontWeight:el("fontWeight"),textAlign:el("textAlign"),fontItalic:el("fontItalic"),textColor:el("textColor"),backgroundColor:el("backgroundColor"),borderColor:el("borderColor"),borderWidth:el("borderWidth"),borderWidthValue:el("borderWidthValue"),nodeShape:el("nodeShape"),nodeLocked:el("nodeLocked"),moveBranch:el("moveBranch"),imageToggleLabel:el("imageToggleLabel"),showNodeImage:el("showNodeImage"),copyStyleBtn:el("copyStyleBtn"),pasteStyleBtn:el("pasteStyleBtn"),resetStyleBtn:el("resetStyleBtn"),branchFrameSection:el("branchFrameSection"),frameToggleBtn:el("frameToggleBtn"),frameFields:el("frameFields"),frameTitle:el("frameTitle"),frameFontSize:el("frameFontSize"),frameFontSizeValue:el("frameFontSizeValue"),frameFontFamily:el("frameFontFamily"),frameFontWeight:el("frameFontWeight"),frameItalic:el("frameItalic"),frameTextColor:el("frameTextColor"),frameBorderColor:el("frameBorderColor"),frameBackgroundColor:el("frameBackgroundColor"),frameOpacity:el("frameOpacity"),frameOpacityValue:el("frameOpacityValue"),frameBorderStyle:el("frameBorderStyle"),
   openResource:el("openResource"),linkBtn:el("linkBtn"),collapseBtn:el("collapseBtn"),deleteBtn:el("deleteBtn"),contextActionsSection:el("contextActionsSection"),contextFolderBtn:el("contextFolderBtn"),contextIdeaBtn:el("contextIdeaBtn"),contextRelationBtn:el("contextRelationBtn"),contextFrameBtn:el("contextFrameBtn"),contextExcludeBtn:el("contextExcludeBtn"),
-  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),exclusionsDialog:el("exclusionsDialog"),exclusionsClose:el("exclusionsClose"),exclusionsList:el("exclusionsList"),exclusionForm:el("exclusionForm"),exclusionPattern:el("exclusionPattern"),excludeBakPreset:el("excludeBakPreset"),excludeNppPreset:el("excludeNppPreset"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),zipWorkspaceBtn:el("zipWorkspaceBtn"),materializeBtn:el("materializeBtn"),
+  imageObjectDialog:el("imageObjectDialog"),imageObjectClose:el("imageObjectClose"),imageObjectSearch:el("imageObjectSearch"),imageObjectList:el("imageObjectList"),preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),exclusionsDialog:el("exclusionsDialog"),exclusionsClose:el("exclusionsClose"),exclusionsList:el("exclusionsList"),exclusionForm:el("exclusionForm"),exclusionPattern:el("exclusionPattern"),excludeBakPreset:el("excludeBakPreset"),excludeNppPreset:el("excludeNppPreset"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),zipWorkspaceBtn:el("zipWorkspaceBtn"),materializeBtn:el("materializeBtn"),
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn"),collapseResourcesBtn:el("collapseResourcesBtn"),collapseInspectorBtn:el("collapseInspectorBtn"),restoreResourcesBtn:el("restoreResourcesBtn"),restoreInspectorBtn:el("restoreInspectorBtn")
 };
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
 };
-const FORMAT=1,APP="0.3.9",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.10",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 const SCAN_MAX_ENTRIES=20000,SCAN_MAX_DEPTH=48,SCAN_YIELD_EVERY=250;
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
@@ -499,15 +499,26 @@ function renderMap(){
 function renderVisualObjects(){
   if(!state.view)return;(state.view.objects||[]).forEach(o=>ui.visualObjects.appendChild(makeVisualObject(o)))
 }
+function imageResourceForObject(o){
+  if(!o||o.type!=="image")return null;
+  return resource(o.resourceId)||state.resources.find(r=>r.path&&r.path===o.path)||null
+}
+async function attachVisualImage(container,o){
+  const r=imageResourceForObject(o);if(!r)return;
+  const url=await imageUrlFor(r);if(!url||!container.isConnected)return;
+  container.replaceChildren();const img=document.createElement("img");img.className="visual-image";img.src=url;img.alt=r.title||base(r.path);img.draggable=false;img.style.objectFit=o.fit||"contain";img.style.opacity=String(Math.max(.1,Math.min(1,(Number(o.opacity)||100)/100)));img.style.borderRadius=(Math.max(0,Number(o.radius)||0))+"px";container.append(img)
+}
 function makeVisualObject(o){
   const e=document.createElement("div");e.className="visual-object "+o.type+(o.id===state.selectedVisual?" selected":"");e.dataset.visual=o.id;e.style.left=o.x+"px";e.style.top=o.y+"px";e.style.width=o.w+"px";e.style.height=o.h+"px";
   if(o.type==="shape"){
     e.classList.add(o.shape||"rectangle");e.style.backgroundColor=o.fill||"#e0e7ff";e.style.borderColor=o.stroke||"#6366f1";
+  }else if(o.type==="image"){
+    const r=imageResourceForObject(o),placeholder=document.createElement("div");placeholder.className="visual-image-placeholder";placeholder.textContent=r&&r.missing?"Image absente":"Chargement de l’image…";e.append(placeholder);e.style.borderRadius=(Math.max(0,Number(o.radius)||0))+"px";attachVisualImage(e,o)
   }else{
     e.textContent=o.text||"Texte";e.style.color=o.textColor||"#172033";e.style.fontSize=(Number(o.fontSize)||18)+"px";e.style.fontFamily=FONT_STACKS[o.fontFamily]||FONT_STACKS.system;e.style.fontWeight=o.fontWeight||"500";e.style.fontStyle=o.italic?"italic":"normal";e.style.textAlign=o.textAlign||"left";e.style.justifyContent=o.textAlign==="center"?"center":o.textAlign==="right"?"flex-end":"flex-start";
   }
   e.onclick=ev=>{ev.stopPropagation();selectVisual(o.id)};
-  e.ondblclick=ev=>{ev.stopPropagation();if(o.type==="text"){const v=prompt("Texte de l’annotation :",o.text||"");if(v!==null){o.text=v;setDirty();renderMap();renderInspector()}}};
+  e.ondblclick=ev=>{ev.stopPropagation();if(o.type==="text"){const v=prompt("Texte de l’annotation :",o.text||"");if(v!==null){o.text=v;setDirty();renderMap();renderInspector()}}else if(o.type==="image"){const r=imageResourceForObject(o);if(r)openResource(r)}};
   e.onpointerdown=ev=>dragVisualObject(ev,o,e);return e
 }
 function dragVisualObject(ev,o,e){
@@ -604,10 +615,13 @@ function renderInspector(){
     ui.edgeForm.dataset.edgeId=ed.id;const s=effectiveEdgeStyle(ed);ui.selectionKind.textContent=ed.kind==="hierarchy"?"Relation hiérarchique":"Relation manuelle";ui.edgeKind.textContent=ed.kind==="hierarchy"?"Hiérarchie":"Manuelle";ui.edgeLabel.value=ed.label||"";ui.edgeColor.value=s.color;ui.edgeWidth.value=s.width;ui.edgeWidthValue.value=s.width+" px";ui.edgeLineStyle.value=s.lineStyle;ui.edgeArrow.value=s.arrow;ui.edgeCurvature.value=s.curvature;ui.edgeCurvatureValue.value=s.curvature+" %";ui.deleteEdgeBtn.classList.toggle("hidden",ed.kind!=="manual");updateActionStates();return
   }
   if(vo){
-    ui.selectionKind.textContent=vo.type==="shape"?"Forme graphique":"Annotation";
-    ui.visualKind.textContent=vo.type==="shape"?"Forme":"Texte";ui.visualTextLabel.classList.toggle("hidden",vo.type!=="text");ui.visualShapeLabel.classList.toggle("hidden",vo.type!=="shape");
-    [ui.visualFontSizeLabel,ui.visualFontFamilyLabel,ui.visualFontWeightLabel,ui.visualTextAlignLabel,ui.visualItalicLabel,ui.visualTextColorLabel].forEach(x=>x.classList.toggle("hidden",vo.type!=="text"));ui.visualFillLabel.classList.toggle("hidden",vo.type!=="shape");ui.visualStrokeLabel.classList.toggle("hidden",vo.type!=="shape");
+    const isText=vo.type==="text",isShape=vo.type==="shape",isImage=vo.type==="image";
+    ui.selectionKind.textContent=isShape?"Forme graphique":isImage?"Image libre":"Annotation";
+    ui.visualKind.textContent=isShape?"Forme":isImage?"Image":"Texte";ui.visualTextLabel.classList.toggle("hidden",!isText);ui.visualShapeLabel.classList.toggle("hidden",!isShape);
+    [ui.visualFontSizeLabel,ui.visualFontFamilyLabel,ui.visualFontWeightLabel,ui.visualTextAlignLabel,ui.visualItalicLabel,ui.visualTextColorLabel].forEach(x=>x.classList.toggle("hidden",!isText));ui.visualFillLabel.classList.toggle("hidden",!isShape);ui.visualStrokeLabel.classList.toggle("hidden",!isShape);
+    [ui.visualImageSourceLabel,ui.visualImageFitLabel,ui.visualImageOpacityLabel,ui.visualImageRadiusLabel].forEach(x=>x.classList.toggle("hidden",!isImage));
     ui.visualText.value=vo.text||"";ui.visualShape.value=vo.shape||"rectangle";ui.visualWidth.value=Math.round(vo.w||180);ui.visualHeight.value=Math.round(vo.h||80);ui.visualFontSize.value=Number(vo.fontSize)||18;ui.visualFontFamily.value=vo.fontFamily||"system";ui.visualFontWeight.value=String(vo.fontWeight||"500");ui.visualTextAlign.value=vo.textAlign||"left";ui.visualItalic.checked=!!vo.italic;ui.visualTextColor.value=vo.textColor||"#172033";ui.visualFill.value=vo.fill||"#e0e7ff";ui.visualStroke.value=vo.stroke||"#6366f1";
+    if(isImage){const ir=imageResourceForObject(vo);ui.visualImageSource.textContent=ir?.path||vo.path||"Ressource introuvable";ui.visualImageFit.value=vo.fit||"contain";ui.visualImageOpacity.value=Number(vo.opacity)||100;ui.visualImageOpacityValue.value=(Number(vo.opacity)||100)+" %";ui.visualImageRadius.value=Number(vo.radius)||0;ui.visualImageRadiusValue.value=(Number(vo.radius)||0)+" px"}
     updateActionStates();return
   }
   ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n){updateActionStates();return}
@@ -657,7 +671,8 @@ function deleteSelectedEdge(){
 function updateVisualObject(){
   const o=selectedVisualObject();if(!o)return;o.w=Math.max(40,Number(ui.visualWidth.value)||o.w||180);o.h=Math.max(30,Number(ui.visualHeight.value)||o.h||80);
   if(o.type==="text"){o.text=ui.visualText.value;o.fontSize=Math.max(8,Number(ui.visualFontSize.value)||18);o.fontFamily=ui.visualFontFamily.value;o.fontWeight=ui.visualFontWeight.value;o.textAlign=ui.visualTextAlign.value;o.italic=ui.visualItalic.checked;o.textColor=ui.visualTextColor.value}
-  else{o.shape=ui.visualShape.value;o.fill=ui.visualFill.value;o.stroke=ui.visualStroke.value}
+  else if(o.type==="shape"){o.shape=ui.visualShape.value;o.fill=ui.visualFill.value;o.stroke=ui.visualStroke.value}
+  else if(o.type==="image"){o.fit=ui.visualImageFit.value;o.opacity=Math.max(10,Math.min(100,Number(ui.visualImageOpacity.value)||100));o.radius=Math.max(0,Math.min(60,Number(ui.visualImageRadius.value)||0));ui.visualImageOpacityValue.value=o.opacity+" %";ui.visualImageRadiusValue.value=o.radius+" px"}
   setDirty();renderMap()
 }
 function deleteVisualObject(){
@@ -666,6 +681,24 @@ function deleteVisualObject(){
 function addShape(){
   if(!state.view)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"shape",shape:"rectangle",x:p.x-90,y:p.y-45,w:180,h:90,fill:"#e0e7ff",stroke:"#6366f1"};
   state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
+}
+function availableImageResources(){
+  return state.resources.filter(r=>isImageResource(r)&&!r.missing&&!r.excluded&&(state.mode==="fs"||(state.mode==="fallback"&&state.fallbackFiles.has(r.path))))
+}
+function renderImageObjectList(){
+  ui.imageObjectList.replaceChildren();const q=(ui.imageObjectSearch.value||"").trim().toLowerCase(),images=availableImageResources().filter(r=>!q||(r.title||"").toLowerCase().includes(q)||(r.path||"").toLowerCase().includes(q));
+  if(!images.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucune image disponible dans ce workspace.";ui.imageObjectList.append(p);return}
+  images.forEach(r=>{
+    const b=document.createElement("button");b.type="button";b.className="image-picker-item";const thumb=document.createElement("span");thumb.className="image-picker-thumb";thumb.textContent="🖼️";const txt=document.createElement("span"),strong=document.createElement("strong"),small=document.createElement("small");strong.textContent=r.title||base(r.path);small.textContent=r.path||"";txt.append(strong,small);b.append(thumb,txt);b.onclick=()=>addImageObject(r);ui.imageObjectList.append(b);
+    imageUrlFor(r).then(url=>{if(!url||!thumb.isConnected)return;thumb.replaceChildren();const img=document.createElement("img");img.src=url;img.alt="";img.draggable=false;thumb.append(img)})
+  })
+}
+function openImageObjectDialog(){
+  if(!state.workspace)return;ui.imageObjectSearch.value="";renderImageObjectList();if(!ui.imageObjectDialog.open)ui.imageObjectDialog.showModal()
+}
+function addImageObject(r){
+  if(!r||!isImageResource(r)||r.missing)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"image",resourceId:r.id,path:r.path,x:p.x-160,y:p.y-110,w:320,h:220,fit:"contain",opacity:100,radius:8};
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();ui.imageObjectDialog.close();render()
 }
 function addTextObject(){
   if(!state.view)return;const text=prompt("Texte de l’annotation :","Nouvelle annotation");if(text===null)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"text",text:text||"Annotation",x:p.x-110,y:p.y-35,w:220,h:70,fontSize:18,fontFamily:"system",fontWeight:"500",textAlign:"left",italic:false,textColor:"#172033"};
@@ -766,16 +799,32 @@ async function openExportDialog(){
 }
 function exportOptions(){return{orientation:ui.exportOrientation.value,includeHidden:ui.exportHidden.checked}}
 function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-mindmap"}
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=()=>reject(reader.error||new Error("Lecture image impossible"));reader.readAsDataURL(file)})
+}
+async function prepareViewForExport(){
+  const view=typeof structuredClone==="function"?structuredClone(state.view):JSON.parse(JSON.stringify(state.view));
+  for(const o of view.objects||[]){
+    if(o.type!=="image")continue;
+    const r=resource(o.resourceId)||state.resources.find(x=>x.path&&x.path===o.path);if(!r||r.missing)continue;
+    try{
+      const file=state.mode==="fs"?await fileFromPath(state.handle,r.path):state.fallbackFiles.get(r.path);
+      if(file)o.dataUrl=await fileToDataUrl(file)
+    }catch(e){console.warn("Image export unavailable",r.path,e)}
+  }
+  return view
+}
 async function runExport(kind){
   if(!state.view)return;
   const api=await getExporterApi();if(!api){alert("Le module d’export de la mindmap n’a pas pu être chargé.");return}
   try{
-    const o=exportOptions(),base=exportBaseName();
-    if(kind==="svg")api.exportSvg(base+".svg",state.view,state.resources,o);
-    else if(kind==="png")api.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
-    else if(kind==="print")api.printA4(state.workspace.name,state.view,state.resources,o);
+    const printWindow=kind==="print"?window.open("","_blank"):null;if(kind==="print"&&!printWindow)throw new Error("La fenêtre d'impression a été bloquée par le navigateur.");
+    setStatus("Préparation de l’export…");const o=exportOptions(),base=exportBaseName(),view=await prepareViewForExport();
+    if(kind==="svg")api.exportSvg(base+".svg",view,state.resources,o);
+    else if(kind==="png")await api.exportPng(base+".png",view,state.resources,o);
+    else if(kind==="print")api.printA4(state.workspace.name,view,state.resources,{...o,targetWindow:printWindow});
     if(kind!=="print")setStatus("Export "+kind.toUpperCase()+" généré","ok")
-  }catch(e){console.error(e);alert("Export impossible : "+(e.message||e))}
+  }catch(e){console.error(e);setStatus("Export impossible","bad");alert("Export impossible : "+(e.message||e))}
 }
 async function exportWorkspaceZip(){
   if(!state.workspace||!state.view)return;setStatus("Création du template ZIP…");
@@ -802,7 +851,7 @@ function closeToolbarMenus(except=null){document.querySelectorAll("[data-menu][o
 function wire(){
   ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.exclusionsBtn.onclick=openExclusionsDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.textFileBtn.onclick=()=>addLocalTextFile("txt");ui.markdownFileBtn.onclick=()=>addLocalTextFile("md");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.mapSelectBtn.onclick=()=>{state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";updateActionStates();renderInspector()};
-  ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=toggleBranchFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;
+  ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=toggleBranchFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;ui.mapImageBtn.onclick=openImageObjectDialog;
   ui.contextFolderBtn.onclick=addFolder;ui.contextIdeaBtn.onclick=addIdea;ui.contextRelationBtn.onclick=linkMode;ui.contextFrameBtn.onclick=toggleBranchFrame;ui.contextExcludeBtn.onclick=excludeSelectedResource;
   document.querySelectorAll("[data-menu]").forEach(menu=>menu.addEventListener("toggle",()=>{if(menu.open)closeToolbarMenus(menu)}));
   document.querySelectorAll("[data-menu] .toolbar-menu-panel button").forEach(b=>b.addEventListener("click",()=>b.closest("[data-menu]")?.removeAttribute("open")));
@@ -811,8 +860,8 @@ function wire(){
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));
   [ui.nodeIcon,ui.fontSize,ui.nodeWidth,ui.nodeHeight,ui.fontFamily,ui.fontWeight,ui.textAlign,ui.fontItalic,ui.textColor,ui.backgroundColor,ui.borderColor,ui.borderWidth,ui.nodeShape,ui.nodeLocked,ui.moveBranch,ui.showNodeImage].forEach(x=>x.addEventListener("input",updateNodeStyle));
   ui.copyStyleBtn.onclick=copyNodeStyle;ui.pasteStyleBtn.onclick=pasteNodeStyle;ui.resetStyleBtn.onclick=resetNodeStyle;ui.frameToggleBtn.onclick=toggleBranchFrame;[ui.frameTitle,ui.frameFontSize,ui.frameFontFamily,ui.frameFontWeight,ui.frameItalic,ui.frameTextColor,ui.frameBorderColor,ui.frameBackgroundColor,ui.frameOpacity,ui.frameBorderStyle].forEach(x=>x.addEventListener("input",updateBranchFrame));
-  ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;[ui.visualText,ui.visualShape,ui.visualWidth,ui.visualHeight,ui.visualFontSize,ui.visualFontFamily,ui.visualFontWeight,ui.visualTextAlign,ui.visualItalic,ui.visualTextColor,ui.visualFill,ui.visualStroke].forEach(x=>x.addEventListener("input",updateVisualObject));ui.deleteVisualBtn.onclick=deleteVisualObject;[ui.edgeLabel,ui.edgeColor,ui.edgeWidth,ui.edgeLineStyle,ui.edgeArrow,ui.edgeCurvature].forEach(x=>{x.addEventListener("input",updateEdgeStyle);x.addEventListener("change",updateEdgeStyle)});ui.deleteEdgeBtn.onclick=deleteSelectedEdge;
-  ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
+  ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;[ui.visualText,ui.visualShape,ui.visualWidth,ui.visualHeight,ui.visualFontSize,ui.visualFontFamily,ui.visualFontWeight,ui.visualTextAlign,ui.visualItalic,ui.visualTextColor,ui.visualFill,ui.visualStroke,ui.visualImageFit,ui.visualImageOpacity,ui.visualImageRadius].forEach(x=>{x.addEventListener("input",updateVisualObject);x.addEventListener("change",updateVisualObject)});ui.deleteVisualBtn.onclick=deleteVisualObject;[ui.edgeLabel,ui.edgeColor,ui.edgeWidth,ui.edgeLineStyle,ui.edgeArrow,ui.edgeCurvature].forEach(x=>{x.addEventListener("input",updateEdgeStyle);x.addEventListener("change",updateEdgeStyle)});ui.deleteEdgeBtn.onclick=deleteSelectedEdge;
+  ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.imageObjectClose.onclick=()=>ui.imageObjectDialog.close();ui.imageObjectSearch.oninput=renderImageObjectList;ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
   ui.exclusionsClose.onclick=()=>ui.exclusionsDialog.close();ui.exclusionForm.onsubmit=e=>{e.preventDefault();if(addExclusionRule(ui.exclusionPattern.value)){ui.exclusionPattern.value="";renderExclusionsList();setStatus("Règle d’exclusion ajoutée","ok")}};ui.excludeBakPreset.onclick=()=>{addExclusionRule("*.bak");renderExclusionsList()};ui.excludeNppPreset.onclick=()=>{addExclusionRule("nppBackup/**");renderExclusionsList()};
   ui.showResourcesBtn.onclick=()=>ui.resourcesPanel.classList.toggle("open");ui.showInspectorBtn.onclick=()=>ui.inspectorPanel.classList.toggle("open");ui.collapseResourcesBtn.onclick=()=>setPanelCollapsed("left",true);ui.collapseInspectorBtn.onclick=()=>setPanelCollapsed("right",true);ui.restoreResourcesBtn.onclick=()=>setPanelCollapsed("left",false);ui.restoreInspectorBtn.onclick=()=>setPanelCollapsed("right",false);ui.toggleResourcesBtn.onclick=()=>{if(innerWidth<=900)ui.resourcesPanel.classList.toggle("open");else setPanelCollapsed("left",!state.panels.left)};ui.toggleInspectorBtn.onclick=()=>{if(innerWidth<=900)ui.inspectorPanel.classList.toggle("open");else setPanelCollapsed("right",!state.panels.right)};document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove("open"));
   window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save(false)}if((e.key==="Delete"||e.key==="Backspace")&&!e.target.matches("input,textarea,select")){if(state.selectedVisual){e.preventDefault();deleteVisualObject()}else if(selectedEdgeObject()?.kind==="manual"){e.preventDefault();deleteSelectedEdge()}}if(e.key==="Escape"){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";closeToolbarMenus();closePanels();renderInspector();updateActionStates()}});window.addEventListener("resize",()=>{if(innerWidth>900)closePanels()})
