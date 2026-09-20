@@ -60,7 +60,7 @@ function rgbaFromHex(hex,alpha){
 
 export function buildMindmapSvg(view,resources,{orientation="landscape",includeHidden=false,background="#ffffff"}={}){
   const resMap=new Map(resources.map(r=>[r.id,r])),hide=includeHidden?new Set():hiddenNodes(view);
-  const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)),nodeMap=new Map(nodes.map(n=>[n.id,n])),objects=Array.isArray(view.objects)?view.objects:[];
+  const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)&&!resMap.get(n.resourceId).excluded),nodeMap=new Map(nodes.map(n=>[n.id,n])),objects=Array.isArray(view.objects)?view.objects:[];
   const b=bounds(nodes,objects),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
 
   const frames=(view.frames||[]).map(frame=>{
