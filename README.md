@@ -20,6 +20,8 @@ La V0.3 transforme le prototype en **workspace visuel réellement éditable** : 
 - barre supérieure compacte en menus et palette flottante dédiée aux outils de mindmapping ;
 - panneaux latéraux Ressources/Détails rabattables indépendamment ;
 - objets graphiques libres : rectangles, ellipses, losanges et annotations texte ;
+- exclusions de fichiers/dossiers par chemin ou motif sans suppression locale ;
+- aperçu Markdown rendu + source, édition locale des `.md`/`.txt` et création directe de nouveaux fichiers texte ;
 - export d’un template ZIP contenant l’arborescence et `.glom/` ;
 - matérialisation d’un workspace brouillon/démo dans un dossier local ;
 - workspaces récents via IndexedDB ;
