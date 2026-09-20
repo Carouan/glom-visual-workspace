@@ -22,11 +22,26 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.2.4")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.0")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el && getComputedStyle(el).display!=="none");
   if(!recentVisible)throw new Error("Recent workspaces button is not visible");
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
+  const treeOverflow=await page.$eval("#tree",el=>getComputedStyle(el).overflowY);
+  if(treeOverflow!=="scroll")throw new Error("Resource tree is not configured with a persistent scrollbar: "+treeOverflow);
+
+  await page.$eval(".node.root",el=>el.click());
+  await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
+  await page.$eval("#nodeIcon",el=>{el.value="⭐";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const rootIcon=await page.$eval(".node.root .node-icon",el=>el.textContent||"");
+  if(!rootIcon.includes("⭐"))throw new Error("Custom node icon was not rendered: "+rootIcon);
+  await page.$eval("#backgroundColor",el=>{el.value="#fff3bf";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const rootBg=await page.$eval(".node.root",el=>getComputedStyle(el).backgroundColor);
+  if(!rootBg.includes("255"))throw new Error("Node background style did not apply: "+rootBg);
+  await page.$eval("#frameToggleBtn",el=>el.click());
+  await page.waitForSelector(".branch-frame",{timeout:5000});
+  const frameCount=await page.$eval(".branch-frame",els=>els.length);
+  if(frameCount<1)throw new Error("Branch frame was not rendered");
   await page.click("#exportBtn");
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);

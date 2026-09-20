@@ -88,23 +88,37 @@ L'objectif est de conserver la même abstraction « workspace » sans coupler le
 
 Objectif : faire de la carte mentale une vraie surface d'édition, pas seulement une projection de l'arborescence.
 
-- plusieurs cartes par workspace ;
-- ajouter plusieurs fois une même ressource dans une carte ;
+### V0.3.0 — première couche d'édition visuelle
+
 - taille du texte d'un nœud ;
-- famille/style de police ;
-- gras, italique et alignement ;
+- famille de police, graisse, italique et alignement ;
 - couleur du texte ;
 - couleur de fond et de bordure ;
-- forme du nœud ;
-- icônes, emojis et images directement sur la carte ;
-- relations nommées et stylables ;
-- cadres/groupes colorés autour d'une branche ou d'un ensemble de nœuds ;
-- verrouillage d'un nœud ou d'un groupe ;
-- duplication de styles ;
-- styles/thèmes réutilisables ;
-- auto-layout horizontal, vertical et radial.
+- épaisseur de bordure ;
+- formes rectangle / arrondie / capsule ;
+- icône ou emoji personnalisé par nœud ;
+- aperçu d'une ressource image directement dans son nœud ;
+- verrouillage de la position d'un nœud ;
+- copier / coller / réinitialiser un style ;
+- cadre coloré automatique autour d'une branche, avec titre, fond, opacité et bordure ;
+- réorganisation automatique de la carte en conservant les nœuds verrouillés ;
+- conservation des styles et cadres dans le JSON de vue ;
+- export SVG/PNG/PDF tenant compte des styles et cadres.
 
 Les choix visuels appartiennent à la **vue** et non à la ressource : un même fichier peut donc être affiché différemment dans deux cartes.
+
+### V0.3.x — enrichissements suivants
+
+- plusieurs cartes par workspace ;
+- ajouter plusieurs fois une même ressource dans une carte ;
+- images et médias comme objets libres, pas seulement dans un nœud de ressource ;
+- relations nommées et stylables ;
+- redimensionnement et verrouillage manuel des cadres/groupes ;
+- sélection multiple ;
+- déplacement d'une branche complète ;
+- styles/thèmes réutilisables ;
+- auto-layout horizontal, vertical et radial ;
+- duplication rapide d'un style sur une branche entière.
 
 ## V0.4 — Métadonnées et vues multiples
 

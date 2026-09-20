@@ -4,9 +4,9 @@
 
 G.L.O.M. Visual Workspace est un prototype de **workspace visuel local-first** : vos vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags et les liens.
 
-La V0.2 poursuit le prototype : **ouvrir un dossier, le voir comme une carte mentale, annoter ses ressources et consulter directement un maximum de formats dans la PWA**.
+La V0.3 transforme le prototype en **workspace visuel réellement éditable** : explorateur de fichiers, consultation locale des ressources et mindmap stylable restent synchronisés sans enfermer les documents.
 
-## Fonctionnalités V0.2
+## Fonctionnalités V0.3
 
 - PWA statique et installable lorsque le navigateur le permet ;
 - ouverture d'un dossier via File System Access API sur les navigateurs compatibles ;
@@ -14,15 +14,22 @@ La V0.2 poursuit le prototype : **ouvrir un dossier, le voir comme une carte men
 - scan récursif des fichiers et dossiers ;
 - mindmap générée automatiquement depuis l'arborescence ;
 - déplacement libre des nœuds, zoom, pan, recentrage et repli des branches ;
+- explorateur de fichiers repliable avec glisser-déposer physique lorsque l'écriture est autorisée ;
+- workspaces récents via IndexedDB ;
+- export de la mindmap en SVG/PNG A4 et impression/PDF ;
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
 - tags et notes ;
+- styles par nœud : police, taille, graisse, italique, alignement, couleurs, bordure et forme ;
+- icône/emoji personnalisé et aperçu des ressources image dans les nœuds ;
+- verrouillage d'un nœud, copier/coller/réinitialiser un style ;
+- cadres colorés autour d'une branche avec titre, fond et opacité ;
+- réorganisation automatique de la carte en respectant les nœuds verrouillés ;
 - viewer local modulaire : images, PDF, audio, vidéo, texte/code, Markdown rendu, JSON structuré, CSV/TSV, DOCX, tableurs et ZIP ;
 - galerie de contenu pour les dossiers ;
 - persistance dans .glom/ lorsque l'écriture est autorisée ;
 - export JSON portable sinon ;
 - cache PWA hors ligne de l'application ;
-- aucune dépendance JavaScript externe dans la V0.1.
 
 ## Principe d'architecture
 
@@ -82,8 +89,7 @@ La compatibilité est détectée à l'exécution. La V0.1 ne suppose donc pas qu
 
 - un renommage ou déplacement effectué hors de l'application peut casser l'association avec les annotations ;
 - pas encore de fusion multi-utilisateur ni de résolution de conflits ;
-- pas de renommage ou déplacement physique des fichiers depuis l'application ;
-- une seule vue mindmap dans cette première version ;
+- une seule vue mindmap pour le moment ;
 - le scan est limité volontairement pour éviter qu'un dossier énorme bloque l'interface.
 
 ## Roadmap
@@ -93,7 +99,7 @@ La roadmap détaillée est maintenue dans [docs/ROADMAP.md](docs/ROADMAP.md) et 
 Axes principaux :
 
 - V0.2.x : enrichir le viewer, miniatures et nouveaux formats ;
-- V0.3 : mindmap avancée — styles des nœuds, cadres de branches, images/icônes et cartes multiples ;
+- V0.3.x : compléter le mindmapping avancé — cartes multiples, relations stylables, objets libres, sélection multiple et layouts supplémentaires ;
 - V0.4 : métadonnées avancées, Kanban, timeline et graphe ;
 - V0.5 : robustesse et suivi des fichiers déplacés/renommés ;
 - V0.6 : synchronisation et gestion des conflits ;
