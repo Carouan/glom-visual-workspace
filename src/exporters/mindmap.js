@@ -130,7 +130,7 @@ export async function exportPng(name,view,resources,options){
   }finally{URL.revokeObjectURL(u)}
 }
 export function printA4(title,view,resources,options){
-  const orientation=options?.orientation||"landscape",svg=buildMindmapSvg(view,resources,{...options,orientation}),w=window.open("","_blank");
+  const orientation=options?.orientation||"landscape",svg=buildMindmapSvg(view,resources,{...options,orientation}),w=options?.targetWindow||window.open("","_blank");
   if(!w)throw new Error("La fenêtre d'impression a été bloquée par le navigateur.");
   const safeTitle=xml(title||"Mindmap");w.document.open();w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeTitle}</title><style>@page{size:A4 ${orientation};margin:8mm}html,body{margin:0;padding:0;background:#fff}body{display:grid;place-items:center}svg{width:100%;height:auto;max-height:calc(100vh - 16mm)}@media print{svg{width:100%;height:auto;max-height:none}}</style></head><body>${svg}<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),200));<\/script></body></html>`);w.document.close()
 }
