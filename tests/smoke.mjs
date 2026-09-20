@@ -105,6 +105,24 @@ try{
     return row?.style.getPropertyValue("--depth")==="2"
   },{timeout:5000});
 
+  // A branch can move as a rigid group while descendants keep their relative positions.
+  await page.evaluate(()=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent==="Histoire")?.click());
+  await page.waitForSelector("#form:not(.hidden)",{timeout:3000});
+  await page.$eval("#moveBranch",el=>{el.checked=true;el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const branchBefore=await page.evaluate(()=>{
+    const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
+    const a=byTitle("Histoire"),b=byTitle("Premiers jeux");if(!a||!b)return null;
+    const r=a.getBoundingClientRect();return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top),cx:r.left+r.width/2,cy:r.top+r.height/2}
+  });
+  if(!branchBefore)throw new Error("Could not prepare branch-group drag");
+  await page.mouse.move(branchBefore.cx,branchBefore.cy);await page.mouse.down();await page.mouse.move(branchBefore.cx+55,branchBefore.cy+35,{steps:8});await page.mouse.up();
+  const branchAfter=await page.evaluate(()=>{
+    const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
+    const a=byTitle("Histoire"),b=byTitle("Premiers jeux");return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top)}
+  });
+  const dax=branchAfter.ax-branchBefore.ax,day=branchAfter.ay-branchBefore.ay,dbx=branchAfter.bx-branchBefore.bx,dby=branchAfter.by-branchBefore.by;
+  if(Math.abs(dax-dbx)>1||Math.abs(day-dby)>1||Math.abs(dax)<5)throw new Error("Branch descendants did not preserve relative positions: "+JSON.stringify({branchBefore,branchAfter}));
+
   // Return to the root before testing inspector-driven styling.
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
