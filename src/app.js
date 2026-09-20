@@ -291,5 +291,18 @@ function wire(){
   ui.showResourcesBtn.onclick=()=>ui.resourcesPanel.classList.toggle("open");ui.showInspectorBtn.onclick=()=>ui.inspectorPanel.classList.toggle("open");document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove("open"));
   window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save(false)}if(e.key==="Escape"){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";closePanels();renderInspector()}});window.addEventListener("resize",()=>{if(innerWidth>900)closePanels()})
 }
-async function init(){wire();if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier"}if("serviceWorker"in navigator){try{await navigator.serviceWorker.register("./sw.js",{scope:"./"})}catch(e){console.warn(e)}}if(new URLSearchParams(location.search).get("demo")==="1")demo()}
+async function init(){
+  document.documentElement.dataset.glomBoot="starting";
+  try{
+    wire();
+    if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier"}
+    if("serviceWorker"in navigator){try{await navigator.serviceWorker.register("./sw.js",{scope:"./"})}catch(e){console.warn(e)}}
+    if(new URLSearchParams(location.search).get("demo")==="1")demo();
+    document.documentElement.dataset.glomBoot="ok"
+  }catch(e){
+    document.documentElement.dataset.glomBoot="error";
+    setStatus("Erreur de démarrage : "+(e&&e.message?e.message:e),"bad");
+    console.error("G.L.O.M. init failed",e)
+  }
+}
 init();
