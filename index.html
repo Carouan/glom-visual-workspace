@@ -31,13 +31,13 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.0</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.1</span></div>
   </header>
 
   <main class="shell">
     <aside id="resourcesPanel" class="panel resources">
       <div class="panel-head"><div><strong>Ressources</strong><small id="count">0 élément</small></div><button class="close mobile-only" data-close="resourcesPanel">×</button></div>
-      <div class="panel-body">
+      <div class="panel-body panel-scroll resources-scroll">
         <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Fichier, tag, note…"></label>
         <div class="legend"><span>📁 dossier</span><span>📄 fichier</span><span>💡 idée</span><span>🔗 web</span></div>
         <div id="tree"></div>
@@ -71,15 +71,21 @@
 
     <aside id="inspectorPanel" class="panel inspector">
       <div class="panel-head"><div><strong>Détails</strong><small id="selectionKind">Aucune sélection</small></div><button class="close mobile-only" data-close="inspectorPanel">×</button></div>
-      <div id="noSelection" class="no-selection">👆<p>Sélectionnez un nœud pour modifier son titre d'affichage, ses tags et ses notes.</p></div>
-      <form id="form" class="form hidden">
-        <label>Titre d'affichage<input id="title" type="text"></label>
-        <label>Type<code id="kind"></code></label>
-        <label>Chemin / URL<code id="path"></code></label>
-        <label>Taille<code id="size">—</code></label>
-        <label>Dernière modification<code id="modified">—</code></label>
-        <label>Tags <small>(séparés par des virgules)</small><input id="tags" type="text"></label>
-        <label>Notes<textarea id="notes" rows="6"></textarea></label>
+      <div id="inspectorScroll" class="panel-scroll inspector-scroll">
+        <div id="noSelection" class="no-selection">👆<p>Sélectionnez un nœud pour modifier son titre d'affichage, ses tags et ses notes.</p></div>
+        <form id="form" class="form hidden">
+          <details class="inspector-section" open>
+            <summary>📋 Détails</summary>
+            <div class="details-grid">
+              <label>Titre d'affichage<input id="title" type="text"></label>
+              <label>Type<code id="kind"></code></label>
+              <label>Chemin / URL<code id="path"></code></label>
+              <label>Taille<code id="size">—</code></label>
+              <label>Dernière modification<code id="modified">—</code></label>
+              <label>Tags <small>(séparés par des virgules)</small><input id="tags" type="text"></label>
+              <label>Notes<textarea id="notes" rows="6"></textarea></label>
+            </div>
+          </details>
 
         <details class="inspector-section" open>
           <summary>🎨 Style du nœud</summary>
@@ -150,7 +156,8 @@
           <button type="button" id="collapseBtn">▾ Replier</button>
           <button type="button" id="deleteBtn" class="danger hidden">🗑️ Supprimer ce nœud</button>
         </div>
-      </form>
+        </form>
+      </div>
     </aside>
   </main>
 

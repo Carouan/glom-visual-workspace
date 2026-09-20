@@ -22,16 +22,26 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.0")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.1")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el && getComputedStyle(el).display!=="none");
   if(!recentVisible)throw new Error("Recent workspaces button is not visible");
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
-  const treeOverflow=await page.$eval("#tree",el=>getComputedStyle(el).overflowY);
-  if(treeOverflow!=="scroll")throw new Error("Resource tree is not configured with a persistent scrollbar: "+treeOverflow);
+  const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
+  if(leftScroll.overflow!=="scroll")throw new Error("Left sidebar is not configured with a persistent scrollbar: "+JSON.stringify(leftScroll));
+  if(leftScroll.scrollHeight>leftScroll.clientHeight)await page.$eval(".resources-scroll",el=>{el.scrollTop=Math.min(60,el.scrollHeight-el.clientHeight)});
 
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
+  const rightScroll=await page.$eval("#inspectorScroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
+  if(rightScroll.overflow!=="scroll")throw new Error("Right sidebar is not configured with a persistent scrollbar: "+JSON.stringify(rightScroll));
+  if(rightScroll.scrollHeight<=rightScroll.clientHeight)throw new Error("Right sidebar content does not produce a scrollable area in the demo: "+JSON.stringify(rightScroll));
+  const detailsSummary=await page.$eval("#form .inspector-section summary",el=>el.textContent||"");
+  if(!detailsSummary.includes("Détails"))throw new Error("Resource details are not wrapped in an inspector box: "+detailsSummary);
+  if(leftScroll.scrollHeight>leftScroll.clientHeight){
+    const leftAfterSelection=await page.$eval(".resources-scroll",el=>el.scrollTop);
+    if(leftAfterSelection<=0)throw new Error("Left sidebar scroll position was lost after selecting a mindmap node");
+  }
   await page.$eval("#nodeIcon",el=>{el.value="⭐";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootIcon=await page.$eval(".node.root .node-icon",el=>el.textContent||"");
   if(!rootIcon.includes("⭐"))throw new Error("Custom node icon was not rendered: "+rootIcon);
