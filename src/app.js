@@ -224,7 +224,10 @@ async function save(quiet){
   const exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views:{"main-mindmap":state.view}};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");ui.saveBtn.textContent=state.mode==="fs"&&state.canWrite?"💾 Enregistrer":"⬇️ Exporter les vues";[ui.scanBtn,ui.saveBtn,ui.exportBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);if(state.mode==="demo")ui.scanBtn.disabled=true;render()
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");ui.saveBtn.textContent=state.mode==="fs"&&state.canWrite?"💾 Enregistrer":"⬇️ Exporter les vues";
+  [ui.scanBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
+  if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
+  ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render()
 }
 function match(r){if(!state.search)return true;const h=[r.title,r.path,r.url,r.notes].concat(r.tags||[]).filter(Boolean).join(" ").toLowerCase();return h.includes(state.search.toLowerCase())}
 function render(){renderTree();renderMap();renderInspector();transform()}
@@ -245,7 +248,7 @@ function renderTree(){
   const extra=state.resources.filter(r=>["virtual","url"].includes(r.type)&&match(r));
   if(extra.length){const h=document.createElement("div");h.className="tree-section";h.textContent="Idées et liens";ui.tree.appendChild(h);extra.forEach(r=>ui.tree.appendChild(treeRow(r,0)))}
 }
-function canMoveResource(r){return state.mode==="fs"&&r&&!r.missing&&["file","folder"].includes(r.type)}
+function canMoveResource(r){return["fs","demo","draft"].includes(state.mode)&&r&&!r.missing&&["file","folder"].includes(r.type)}
 function treeRow(r,d){
   const row=document.createElement("div");row.className="tree-row"+(r.missing?" missing":"");row.dataset.resourceId=r.id;
   const n=nodeForResource(r.id);if(n&&n.id===state.selected)row.classList.add("selected");row.style.setProperty("--depth",d);
@@ -259,14 +262,14 @@ function treeRow(r,d){
   row.onclick=()=>{if(n){select(n.id);focus(n.id);closePanels()}};
   row.draggable=canMoveResource(r);
   if(row.draggable){
-    row.title=state.canWrite?"Glisser pour déplacer":"Glisser pour déplacer — une autorisation d’écriture pourra être demandée";
+    row.title=state.mode==="fs"&&!state.canWrite?"Glisser pour déplacer — une autorisation d’écriture pourra être demandée":"Glisser pour déplacer";
     row.addEventListener("dragstart",e=>{state.draggedResource=r.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",r.id);row.classList.add("dragging")});
     row.addEventListener("dragend",()=>{state.draggedResource=null;row.classList.remove("dragging");document.querySelectorAll(".tree-row.drop-target").forEach(x=>x.classList.remove("drop-target"))})
   }
-  if((r.type==="root"||r.type==="folder")&&state.mode==="fs"){
+  if((r.type==="root"||r.type==="folder")&&["fs","demo","draft"].includes(state.mode)){
     row.addEventListener("dragover",e=>{if(!state.draggedResource||state.draggedResource===r.id)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drop-target")});
     row.addEventListener("dragleave",()=>row.classList.remove("drop-target"));
-    row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await moveResource(source,r)})
+    row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await reparentFromMindmap(source,r)})
   }
   return row
 }
@@ -300,7 +303,7 @@ function applyReparentModel(source,target,plan){
   state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderFrames(hiddenNodes());renderInspector();return true
 }
 async function moveResource(source,target){
-  if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return false;
+  if(state.mode!=="fs"||!source||source.missing||!["file","folder"].includes(source.type)||!target||!["root","folder"].includes(target.type))return false;
   const plan=reparentPlan(source,target);if(!plan)return false;
   if(!(await ensureWritePermission()))return false;
   const sourceParent=await dirByParts(state.handle,parentPath(source.path).split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,plan.targetPath.split("/").filter(Boolean),false);
@@ -498,27 +501,46 @@ async function openRecentDialog(){
 }
 async function openExportDialog(){
   if(!state.workspace||!state.view)return;
-  setStatus("Préparation de l’export…");
-  const api=await getExporterApi();
-  if(!api){alert("Le module d’export n’a pas pu être chargé.");return}
   setStatus(state.dirty?"Modifications non enregistrées":"Prêt");
+  ui.materializeBtn.disabled=!supportsFS();
   if(!ui.exportDialog.open)ui.exportDialog.showModal()
 }
 function exportOptions(){return{orientation:ui.exportOrientation.value,includeHidden:ui.exportHidden.checked}}
 function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-mindmap"}
-function runExport(kind){
-  if(!exporterApi||!state.view)return;
+async function runExport(kind){
+  if(!state.view)return;
+  const api=await getExporterApi();if(!api){alert("Le module d’export de la mindmap n’a pas pu être chargé.");return}
   try{
     const o=exportOptions(),base=exportBaseName();
-    if(kind==="svg")exporterApi.exportSvg(base+".svg",state.view,state.resources,o);
-    else if(kind==="png")exporterApi.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
-    else if(kind==="print")exporterApi.printA4(state.workspace.name,state.view,state.resources,o);
+    if(kind==="svg")api.exportSvg(base+".svg",state.view,state.resources,o);
+    else if(kind==="png")api.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
+    else if(kind==="print")api.printA4(state.workspace.name,state.view,state.resources,o);
     if(kind!=="print")setStatus("Export "+kind.toUpperCase()+" généré","ok")
   }catch(e){console.error(e);alert("Export impossible : "+(e.message||e))}
 }
+async function exportWorkspaceZip(){
+  if(!state.workspace||!state.view)return;setStatus("Création du template ZIP…");
+  const api=await getWorkspaceExporterApi();if(!api){alert("Le module ZIP n’a pas pu être chargé.");return}
+  try{const result=await api.exportWorkspaceTemplateZip(state.workspace,state.resources,state.view,APP);setStatus("Template ZIP créé — "+result.folders+" dossier(s), "+result.plannedFiles+" fichier(s) planifié(s)","ok")}
+  catch(e){console.error(e);setStatus("Export ZIP impossible","bad");alert("Impossible de créer le ZIP : "+(e.message||e))}
+}
+async function materializeWorkspace(){
+  if(!state.workspace||!state.view)return;if(!supportsFS()){alert("Ce navigateur ne permet pas de créer directement une arborescence locale.");return}
+  try{
+    const parent=await window.showDirectoryPicker({mode:"readwrite"}),suggested=safeFolderName(state.workspace.name),raw=prompt("Nom du dossier à créer :",suggested);if(raw===null)return;
+    const folderName=safeFolderName(raw);if(await entryExists(parent,folderName)){alert("Un dossier portant ce nom existe déjà dans l’emplacement choisi.");return}
+    setStatus("Création de l’arborescence…");const root=await parent.getDirectoryHandle(folderName,{create:true});
+    const folders=state.resources.filter(r=>r.type==="folder"&&!r.missing&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length);
+    for(const r of folders)await dirByParts(root,r.path.split("/").filter(Boolean),true);
+    const payload=workspaceMetadataSnapshot();
+    await Promise.all([writeJson(root,WS,payload.workspace),writeJson(root,RES,payload.resources),writeJson(root,VIEW,payload.view)]);
+    const planned=state.resources.filter(r=>r.type==="file"&&r.path).length;ui.exportDialog.close();await loadHandle(root,false);
+    setStatus("Workspace créé sur disque","ok");if(planned)alert(planned+" ressource(s) fichier sont conservées comme références planifiées. Elles apparaîtront « absentes » jusqu’à ce que les vrais fichiers correspondants soient ajoutés.")
+  }catch(e){if(e&&e.name==="AbortError")return;console.error(e);setStatus("Création sur disque impossible","bad");alert("Impossible de créer le workspace : "+(e.message||e))}
+}
 function closePanels(){ui.resourcesPanel.classList.remove("open");ui.inspectorPanel.classList.remove("open")}
 function wire(){
-  ui.openBtn.onclick=openWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
+  ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node")){state.selected=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));
   [ui.nodeIcon,ui.fontSize,ui.fontFamily,ui.fontWeight,ui.textAlign,ui.fontItalic,ui.textColor,ui.backgroundColor,ui.borderColor,ui.borderWidth,ui.nodeShape,ui.nodeLocked,ui.showNodeImage].forEach(x=>x.addEventListener("input",updateNodeStyle));
