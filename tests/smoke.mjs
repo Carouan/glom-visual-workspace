@@ -216,12 +216,19 @@ try{
   await page.waitForSelector("#visualForm:not(.hidden)",{timeout:3000});
   await page.select("#visualShape","ellipse");
   await page.waitForFunction(()=>document.querySelector(".visual-object.shape")?.classList.contains("ellipse"),{timeout:3000});
+  // Move the shape to a clear area first: a free object may legitimately sit behind a node.
+  await page.evaluate(()=>{
+    const shape=document.querySelector(".visual-object.shape"),r=shape.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,opts={bubbles:true,button:0,pointerId:92,pointerType:"mouse",isPrimary:true};
+    shape.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+320,clientY:y+120}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+320,clientY:y+120}));
+  });
   await page.click(".node.root");
   await page.waitForSelector("#form:not(.hidden)",{timeout:3000});
   await page.click(".visual-object.shape");
   await page.waitForSelector("#visualForm:not(.hidden)",{timeout:3000});
   const shapeReselected=await page.$eval(".visual-object.shape",el=>el.classList.contains("selected"));
-  if(!shapeReselected)throw new Error("A free shape cannot be re-selected after selecting a node");
+  if(!shapeReselected)throw new Error("A visible free shape cannot be re-selected after selecting a node");
 
   page.once("dialog",d=>d.accept("À retenir"));
   await page.click("#mapTextBtn");
