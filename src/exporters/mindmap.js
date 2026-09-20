@@ -11,6 +11,15 @@ function iconFor(r){
 }
 function styleFor(n,r){return Object.assign({icon:"",fontSize:14,width:240,height:74,fontFamily:"system",fontWeight:"650",italic:false,textAlign:"left",textColor:"#172033",backgroundColor:"#ffffff",borderColor:TYPE_COLORS[r?.type]||"#d8deea",borderWidth:1,shape:"rounded"},n.style||{})}
 function nodeDims(n,r){const s=styleFor(n,r);return{w:Math.max(140,Number(s.width)||240),h:Math.max(60,Number(s.height)||74)}}
+function edgePath(a,z,ad,zd){
+  const ac={x:a.x+ad.w/2,y:a.y+ad.h/2},bc={x:z.x+zd.w/2,y:z.y+zd.h/2},dx=bc.x-ac.x,dy=bc.y-ac.y,vertical=Math.abs(dy)>Math.abs(dx)*1.15;
+  if(vertical){
+    const dir=dy>=0?1:-1,sx=ac.x,sy=dy>=0?a.y+ad.h:a.y,tx=bc.x,ty=dy>=0?z.y:z.y+zd.h,bend=Math.max(48,Math.abs(ty-sy)*.42);
+    return`M ${sx} ${sy} C ${sx} ${sy+dir*bend}, ${tx} ${ty-dir*bend}, ${tx} ${ty}`
+  }
+  const dir=dx>=0?1:-1,sx=dx>=0?a.x+ad.w:a.x,sy=ac.y,tx=dx>=0?z.x:z.x+zd.w,ty=bc.y,bend=Math.max(48,Math.abs(tx-sx)*.42);
+  return`M ${sx} ${sy} C ${sx+dir*bend} ${sy}, ${tx-dir*bend} ${ty}, ${tx} ${ty}`
+}
 function radius(shape){return shape==="rectangle"?2:shape==="pill"?37:12}
 function wrapText(text,max=28,lines=2){
   const words=String(text||"").split(/\s+/).filter(Boolean),out=[];let line="";
@@ -71,9 +80,9 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
   }).join("");
 
   const edges=(view.edges||[]).filter(e=>nodeMap.has(e.from)&&nodeMap.has(e.to)).map(e=>{
-    const a=nodeMap.get(e.from),z=nodeMap.get(e.to),ad=nodeDims(a,resMap.get(a.resourceId)),zd=nodeDims(z,resMap.get(z.resourceId)),sx=a.x+ad.w,sy=a.y+ad.h/2,tx=z.x,ty=z.y+zd.h/2,dx=Math.max(70,Math.abs(tx-sx)*.45);
+    const a=nodeMap.get(e.from),z=nodeMap.get(e.to),ad=nodeDims(a,resMap.get(a.resourceId)),zd=nodeDims(z,resMap.get(z.resourceId));
     const stroke=e.kind==="manual"?"#3b82f6":"#94a3b8",dash=e.kind==="manual"?' stroke-dasharray="7 5"':"";
-    return `<path d="M ${sx} ${sy} C ${sx+dx} ${sy}, ${tx-dx} ${ty}, ${tx} ${ty}" fill="none" stroke="${stroke}" stroke-width="2.2"${dash}/>`
+    return `<path d="${edgePath(a,z,ad,zd)}" fill="none" stroke="${stroke}" stroke-width="2.2"${dash}/>`
   }).join("");
 
   const visualObjects=objects.map(o=>{
