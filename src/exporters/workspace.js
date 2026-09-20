@@ -59,7 +59,7 @@ export function workspacePayloads(workspace,resources,view,appVersion){
 export async function exportWorkspaceTemplateZip(workspace,resources,view,appVersion){
   const payload=workspacePayloads(workspace,resources,view,appVersion),entries=[];
   const seenDirs=new Set(),addDir=path=>{const p=path.replace(/\/+$/,"")+"/";if(!seenDirs.has(p)){seenDirs.add(p);entries.push({name:p,data:new Uint8Array(0),directory:true})}};
-  const folders=resources.filter(r=>r.type==="folder"&&!r.missing&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length||a.path.localeCompare(b.path));
+  const folders=resources.filter(r=>r.type==="folder"&&!r.missing&&!r.excluded&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length||a.path.localeCompare(b.path));
   for(const r of folders){
     const parts=r.path.split("/").filter(Boolean);for(let i=1;i<=parts.length;i++)addDir(parts.slice(0,i).join("/"))
   }
@@ -67,7 +67,7 @@ export async function exportWorkspaceTemplateZip(workspace,resources,view,appVer
   entries.push({name:".glom/workspace.json",data:enc.encode(jsonText(payload.workspace))});
   entries.push({name:".glom/resources.json",data:enc.encode(jsonText(payload.resources))});
   entries.push({name:".glom/views/main-mindmap.json",data:enc.encode(jsonText(payload.view))});
-  const planned=resources.filter(r=>r.type==="file"&&r.path).map(r=>r.path);
+  const planned=resources.filter(r=>r.type==="file"&&!r.excluded&&r.path).map(r=>r.path);
   const readme=[
     "G.L.O.M. Visual Workspace — template de workspace",
     "",

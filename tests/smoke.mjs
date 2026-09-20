@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.5")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.6")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -69,7 +69,7 @@ try{
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
   const contextualActions=await page.$$eval(".context-actions button",els=>els.length);
-  if(contextualActions!==4)throw new Error("Contextual action group is incomplete: "+contextualActions);
+  if(contextualActions!==5)throw new Error("Contextual action group is incomplete: "+contextualActions);
   const relationEnabled=await page.$eval("#mapRelationBtn",el=>!el.disabled);
   if(!relationEnabled)throw new Error("Relation tool should be enabled for a selected node");
   const rightScroll=await page.$eval("#inspectorScroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
@@ -116,8 +116,21 @@ try{
   if(!rootBg.includes("255"))throw new Error("Node background style did not apply: "+rootBg);
   await page.$eval("#frameToggleBtn",el=>el.click());
   await page.waitForSelector(".branch-frame",{timeout:5000});
-  const frameCount=await page.$$eval(".branch-frame",els=>els.length);
+  const frameCount=await page.$eval(".branch-frame",els=>els.length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
+
+  // Exclusion rules hide matching resources without deleting them from the model.
+  await page.$eval("#exclusionsBtn",el=>el.click());
+  await page.waitForSelector("#exclusionsDialog[open]",{timeout:3000});
+  await page.$eval("#exclusionPattern",el=>{el.value="*.md"});
+  await page.$eval("#exclusionForm",el=>el.requestSubmit());
+  await page.waitForFunction(()=>![...document.querySelectorAll(".node-title")].some(el=>el.textContent.endsWith(".md")),{timeout:3000});
+  const exclusionRule=await page.$eval("#exclusionsList code",el=>el.textContent||"");
+  if(exclusionRule!=="*.md")throw new Error("Exclusion rule was not stored/rendered: "+exclusionRule);
+  await page.$eval("#exclusionsList button",el=>el.click());
+  await page.waitForFunction(()=>[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Fiche de concept.md"),{timeout:3000});
+  await page.click("#exclusionsClose");
+
   await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);
@@ -127,6 +140,28 @@ try{
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
   await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
   await page.click("#recentClose");
+
+  // Markdown viewer must default to rendered content and expose an editor when saving is available.
+  const viewerCheck=await page.evaluate(async()=>{
+    const api=await import("./src/viewers/index.js");
+    const dialog=document.createElement("dialog"),header=document.createElement("div"),title=document.createElement("strong"),meta=document.createElement("small"),body=document.createElement("div");
+    header.append(title,meta);dialog.append(header,body);document.body.append(dialog);
+    let saved="";
+    const file=new File(["# Titre\n\n**Gras**\n\n*Italique*"],"test.md",{type:"text/markdown"});
+    await api.showFilePreview({title:"test.md",path:"test.md"},file,{dialog,title,meta,body},{onSaveText:async text=>{saved=text;return{size:new Blob([text]).size}}});
+    const rendered=body.querySelector(".viewer-markdown")?.innerHTML||"";
+    const edit=[...body.querySelectorAll(".viewer-toolbar button")].find(b=>b.textContent.includes("Modifier"));if(!edit)return{rendered,saved,error:"no edit button"};
+    edit.click();const ta=body.querySelector(".viewer-editor-area");if(!ta)return{rendered,saved,error:"no textarea"};
+    ta.value="# Modifié";
+    const save=[...body.querySelectorAll(".viewer-editor-actions button")].find(b=>b.textContent.includes("Enregistrer"));save.click();
+    await new Promise(r=>setTimeout(r,80));
+    const renderedAfter=body.querySelector(".viewer-markdown")?.textContent||"";
+    dialog.close();dialog.remove();api.clearPreview();
+    return{rendered,saved,renderedAfter}
+  });
+  if(viewerCheck.error)throw new Error("Markdown editor unavailable: "+JSON.stringify(viewerCheck));
+  if(!viewerCheck.rendered.includes("<h1>Titre</h1>")||!viewerCheck.rendered.includes("<strong>Gras</strong>"))throw new Error("Markdown did not render by default: "+JSON.stringify(viewerCheck));
+  if(viewerCheck.saved!=="# Modifié"||!viewerCheck.renderedAfter.includes("Modifié"))throw new Error("Markdown edit/save flow failed: "+JSON.stringify(viewerCheck));
 
   // A workspace can be started from scratch and populated visually with folders.
   page.once("dialog",d=>d.accept("Workspace vierge test"));

@@ -39,6 +39,10 @@
     <symbol id="i-panel-left" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M14 9l-3 3 3 3"/></symbol>
     <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M10 9l3 3-3 3"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 3h6l1 4H8zM7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-file-edit" viewBox="0 0 24 24"><path d="M6 3h8l4 4v7"/><path d="M14 3v5h5M6 3v18h7"/><path d="m14 18 5-5 2 2-5 5-3 1z"/></symbol>
+    <symbol id="i-markdown" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M6 15V9l3 3 3-3v6M15 12h4M17 10l2 2-2 2"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.5 6.2A10.5 10.5 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.2 3"/><path d="M6.1 7.1C3.7 8.8 2.5 12 2.5 12S6 18 12 18c1.1 0 2.1-.2 3-.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></symbol>
   </svg>
   <header class="topbar">
     <div class="brand">
@@ -56,6 +60,7 @@
           <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
           <span class="menu-divider"></span>
           <button id="scanBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-refresh"></use></svg><span class="button-label">Rescanner le dossier</span></button>
+          <button id="exclusionsBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-filter"></use></svg><span class="button-label">Exclusions…</span></button>
           <button id="saveBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-save"></use></svg><span class="button-label">Enregistrer</span></button>
         </div>
       </details>
@@ -64,6 +69,8 @@
         <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-plus-circle"></use></svg><span>Insertion</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
           <button id="folderBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg><span class="button-label">Nouveau dossier</span></button>
+          <button id="textFileBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-file-edit"></use></svg><span class="button-label">Fichier texte (.txt)</span></button>
+          <button id="markdownFileBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-markdown"></use></svg><span class="button-label">Fichier Markdown (.md)</span></button>
           <button id="ideaBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Nouvelle idée</span></button>
           <button id="urlBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-link"></use></svg><span class="button-label">Lien web</span></button>
         </div>
@@ -90,7 +97,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.5</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.6</span></div>
   </header>
 
   <main class="shell">
@@ -194,6 +201,7 @@
               <button type="button" id="contextIdeaBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Idée liée</span></button>
               <button type="button" id="contextRelationBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg><span class="button-label">Relation</span></button>
               <button type="button" id="contextFrameBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre de branche</span></button>
+              <button type="button" id="contextExcludeBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-eye-off"></use></svg><span class="button-label">Exclure du workspace</span></button>
             </div>
           </details>
 
@@ -305,6 +313,22 @@
           <button id="materializeBtn" type="button">📁 Créer sur disque</button>
         </div>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="exclusionsDialog" class="small-dialog">
+    <header><div><strong>Exclusions du workspace</strong><small>Masquer sans supprimer du disque</small></div><button id="exclusionsClose">×</button></header>
+    <div class="exclusions-panel">
+      <p>Les règles sont enregistrées dans <code>.glom/workspace.json</code>. Exemples : <code>*.bak</code>, <code>nppBackup/**</code>, <code>Sources/Brouillons</code>.</p>
+      <form id="exclusionForm" class="exclusion-add">
+        <input id="exclusionPattern" type="text" placeholder="Chemin ou motif, ex. *.bak">
+        <button type="submit" class="primary">Ajouter</button>
+      </form>
+      <div class="exclusion-presets">
+        <button id="excludeBakPreset" type="button">＋ *.bak</button>
+        <button id="excludeNppPreset" type="button">＋ nppBackup/**</button>
+      </div>
+      <div id="exclusionsList" class="exclusions-list"></div>
     </div>
   </dialog>
 

@@ -21,7 +21,8 @@ function urlFor(file){
 export function clearPreview(){
   objectUrls.forEach(u=>URL.revokeObjectURL(u));objectUrls=[];
 }
-function empty(node){node.replaceChildren()}\nfunction openDialog(dialog){if(!dialog.open)dialog.showModal()}
+function empty(node){node.replaceChildren()}
+function openDialog(dialog){if(!dialog.open)dialog.showModal()}
 function message(body,title,text,action){
   const box=document.createElement("div");box.className="preview-fallback";
   const h=document.createElement("strong");h.textContent=title;
@@ -150,11 +151,36 @@ function tableFromRows(rows,{maxRows=500,maxCols=100}={}){
   if(rows.length>maxRows){const p=document.createElement("p");p.className="viewer-note";p.textContent="Aperçu limité aux "+maxRows+" premières lignes sur "+rows.length+".";shell.append(p)}
   return shell;
 }
-function viewerTabs(rendered,source){
-  const wrap=document.createElement("div"),bar=document.createElement("div");bar.className="viewer-toolbar";const host=document.createElement("div");host.className="viewer-document";
-  const showRendered=()=>{host.replaceChildren(rendered);a.classList.add("active");b.classList.remove("active")};
-  const showSource=()=>{host.replaceChildren(source);b.classList.add("active");a.classList.remove("active")};
-  const a=button("👁️ Rendu",showRendered),b=button("</> Source",showSource);bar.append(a,b);wrap.append(bar,host);showRendered();return wrap;
+function editableTextDocument(initial,{markdown=false,onSave=null,onMeta=null}={}){
+  let current=String(initial??"");const wrap=document.createElement("div"),bar=document.createElement("div"),host=document.createElement("div");bar.className="viewer-toolbar";host.className="viewer-document";
+  const buttons=[];
+  const setActive=active=>buttons.forEach(b=>b.classList.toggle("active",b===active));
+  const showPreview=()=>{
+    if(markdown){const article=document.createElement("article");article.className="viewer-markdown";article.innerHTML=renderMarkdown(current);host.replaceChildren(article)}
+    else host.replaceChildren(textPanel(current,"text"));
+    setActive(previewBtn)
+  };
+  const previewBtn=button(markdown?"👁️ Aperçu":"👁️ Lecture",showPreview);buttons.push(previewBtn);bar.append(previewBtn);
+  if(markdown){
+    const sourceBtn=button("</> Source",()=>{host.replaceChildren(textPanel(current,"markdown"));setActive(sourceBtn)});buttons.push(sourceBtn);bar.append(sourceBtn)
+  }
+  if(onSave){
+    const editBtn=button("✏️ Modifier",()=>{
+      const editor=document.createElement("div");editor.className="viewer-editor";
+      const textarea=document.createElement("textarea");textarea.className="viewer-editor-area";textarea.value=current;textarea.spellcheck=true;
+      const actions=document.createElement("div");actions.className="viewer-editor-actions";const status=document.createElement("span");status.className="viewer-count";
+      const saveBtn=button("💾 Enregistrer",async()=>{
+        saveBtn.disabled=true;status.textContent="Enregistrement…";
+        try{
+          const result=await onSave(textarea.value);current=textarea.value;status.textContent="Enregistré";if(onMeta)onMeta(result);showPreview()
+        }catch(e){console.error(e);status.textContent="Échec";alert("Impossible d’enregistrer le fichier : "+(e.message||e))}
+        finally{saveBtn.disabled=false}
+      });
+      actions.append(saveBtn,status);editor.append(textarea,actions);host.replaceChildren(editor);setActive(editBtn);setTimeout(()=>textarea.focus(),0)
+    });
+    buttons.push(editBtn);bar.append(editBtn)
+  }
+  wrap.append(bar,host);showPreview();return wrap
 }
 async function renderDocx(file,body){
   const loading=document.createElement("div");loading.className="viewer-loading";loading.textContent="Conversion locale du document Word…";body.append(loading);
@@ -183,7 +209,7 @@ async function renderZip(file,body){
     Object.entries(data).slice(0,2000).forEach(([name,bytes])=>{const row=document.createElement("div");row.className="archive-row";const n=document.createElement("span");n.textContent=name;const s=document.createElement("span");s.textContent=bytes.length?bytes.length+" o":"";row.append(n,s);list.append(row)});body.append(list);
   }catch(e){empty(body);message(body,"Archive non prévisualisable","Impossible de lire cette archive dans le navigateur.",downloadLink(file));console.error(e)}
 }
-export async function showFilePreview(resource,file,ui){
+export async function showFilePreview(resource,file,ui,options={}){
   clearPreview();ui.title.textContent=resource.title;ui.meta.textContent=(resource.path||file.name)+" — "+bytes(file.size);empty(ui.body);
   const ext=extOf(resource.path||file.name),mime=file.type||"";
   if(mime.startsWith("image/")||["png","jpg","jpeg","gif","webp","svg","bmp","avif"].includes(ext)){
@@ -208,10 +234,10 @@ export async function showFilePreview(resource,file,ui){
   }else if(["csv","tsv"].includes(ext)){
     const text=await file.text();ui.body.append(tableFromRows(parseCsv(text,ext==="tsv"?"\t":",")));
   }else if(["md","markdown"].includes(ext)){
-    const src=await file.text(),article=document.createElement("article");article.className="viewer-markdown";article.innerHTML=renderMarkdown(src);ui.body.append(viewerTabs(article,textPanel(src,"markdown")));
+    const src=await file.text();ui.body.append(editableTextDocument(src,{markdown:true,onSave:options.onSaveText,onMeta:r=>{if(r&&Number.isFinite(r.size))ui.meta.textContent=(resource.path||file.name)+" — "+bytes(r.size)}}));
   }else if(mime.startsWith("text/")||["txt","log","js","mjs","ts","css","html","xml","yaml","yml","py","ini","toml","sql","java","c","cpp","h","cs","php"].includes(ext)){
     if(file.size>8000000)message(ui.body,"Fichier texte volumineux","L’aperçu est limité à 8 Mo pour éviter de bloquer l’interface.",downloadLink(file));
-    else ui.body.append(textPanel(await file.text(),ext));
+    else{const src=await file.text();if(ext==="txt")ui.body.append(editableTextDocument(src,{markdown:false,onSave:options.onSaveText,onMeta:r=>{if(r&&Number.isFinite(r.size))ui.meta.textContent=(resource.path||file.name)+" — "+bytes(r.size)}}));else ui.body.append(textPanel(src,ext))}
   }else if(["pptx","ppt","odp"].includes(ext)){
     message(ui.body,"Présentation détectée","La prévisualisation fidèle des présentations n’est pas encore disponible dans cette version. Elle est prévue dans le backlog.",downloadLink(file));
   }else{
@@ -226,7 +252,7 @@ function resourceIcon(r){
 function parentPath(path=""){const i=path.lastIndexOf("/");return i<0?"":path.slice(0,i)}
 export function showFolderPreview(folder,resources,ui,onOpen){
   clearPreview();ui.title.textContent=folder.title;ui.meta.textContent=folder.type==="root"?"Racine du workspace":"Dossier — "+folder.path;empty(ui.body);
-  const path=folder.path||"",children=resources.filter(r=>!r.missing&&r.id!==folder.id&&["folder","file","url","virtual"].includes(r.type)&&((r.type==="url"||r.type==="virtual")?false:parentPath(r.path||"")===path));
+  const path=folder.path||"",children=resources.filter(r=>!r.missing&&!r.excluded&&r.id!==folder.id&&["folder","file","url","virtual"].includes(r.type)&&((r.type==="url"||r.type==="virtual")?false:parentPath(r.path||"")===path));
   const head=document.createElement("div");head.className="gallery-head";const p=document.createElement("p");p.textContent=children.length+" élément"+(children.length>1?"s":"")+" directement dans ce dossier.";head.append(p);ui.body.append(head);
   const grid=document.createElement("div");grid.className="resource-gallery";
   if(!children.length){message(grid,"Dossier vide","Aucune ressource directe à afficher.");}
