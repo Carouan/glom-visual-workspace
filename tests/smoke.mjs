@@ -6,6 +6,7 @@ if(!executablePath)throw new Error("CHROME_BIN is required");
 const browser=await puppeteer.launch({headless:true,executablePath,args:["--no-sandbox","--disable-gpu"]});
 try{
   const page=await browser.newPage();
+  await page.setViewport({width:1440,height:900,deviceScaleFactor:1});
   const errors=[];
   page.on("pageerror",e=>errors.push("pageerror: "+e.message));
   page.on("console",msg=>{if(msg.type()==="error")errors.push("console: "+msg.text())});
