@@ -4,7 +4,7 @@
 
 G.L.O.M. Visual Workspace est un prototype de **workspace visuel local-first** : vos vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags et les liens.
 
-La V0.3 transforme le prototype en **workspace visuel réellement éditable** : explorateur de fichiers, consultation locale des ressources et mindmap stylable restent synchronisés sans enfermer les documents.
+La V0.3 transforme le prototype en **workspace visuel réellement éditable** : explorateur de fichiers, consultation locale des ressources et mindmap stylable restent synchronisés sans enfermer les documents. La V0.3.2 ajoute aussi la construction d’un workspace depuis zéro et la synchronisation de la hiérarchie depuis la carte centrale.
 
 ## Fonctionnalités V0.3
 
@@ -15,6 +15,10 @@ La V0.3 transforme le prototype en **workspace visuel réellement éditable** : 
 - mindmap générée automatiquement depuis l'arborescence ;
 - déplacement libre des nœuds, zoom, pan, recentrage et repli des branches ;
 - explorateur de fichiers repliable avec glisser-déposer physique lorsque l'écriture est autorisée ;
+- glisser-déposer d’un nœud fichier/dossier sur un dossier directement dans la mindmap pour modifier l’arborescence ;
+- création d’un workspace vide et ajout visuel de dossiers ;
+- export d’un template ZIP contenant l’arborescence et `.glom/` ;
+- matérialisation d’un workspace brouillon/démo dans un dossier local ;
 - workspaces récents via IndexedDB ;
 - export de la mindmap en SVG/PNG A4 et impression/PDF ;
 - nœuds conceptuels indépendants des fichiers ;
