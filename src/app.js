@@ -683,7 +683,7 @@ function addShape(){
   state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
 }
 function availableImageResources(){
-  return state.resources.filter(r=>isImageResource(r)&&!r.missing&&!r.excluded)
+  return state.resources.filter(r=>isImageResource(r)&&!r.missing&&!r.excluded&&(state.mode==="fs"||(state.mode==="fallback"&&state.fallbackFiles.has(r.path))))
 }
 function renderImageObjectList(){
   ui.imageObjectList.replaceChildren();const q=(ui.imageObjectSearch.value||"").trim().toLowerCase(),images=availableImageResources().filter(r=>!q||(r.title||"").toLowerCase().includes(q)||(r.path||"").toLowerCase().includes(q));
