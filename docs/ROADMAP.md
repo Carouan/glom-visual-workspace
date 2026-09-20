@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.8 stable.**
+**État actuel : v0.3.9 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -191,23 +191,33 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - les connecteurs partent du milieu du bord pertinent de chaque boîte ;
 - exports SVG/PNG/PDF utilisant le même routage adaptatif.
 
+### V0.3.9 — relations nommées et stylables ✅
+
+- sélection directe d'une relation dans la carte ;
+- libellé éditable ;
+- couleur et épaisseur personnalisables ;
+- trait plein, pointillé ou en points ;
+- flèche vers la cible ou aux deux extrémités ;
+- courbure réglable jusqu'au lien droit ;
+- styles persistés dans le JSON de vue ;
+- styles des relations hiérarchiques conservés lors d'un rescan ;
+- export SVG/PNG/PDF fidèle aux libellés, styles et flèches.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.8 :
+Ordre de travail proposé après v0.3.9 :
 
-1. **relations nommées et stylables** ;
-2. **images/médias comme objets libres** ;
-3. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
-4. **sélection multiple** et groupes/cadres arbitraires ;
-5. **auto-layout horizontal, vertical et radial** ;
-6. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+1. **images/médias comme objets libres** ;
+2. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
+3. **sélection multiple** et groupes/cadres arbitraires ;
+4. **auto-layout horizontal, vertical et radial** ;
+5. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
 - plusieurs cartes par workspace ;
 - ajouter plusieurs fois une même ressource dans une carte ;
 - images et médias comme objets libres, pas seulement dans un nœud de ressource ;
-- relations nommées et stylables ;
 - redimensionnement et verrouillage manuel des cadres/groupes ;
 - sélection multiple ;
 - styles/thèmes réutilisables ;
