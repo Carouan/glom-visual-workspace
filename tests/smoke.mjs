@@ -140,12 +140,12 @@ try{
   if(!manualReady)throw new Error("No manual relation available for style test");
   if(manualReady.hitPE!=="stroke"||manualReady.visiblePE!=="stroke")throw new Error("Relation paths are not pointer-selectable: "+JSON.stringify(manualReady));
   await page.waitForSelector("#edgeForm:not(.hidden)",{timeout:3000});
-  await page.$eval("#edgeLabel",el=>{el.value="inspire";el.dispatchEvent(new Event("input",{bubbles:true}))});
-  await page.$eval("#edgeColor",el=>{el.value="#dc2626";el.dispatchEvent(new Event("input",{bubbles:true}))});
-  await page.$eval("#edgeWidth",el=>{el.value="4";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#edgeLabel",el=>{el.value="inspire";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#edgeColor",el=>{el.value="#dc2626";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#edgeWidth",el=>{el.value="4";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
   await page.select("#edgeLineStyle","dotted");
   await page.select("#edgeArrow","end");
-  await page.$eval("#edgeCurvature",el=>{el.value="0";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#edgeCurvature",el=>{el.value="0";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
   const relationStyle=await page.evaluate(()=>{
     const hit=document.querySelector("#edges .edge-hit.selected"),group=hit?.closest(".edge-group"),p=group?.querySelector(".edge"),label=group?.querySelector(".edge-label");
     if(!p)return null;const cs=getComputedStyle(p);
