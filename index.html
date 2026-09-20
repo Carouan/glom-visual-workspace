@@ -18,12 +18,14 @@
     </div>
     <nav class="toolbar">
       <button id="openBtn" class="primary">📂 Ouvrir un workspace</button>
+      <button id="newWorkspaceBtn">🆕 Nouveau</button>
       <button id="recentBtn">🕘 Récents</button>
       <button id="demoBtn">🧪 Démo</button>
       <button id="scanBtn" disabled>↻ Rescanner</button>
       <button id="saveBtn" disabled>💾 Enregistrer</button>
       <button id="exportBtn" disabled>🖨 Exporter</button>
       <span class="sep"></span>
+      <button id="folderBtn" disabled>＋ Dossier</button>
       <button id="ideaBtn" disabled>＋ Idée</button>
       <button id="urlBtn" disabled>🔗 Lien</button>
       <button id="fitBtn" disabled>⊙ Recentrer</button>
@@ -31,7 +33,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.1</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.2</span></div>
   </header>
 
   <main class="shell">
@@ -186,6 +188,14 @@
         <button id="exportSvgBtn" type="button">⬇️ SVG A4</button>
         <button id="exportPngBtn" type="button">🖼️ PNG A4</button>
         <button id="exportPrintBtn" type="button" class="primary">🖨️ Imprimer / PDF</button>
+      </div>
+      <div class="workspace-export-box">
+        <strong>📦 Workspace</strong>
+        <p>Exporter ou matérialiser la structure complète de la carte : dossiers + métadonnées <code>.glom</code>.</p>
+        <div class="export-actions workspace-actions">
+          <button id="zipWorkspaceBtn" type="button">📦 Template ZIP</button>
+          <button id="materializeBtn" type="button">📁 Créer sur disque</button>
+        </div>
       </div>
     </div>
   </dialog>
