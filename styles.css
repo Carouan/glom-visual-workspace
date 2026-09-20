@@ -291,3 +291,21 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
   .shell,.shell.left-collapsed,.shell.right-collapsed,.shell.left-collapsed.right-collapsed{display:block}
   .shell.left-collapsed>.resources,.shell.right-collapsed>.inspector{visibility:visible;pointer-events:auto}
 }
+
+/* V0.3.6 — exclusions + local text/Markdown editing */
+#contextExcludeBtn{grid-column:1/-1}
+.exclusions-panel{padding:1rem;display:grid;gap:.8rem}
+.exclusions-panel>p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
+.exclusion-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem}
+.exclusion-add input{min-height:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);padding:.5rem .65rem}
+.exclusion-presets{display:flex;gap:.45rem;flex-wrap:wrap}
+.exclusions-list{display:grid;gap:.45rem;max-height:42vh;overflow:auto}
+.exclusion-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:center;padding:.55rem .65rem;border:1px solid var(--border);border-radius:9px;background:var(--surface2)}
+.exclusion-item code{overflow-wrap:anywhere}
+.viewer-editor{display:grid;gap:.65rem;min-height:420px}
+.viewer-editor-area{width:100%;min-height:420px;resize:vertical;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);padding:.8rem;font:14px/1.55 "Cascadia Code","SFMono-Regular",Consolas,monospace;tab-size:2}
+.viewer-editor-actions{display:flex;align-items:center;gap:.6rem;position:sticky;bottom:0;padding:.5rem 0;background:var(--surface)}
+.viewer-markdown{font-size:1rem}
+.viewer-markdown p{margin:.7em 0}
+.viewer-markdown ul,.viewer-markdown ol{padding-left:1.6rem}
+@media(max-width:600px){.exclusion-add{grid-template-columns:1fr}.viewer-editor,.viewer-editor-area{min-height:320px}}
