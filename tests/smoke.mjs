@@ -112,7 +112,7 @@ try{
   const branchBefore=await page.evaluate(()=>{
     const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
     const a=byTitle("Histoire"),b=byTitle("Premiers jeux");if(!a||!b)return null;
-    const r=a.getBoundingClientRect();return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top),cx:r.left+24,cy:r.top+r.height/2}
+    const r=a.querySelector(".node-icon").getBoundingClientRect();return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top),cx:r.left+r.width/2,cy:r.top+r.height/2}
   });
   if(!branchBefore)throw new Error("Could not prepare branch-group drag");
   await page.mouse.move(branchBefore.cx,branchBefore.cy);await page.mouse.down();await page.mouse.move(branchBefore.cx+55,branchBefore.cy+35,{steps:8});await page.mouse.up();
