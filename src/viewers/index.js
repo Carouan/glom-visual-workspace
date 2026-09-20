@@ -160,8 +160,10 @@ function editableTextDocument(initial,{markdown=false,onSave=null,onMeta=null}={
     else host.replaceChildren(textPanel(current,"text"));
     setActive(previewBtn)
   };
-  const showSource=()=>{host.replaceChildren(textPanel(current,markdown?"markdown":"text"));setActive(sourceBtn)};
-  const previewBtn=button(markdown?"👁️ Aperçu":"👁️ Lecture",showPreview),sourceBtn=button("</> Source",showSource);buttons.push(previewBtn,sourceBtn);bar.append(previewBtn,sourceBtn);
+  const previewBtn=button(markdown?"👁️ Aperçu":"👁️ Lecture",showPreview);buttons.push(previewBtn);bar.append(previewBtn);
+  if(markdown){
+    const sourceBtn=button("</> Source",()=>{host.replaceChildren(textPanel(current,"markdown"));setActive(sourceBtn)});buttons.push(sourceBtn);bar.append(sourceBtn)
+  }
   if(onSave){
     const editBtn=button("✏️ Modifier",()=>{
       const editor=document.createElement("div");editor.className="viewer-editor";
