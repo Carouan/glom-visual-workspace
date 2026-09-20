@@ -2,9 +2,11 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-Cette roadmap décrit l'évolution visée après la V0.1. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
+**État actuel : v0.3.8 stable.**
 
-## V0.2 — Universal Resource Viewer
+Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
+
+## V0.2 — Universal Resource Viewer ✅ livré
 
 Objectif : permettre de **consulter immédiatement une ressource sans quitter le workspace**.
 
@@ -36,7 +38,7 @@ Les modules externes nécessaires aux formats Office sont libres et chargés à 
 - cache local des miniatures ;
 - ouverture explicite dans l'application système quand l'API navigateur le permet.
 
-## V0.2.1 — Explorateur de fichiers et navigation de workspace
+## V0.2.1 — Explorateur de fichiers et navigation de workspace ✅ livré
 
 Objectif : faire de la barre latérale gauche un **véritable navigateur de fichiers**, tout en conservant la mindmap comme représentation parallèle.
 
@@ -51,7 +53,7 @@ Objectif : faire de la barre latérale gauche un **véritable navigateur de fich
 - date de dernière modification lorsque disponible ;
 - séparation stricte entre déplacement physique du fichier et disposition visuelle des nœuds de la mindmap.
 
-## V0.2.2 — Export, impression et workspaces récents
+## V0.2.2 — Export, impression et workspaces récents ✅ livré
 
 ### Export de la mindmap
 
@@ -84,11 +86,11 @@ Pistes à étudier séparément :
 
 L'objectif est de conserver la même abstraction « workspace » sans coupler le cœur de G.L.O.M. à SSH.
 
-## V0.3 — Mindmap avancée
+## V0.3 — Mindmap avancée 🚧 en cours
 
 Objectif : faire de la carte mentale une vraie surface d'édition, pas seulement une projection de l'arborescence.
 
-### V0.3.0 — première couche d'édition visuelle
+### V0.3.0 — première couche d'édition visuelle ✅
 
 - taille du texte d'un nœud ;
 - famille de police, graisse, italique et alignement ;
@@ -107,7 +109,7 @@ Objectif : faire de la carte mentale une vraie surface d'édition, pas seulement
 
 Les choix visuels appartiennent à la **vue** et non à la ressource : un même fichier peut donc être affiché différemment dans deux cartes.
 
-### V0.3.2 — construction visuelle du workspace
+### V0.3.2 — construction visuelle du workspace ✅
 
 - glisser un fichier ou dossier **sur un dossier dans la mindmap** pour le reparent dans l'arborescence ;
 - déplacement physique correspondant en mode File System Access ;
@@ -121,7 +123,7 @@ Les choix visuels appartiennent à la **vue** et non à la ressource : un même 
 
 Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est destiné à transporter la **structure + la carte + les métadonnées**. Un export de sauvegarde complète avec contenus sera traité séparément.
 
-### V0.3.3 — organisation de l'interface
+### V0.3.3 — organisation de l'interface ✅
 
 - barre supérieure compacte organisée en menus Workspace / Insertion / Vue / Exporter ;
 - bouton Ouvrir conservé comme action globale immédiatement visible ;
@@ -132,7 +134,7 @@ Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est des
 - fermeture automatique des menus après une action, clic extérieur ou Échap ;
 - règle d'UX documentée dans `docs/UI-V0.3.3.md` pour éviter la prolifération future de boutons.
 
-### V0.3.5 — espace de travail et objets graphiques libres
+### V0.3.5 — espace de travail et objets graphiques libres ✅
 
 - panneaux **Ressources** et **Détails** rabattables indépendamment sur desktop ;
 - boutons latéraux pour rouvrir un panneau masqué ;
@@ -151,7 +153,7 @@ Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est des
 
 L'outil **Image libre** reste réservé pour une étape suivante : sa persistance doit être conçue sans enfermer ou dupliquer silencieusement les fichiers utilisateur.
 
-### V0.3.6 — fichiers texte, Markdown et exclusions
+### V0.3.6 — fichiers texte, Markdown et exclusions ✅
 
 - exclusions persistantes de fichiers/dossiers sans suppression physique ;
 - exclusion rapide depuis le panneau de détails ;
@@ -165,7 +167,7 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - création directe d'un fichier texte ou Markdown dans le dossier sélectionné ;
 - mise à jour immédiate de l'arborescence et de la mindmap sans rescan complet.
 
-### V0.3.7 — canvas libre et géométrie avancée
+### V0.3.7 — canvas libre et géométrie avancée ✅
 
 - canvas de travail non borné par le format d'impression : les nœuds et objets peuvent utiliser des coordonnées négatives ;
 - l'A4 devient uniquement une **cible de rendu** : les limites du contenu sont calculées à l'export puis l'ensemble est ajusté à la page ;
@@ -177,7 +179,7 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - contrôles typographiques cohérents pour titres de nœuds, annotations texte et titres de cadres ;
 - option **Déplacer cette branche comme un groupe** : le déplacement du nœud racine conserve les positions relatives de tous ses descendants.
 
-### V0.3.8 — gros workspaces et routage adaptatif
+### V0.3.8 — gros workspaces et routage adaptatif ✅
 
 - remplacement de la limite historique V0.1 de 1 200 éléments / profondeur 10 ;
 - scan jusqu'à **20 000 éléments** et profondeur **48** avant garde-fou ;
@@ -189,7 +191,18 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - les connecteurs partent du milieu du bord pertinent de chaque boîte ;
 - exports SVG/PNG/PDF utilisant le même routage adaptatif.
 
-### V0.3.x — enrichissements suivants
+### Prochaines priorités V0.3.x
+
+Ordre de travail proposé après v0.3.8 :
+
+1. **relations nommées et stylables** ;
+2. **images/médias comme objets libres** ;
+3. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
+4. **sélection multiple** et groupes/cadres arbitraires ;
+5. **auto-layout horizontal, vertical et radial** ;
+6. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+
+### Backlog V0.3.x
 
 - plusieurs cartes par workspace ;
 - ajouter plusieurs fois une même ressource dans une carte ;
@@ -197,7 +210,6 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - relations nommées et stylables ;
 - redimensionnement et verrouillage manuel des cadres/groupes ;
 - sélection multiple ;
-- déplacement d'une branche complète ;
 - styles/thèmes réutilisables ;
 - auto-layout horizontal, vertical et radial ;
 - duplication rapide d'un style sur une branche entière.
