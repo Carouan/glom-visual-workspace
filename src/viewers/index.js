@@ -21,7 +21,7 @@ function urlFor(file){
 export function clearPreview(){
   objectUrls.forEach(u=>URL.revokeObjectURL(u));objectUrls=[];
 }
-function empty(node){node.replaceChildren()}
+function empty(node){node.replaceChildren()}\nfunction openDialog(dialog){if(!dialog.open)dialog.showModal()}
 function message(body,title,text,action){
   const box=document.createElement("div");box.className="preview-fallback";
   const h=document.createElement("strong");h.textContent=title;
@@ -159,7 +159,7 @@ function viewerTabs(rendered,source){
 async function renderDocx(file,body){
   const loading=document.createElement("div");loading.className="viewer-loading";loading.textContent="Conversion locale du document Word…";body.append(loading);
   try{
-    const mammoth=await import(OFFICE_MAMMOTH);const result=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
+    const mod=await import(OFFICE_MAMMOTH),mammoth=mod.default||mod;const result=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
     const article=document.createElement("article");article.className="viewer-docx";article.innerHTML=sanitizeHtml(result.value);
     empty(body);body.append(article);
     if(result.messages?.length){const box=document.createElement("details");box.className="viewer-warnings";const s=document.createElement("summary");s.textContent=result.messages.length+" avertissement(s) de conversion";box.append(s);result.messages.forEach(m=>{const p=document.createElement("p");p.textContent=m.message||String(m);box.append(p)});body.append(box)}
@@ -168,7 +168,7 @@ async function renderDocx(file,body){
 async function renderWorkbook(file,body){
   const loading=document.createElement("div");loading.className="viewer-loading";loading.textContent="Lecture locale du classeur…";body.append(loading);
   try{
-    const XLSX=await import(SHEET_READER);const wb=XLSX.read(await file.arrayBuffer(),{type:"array",dense:true});
+    const mod=await import(SHEET_READER),XLSX=mod.default||mod;const wb=XLSX.read(await file.arrayBuffer(),{type:"array",dense:true});
     empty(body);const bar=document.createElement("div");bar.className="viewer-toolbar";const select=document.createElement("select");select.setAttribute("aria-label","Feuille du classeur");
     wb.SheetNames.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;select.append(o)});const host=document.createElement("div");
     const render=()=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[select.value],{header:1,defval:"",raw:false});host.replaceChildren(tableFromRows(rows))};
@@ -217,7 +217,7 @@ export async function showFilePreview(resource,file,ui){
   }else{
     message(ui.body,"Pas de prévisualisation intégrée","Ce format n’a pas encore de viewer. Le fichier reste accessible sans conversion.",downloadLink(file));
   }
-  ui.dialog.showModal();
+  openDialog(ui.dialog);
 }
 function resourceIcon(r){
   if(r.type==="folder"||r.type==="root")return"📁";if(r.type==="virtual")return"💡";if(r.type==="url")return"🔗";
@@ -230,5 +230,5 @@ export function showFolderPreview(folder,resources,ui,onOpen){
   const head=document.createElement("div");head.className="gallery-head";const p=document.createElement("p");p.textContent=children.length+" élément"+(children.length>1?"s":"")+" directement dans ce dossier.";head.append(p);ui.body.append(head);
   const grid=document.createElement("div");grid.className="resource-gallery";
   if(!children.length){message(grid,"Dossier vide","Aucune ressource directe à afficher.");}
-  children.forEach(r=>{const card=document.createElement("button");card.type="button";card.className="resource-card";const ic=document.createElement("span");ic.className="resource-card-icon";ic.textContent=resourceIcon(r);const t=document.createElement("strong");t.textContent=r.title;const meta=document.createElement("small");meta.textContent=r.tags?.length?r.tags.map(x=>"#"+x).join(" "):(r.type==="folder"?"Dossier":extOf(r.path||"").toUpperCase()||"Fichier");card.append(ic,t,meta);card.addEventListener("click",()=>onOpen(r));grid.append(card)});ui.body.append(grid);ui.dialog.showModal();
+  children.forEach(r=>{const card=document.createElement("button");card.type="button";card.className="resource-card";const ic=document.createElement("span");ic.className="resource-card-icon";ic.textContent=resourceIcon(r);const t=document.createElement("strong");t.textContent=r.title;const meta=document.createElement("small");meta.textContent=r.tags?.length?r.tags.map(x=>"#"+x).join(" "):(r.type==="folder"?"Dossier":extOf(r.path||"").toUpperCase()||"Fichier");card.append(ic,t,meta);card.addEventListener("click",()=>onOpen(r));grid.append(card)});ui.body.append(grid);openDialog(ui.dialog);
 }
