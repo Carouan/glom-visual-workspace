@@ -28,8 +28,7 @@ try{
   await page.click("#exportClose");
   await page.click("#recentBtn");
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
-  const recentText=await page.$eval("#recentList",el=>el.textContent||"");
-  if(!recentText.includes("Aucun workspace récent"))throw new Error("Recent workspace dialog did not initialize: "+recentText);
+  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
 }finally{
