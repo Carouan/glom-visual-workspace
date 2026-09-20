@@ -21,6 +21,7 @@
       <button id="demoBtn">🧪 Démo</button>
       <button id="scanBtn" disabled>↻ Rescanner</button>
       <button id="saveBtn" disabled>💾 Enregistrer</button>
+      <button id="exportBtn" disabled>🖨 Exporter</button>
       <span class="sep"></span>
       <button id="ideaBtn" disabled>＋ Idée</button>
       <button id="urlBtn" disabled>🔗 Lien</button>
@@ -28,7 +29,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.2.1</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.2.2</span></div>
   </header>
 
   <main class="shell">
@@ -89,6 +90,22 @@
   <dialog id="preview">
     <header><div><strong id="previewTitle"></strong><small id="previewMeta"></small></div><button id="previewClose">×</button></header>
     <div id="previewBody"></div>
+  </dialog>
+
+  <dialog id="exportDialog" class="small-dialog">
+    <header><div><strong>Exporter la mindmap</strong><small>A4 prêt à imprimer</small></div><button id="exportClose">×</button></header>
+    <div class="export-panel">
+      <label>Orientation
+        <select id="exportOrientation"><option value="landscape">Paysage</option><option value="portrait">Portrait</option></select>
+      </label>
+      <label class="check-row"><input id="exportHidden" type="checkbox"> Inclure les branches repliées</label>
+      <p>SVG et PNG sont cadrés au format A4. « Imprimer / PDF » ouvre le dialogue d'impression du navigateur : choisissez « Enregistrer au format PDF » pour créer le PDF.</p>
+      <div class="export-actions">
+        <button id="exportSvgBtn" type="button">⬇️ SVG A4</button>
+        <button id="exportPngBtn" type="button">🖼️ PNG A4</button>
+        <button id="exportPrintBtn" type="button" class="primary">🖨️ Imprimer / PDF</button>
+      </div>
+    </div>
   </dialog>
 
   <input id="folderFallback" type="file" webkitdirectory multiple hidden>

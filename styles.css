@@ -40,3 +40,6 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
 
 /* File explorer V0.2.1 */
 .tree-row{position:relative}.tree-toggle,.tree-toggle-placeholder{width:24px;height:24px;flex:0 0 24px;padding:0;border:0;background:transparent;display:grid;place-items:center;color:var(--muted)}.tree-toggle:hover{color:var(--primary);background:var(--surface2)}.tree-row[draggable="true"]{cursor:grab}.tree-row.dragging{opacity:.45}.tree-row.drop-target{outline:2px solid var(--primary);background:var(--primary2)}.tree-row.drop-target .tree-label{font-weight:700}
+
+/* Mindmap export V0.2.2 */
+.small-dialog{width:min(560px,94vw);height:auto;max-height:90vh}.export-panel{padding:1rem;display:grid;gap:1rem}.export-panel>label{display:grid;gap:.35rem;font-size:.85rem;font-weight:650;color:var(--muted)}.export-panel select{min-height:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);padding:.45rem .55rem}.export-panel .check-row{display:flex;align-items:center;gap:.55rem;color:var(--text);font-weight:500}.export-panel .check-row input{width:18px;height:18px}.export-panel p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}.export-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}.export-actions button{min-height:44px}@media(max-width:600px){.export-actions{grid-template-columns:1fr}}
