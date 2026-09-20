@@ -36,6 +36,9 @@
     <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
     <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h4a5 5 0 0 0 5-5c0-3-4-5-9-5z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="10" cy="6.8" r=".8"/><circle cx="15" cy="7.2" r=".8"/></symbol>
     <symbol id="i-relation" viewBox="0 0 24 24"><circle cx="6" cy="17" r="2"/><circle cx="18" cy="7" r="2"/><path d="M8 16c4-1 4-7 8-8"/><path d="m13 7 3 1 1-3"/></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M14 9l-3 3 3 3"/></symbol>
+    <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M10 9l3 3-3 3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 3h6l1 4H8zM7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
   </svg>
   <header class="topbar">
     <div class="brand">
@@ -71,6 +74,9 @@
         <div class="toolbar-menu-panel">
           <button id="fitBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-focus"></use></svg><span class="button-label">Recentrer / ajuster</span></button>
           <button id="autoLayoutBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-layout"></use></svg><span class="button-label">Réorganiser la carte</span></button>
+          <span class="menu-divider"></span>
+          <button id="toggleResourcesBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg><span class="button-label">Afficher/masquer Ressources</span></button>
+          <button id="toggleInspectorBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg><span class="button-label">Afficher/masquer Détails</span></button>
         </div>
       </details>
 
@@ -84,12 +90,12 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.4</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.5</span></div>
   </header>
 
   <main class="shell">
     <aside id="resourcesPanel" class="panel resources">
-      <div class="panel-head"><div><strong>Ressources</strong><small id="count">0 élément</small></div><button class="close mobile-only" data-close="resourcesPanel">×</button></div>
+      <div class="panel-head"><div><strong>Ressources</strong><small id="count">0 élément</small></div><div class="panel-head-actions"><button id="collapseResourcesBtn" class="panel-toggle desktop-only" type="button" title="Rabattre le panneau Ressources" aria-label="Rabattre Ressources"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg></button><button class="close mobile-only" data-close="resourcesPanel">×</button></div></div>
       <div class="panel-body panel-scroll resources-scroll">
         <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Fichier, tag, note…"></label>
         <div class="legend"><span>📁 dossier</span><span>📄 fichier</span><span>💡 idée</span><span>🔗 web</span></div>
@@ -98,6 +104,8 @@
     </aside>
 
     <section class="stage">
+      <button id="restoreResourcesBtn" class="panel-restore left hidden desktop-only" type="button" title="Afficher Ressources" aria-label="Afficher Ressources"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg></button>
+      <button id="restoreInspectorBtn" class="panel-restore right hidden desktop-only" type="button" title="Afficher Détails" aria-label="Afficher Détails"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg></button>
       <div class="stage-tools">
         <button id="zoomOut">−</button><span id="zoomValue">100%</span><button id="zoomIn">＋</button>
         <span class="sep"></span><span id="hint">Glisser le fond pour déplacer la vue</span>
@@ -120,13 +128,14 @@
           <button id="mapRelationBtn" type="button" title="Créer une relation depuis le nœud sélectionné" aria-label="Créer une relation"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg></button>
           <button id="mapFrameBtn" type="button" title="Créer ou retirer un cadre de branche" aria-label="Cadre de branche"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg></button>
           <span class="palette-divider"></span>
-          <button id="mapShapeBtn" type="button" disabled title="Formes libres — prévu en V0.3.x" aria-label="Forme libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg></button>
-          <button id="mapTextBtn" type="button" disabled title="Texte libre — prévu en V0.3.x" aria-label="Texte libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-text"></use></svg></button>
+          <button id="mapShapeBtn" type="button" title="Ajouter une forme libre" aria-label="Ajouter une forme"><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg></button>
+          <button id="mapTextBtn" type="button" title="Ajouter une annotation texte" aria-label="Ajouter du texte"><svg class="ui-icon" aria-hidden="true"><use href="#i-text"></use></svg></button>
           <button id="mapImageBtn" type="button" disabled title="Image libre — prévu en V0.3.x" aria-label="Image libre à venir"><svg class="ui-icon" aria-hidden="true"><use href="#i-image"></use></svg></button>
         </div>
         <div id="world" class="world">
           <div id="frames"></div>
           <svg id="edges" width="8000" height="8000"></svg>
+          <div id="visualObjects"></div>
           <div id="nodes"></div>
         </div>
       </div>
@@ -135,9 +144,35 @@
     </section>
 
     <aside id="inspectorPanel" class="panel inspector">
-      <div class="panel-head"><div><strong>Détails</strong><small id="selectionKind">Aucune sélection</small></div><button class="close mobile-only" data-close="inspectorPanel">×</button></div>
+      <div class="panel-head"><div><strong>Détails</strong><small id="selectionKind">Aucune sélection</small></div><div class="panel-head-actions"><button id="collapseInspectorBtn" class="panel-toggle desktop-only" type="button" title="Rabattre le panneau Détails" aria-label="Rabattre Détails"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg></button><button class="close mobile-only" data-close="inspectorPanel">×</button></div></div>
       <div id="inspectorScroll" class="panel-scroll inspector-scroll">
         <div id="noSelection" class="no-selection">👆<p>Sélectionnez un nœud pour modifier son titre d'affichage, ses tags et ses notes.</p></div>
+        <form id="visualForm" class="form hidden">
+          <details class="inspector-section" open>
+            <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg><span class="button-label">Objet graphique</span></summary>
+            <div class="details-grid">
+              <label>Type<code id="visualKind">—</code></label>
+              <label id="visualTextLabel">Texte<input id="visualText" type="text"></label>
+              <label id="visualShapeLabel">Forme
+                <select id="visualShape">
+                  <option value="rectangle">Rectangle</option>
+                  <option value="ellipse">Ellipse</option>
+                  <option value="diamond">Losange</option>
+                </select>
+              </label>
+              <label>Largeur<input id="visualWidth" type="number" min="40" max="1200" step="10"></label>
+              <label>Hauteur<input id="visualHeight" type="number" min="30" max="800" step="10"></label>
+              <label id="visualFontSizeLabel">Taille du texte<input id="visualFontSize" type="number" min="10" max="72" step="1"></label>
+              <label id="visualTextColorLabel">Couleur du texte<input id="visualTextColor" type="color" value="#172033"></label>
+              <label id="visualFillLabel">Fond<input id="visualFill" type="color" value="#e0e7ff"></label>
+              <label id="visualStrokeLabel">Bordure<input id="visualStroke" type="color" value="#6366f1"></label>
+            </div>
+          </details>
+          <div class="form-actions">
+            <button type="button" id="deleteVisualBtn" class="danger"><svg class="ui-icon" aria-hidden="true"><use href="#i-trash"></use></svg><span class="button-label">Supprimer l’objet</span></button>
+          </div>
+        </form>
+
         <form id="form" class="form hidden">
           <details class="inspector-section" open>
             <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-file-text"></use></svg><span class="button-label">Détails</span></summary>
