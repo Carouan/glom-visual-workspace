@@ -17,7 +17,7 @@ const ui={
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null
 };
-const FORMAT=1,APP="0.2.3",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.2.4",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -94,7 +94,26 @@ async function scan(root){
   }
   await walk(root,"",0);return{entries,truncated}
 }
-async function permission(handle,user){try{if(handle.queryPermission){const q=await handle.queryPermission({mode:"readwrite"});if(q==="granted")return true}if(user&&handle.requestPermission)return(await handle.requestPermission({mode:"readwrite"}))==="granted"}catch(e){}return false}
+async function permission(handle,user){
+  try{
+    if(handle.queryPermission){
+      const q=await handle.queryPermission({mode:"readwrite"});
+      if(q==="granted")return true
+    }
+    if(user&&handle.requestPermission)return(await handle.requestPermission({mode:"readwrite"}))==="granted"
+  }catch(e){console.warn("Permission check failed",e)}
+  return false
+}
+async function ensureWritePermission(){
+  if(state.mode!=="fs"||!state.handle)return false;
+  if(state.canWrite)return true;
+  try{
+    state.canWrite=await permission(state.handle,true);
+    show();
+    if(!state.canWrite)setStatus("Écriture non autorisée — déplacement annulé","bad");
+    return state.canWrite
+  }catch(e){console.warn(e);return false}
+}
 function fallbackScan(files){
   const map=new Map(),fileMap=new Map();let rootName="Workspace importé";
   Array.from(files||[]).forEach(f=>{let parts=(f.webkitRelativePath||f.name).split("/").filter(Boolean);if(parts.length>1){rootName=parts[0]||rootName;parts.shift()}if([".glom",".git","node_modules"].includes(parts[0]))return;const rel=parts.join("/");if(!rel)return;for(let i=1;i<parts.length;i++){const p=parts.slice(0,i).join("/");if(!map.has("folder:"+p))map.set("folder:"+p,{type:"folder",path:p,name:parts[i-1]})}map.set("file:"+rel,{type:"file",path:rel,name:parts[parts.length-1],size:f.size,lastModified:f.lastModified});fileMap.set(rel,f)});
@@ -106,7 +125,14 @@ async function fallbackMetadata(files){
 }
 async function fileFromPath(root,path){const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name);return h.getFile()}
 function download(name,obj){const b=new Blob([JSON.stringify(obj,null,2)+"\n"],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-function formatSize(n){return Number.isFinite(n)?(n/1048576).toFixed(n===0?0:n<1048576?3:2)+" Mo":"—"}
+function formatSize(n){
+  if(!Number.isFinite(n))return"—";
+  const nf=(v,d)=>new Intl.NumberFormat("fr-BE",{minimumFractionDigits:0,maximumFractionDigits:d}).format(v);
+  if(n<1024)return nf(n,0)+" o";
+  if(n<1048576)return nf(n/1024,n<10240?2:1)+" Ko";
+  if(n<1073741824)return nf(n/1048576,n<10485760?2:1)+" Mo";
+  return nf(n/1073741824,n<10737418240?2:1)+" Go"
+}
 function formatDate(n){return Number.isFinite(n)?new Intl.DateTimeFormat("fr-BE",{dateStyle:"medium",timeStyle:"short"}).format(new Date(n)):"—"}
 function initTreeExpansion(){
   state.treeExpanded=new Set();
@@ -163,7 +189,7 @@ function renderTree(){
   const extra=state.resources.filter(r=>["virtual","url"].includes(r.type)&&match(r));
   if(extra.length){const h=document.createElement("div");h.className="tree-section";h.textContent="Idées et liens";ui.tree.appendChild(h);extra.forEach(r=>ui.tree.appendChild(treeRow(r,0)))}
 }
-function canMoveResource(r){return state.mode==="fs"&&state.canWrite&&r&&!r.missing&&["file","folder"].includes(r.type)}
+function canMoveResource(r){return state.mode==="fs"&&r&&!r.missing&&["file","folder"].includes(r.type)}
 function treeRow(r,d){
   const row=document.createElement("div");row.className="tree-row"+(r.missing?" missing":"");row.dataset.resourceId=r.id;
   const n=nodeForResource(r.id);if(n&&n.id===state.selected)row.classList.add("selected");row.style.setProperty("--depth",d);
@@ -177,10 +203,11 @@ function treeRow(r,d){
   row.onclick=()=>{if(n){select(n.id);focus(n.id);closePanels()}};
   row.draggable=canMoveResource(r);
   if(row.draggable){
+    row.title=state.canWrite?"Glisser pour déplacer":"Glisser pour déplacer — une autorisation d’écriture pourra être demandée";
     row.addEventListener("dragstart",e=>{state.draggedResource=r.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",r.id);row.classList.add("dragging")});
     row.addEventListener("dragend",()=>{state.draggedResource=null;row.classList.remove("dragging");document.querySelectorAll(".tree-row.drop-target").forEach(x=>x.classList.remove("drop-target"))})
   }
-  if((r.type==="root"||r.type==="folder")&&state.mode==="fs"&&state.canWrite){
+  if((r.type==="root"||r.type==="folder")&&state.mode==="fs"){
     row.addEventListener("dragover",e=>{if(!state.draggedResource||state.draggedResource===r.id)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drop-target")});
     row.addEventListener("dragleave",()=>row.classList.remove("drop-target"));
     row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await moveResource(source,r)})
@@ -199,6 +226,7 @@ async function copyDirectoryHandle(srcHandle,targetDir,name){
 }
 async function moveResource(source,target){
   if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return;
+  if(!(await ensureWritePermission()))return;
   if(source.type==="folder"&&(target.path===source.path||target.path.startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return}
   const sourceParentPath=parentPath(source.path),targetPath=target.path||"";
   if(sourceParentPath===targetPath)return;
@@ -240,7 +268,7 @@ function dragNode(ev,n,e){
 function select(id){state.selected=id;renderTree();renderMap();renderInspector()}
 function manualEdge(a,b){if(state.view.edges.some(e=>e.from===a&&e.to===b))return;state.view.edges.push({id:"m-"+uuid(),from:a,to:b,kind:"manual"});setDirty()}
 function renderInspector(){
-  const r=selectedResource(),n=selectedNode();ui.noSelection.classList.toggle("hidden",!!r);ui.form.classList.toggle("hidden",!r);ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n)return;ui.title.value=r.title||"";ui.kind.textContent=typeLabel(r)+(r.missing?" — absent":"");ui.path.textContent=r.path||r.url||"(nœud conceptuel)";ui.size.textContent=["root","folder","file"].includes(r.type)?formatSize(r.size):"—";ui.modified.textContent=r.type==="file"?formatDate(r.lastModified):"—";ui.tags.value=(r.tags||[]).join(", ");ui.notes.value=r.notes||"";ui.openResource.disabled=r.type==="virtual";ui.openResource.textContent=["root","folder"].includes(r.type)?"▦ Galerie du dossier":"👁️ Ouvrir / prévisualiser";ui.deleteBtn.classList.toggle("hidden",!["virtual","url"].includes(r.type));ui.collapseBtn.classList.toggle("hidden",!children(n.id).length);ui.collapseBtn.textContent=n.collapsed?"▸ Déplier":"▾ Replier";ui.linkBtn.textContent=state.linkSource===n.id?"✕ Annuler le lien":"⛓️ Relier à…"
+  const r=selectedResource(),n=selectedNode();ui.noSelection.classList.toggle("hidden",!!r);ui.form.classList.toggle("hidden",!r);ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n)return;ui.title.value=r.title||"";ui.kind.textContent=typeLabel(r)+(r.missing?" — absent":"");ui.path.textContent=r.path||r.url||"(nœud conceptuel)";ui.size.textContent=["root","folder","file"].includes(r.type)?formatSize(r.size):"—";ui.size.title=Number.isFinite(r.size)?new Intl.NumberFormat("fr-BE").format(r.size)+" octets":"";ui.modified.textContent=r.type==="file"?formatDate(r.lastModified):"—";ui.tags.value=(r.tags||[]).join(", ");ui.notes.value=r.notes||"";ui.openResource.disabled=r.type==="virtual";ui.openResource.textContent=["root","folder"].includes(r.type)?"▦ Galerie du dossier":"👁️ Ouvrir / prévisualiser";ui.deleteBtn.classList.toggle("hidden",!["virtual","url"].includes(r.type));ui.collapseBtn.classList.toggle("hidden",!children(n.id).length);ui.collapseBtn.textContent=n.collapsed?"▸ Déplier":"▾ Replier";ui.linkBtn.textContent=state.linkSource===n.id?"✕ Annuler le lien":"⛓️ Relier à…"
 }
 function updateForm(){const r=selectedResource();if(!r)return;r.title=ui.title.value.trim()||r.title;r.tags=ui.tags.value.split(",").map(x=>x.trim()).filter(Boolean);r.notes=ui.notes.value;setDirty();renderTree();renderMap()}
 function toggleCollapse(){const n=selectedNode();if(!n)return;n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}
@@ -357,7 +385,12 @@ async function init(){
   try{
     wire();
     if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier";ui.recentBtn.disabled=true;ui.recentBtn.title="Non disponible avec ce navigateur"}
-    if("serviceWorker"in navigator){try{await navigator.serviceWorker.register("./sw.js",{scope:"./"})}catch(e){console.warn(e)}}
+    if("serviceWorker"in navigator){
+      try{
+        const reg=await navigator.serviceWorker.register("./sw.js?v="+APP,{scope:"./",updateViaCache:"none"});
+        await reg.update();
+      }catch(e){console.warn("Service worker registration/update failed",e)}
+    }
     if(new URLSearchParams(location.search).get("demo")==="1")demo();
     document.documentElement.dataset.glomBoot="ok"
   }catch(e){
