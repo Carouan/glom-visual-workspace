@@ -36,10 +36,14 @@ function descendants(view,rootId){
   while(stack.length){const id=stack.pop();(byParent.get(id)||[]).forEach(c=>{if(!seen.has(c)){seen.add(c);out.push(c);stack.push(c)}})}
   return out
 }
-function bounds(nodes){
-  if(!nodes.length)return{x:0,y:0,w:100,h:100};
-  const minX=Math.min(...nodes.map(n=>n.x)),minY=Math.min(...nodes.map(n=>n.y));
-  const maxX=Math.max(...nodes.map(n=>n.x+NODE_W)),maxY=Math.max(...nodes.map(n=>n.y+NODE_H));
+function bounds(nodes,objects=[]){
+  const boxes=[
+    ...nodes.map(n=>({x:n.x,y:n.y,w:NODE_W,h:NODE_H})),
+    ...objects.map(o=>({x:o.x||0,y:o.y||0,w:o.w||120,h:o.h||60}))
+  ];
+  if(!boxes.length)return{x:0,y:0,w:100,h:100};
+  const minX=Math.min(...boxes.map(b=>b.x)),minY=Math.min(...boxes.map(b=>b.y));
+  const maxX=Math.max(...boxes.map(b=>b.x+b.w)),maxY=Math.max(...boxes.map(b=>b.y+b.h));
   return{x:minX,y:minY,w:Math.max(1,maxX-minX),h:Math.max(1,maxY-minY)}
 }
 function metaFor(r){
@@ -56,8 +60,8 @@ function rgbaFromHex(hex,alpha){
 
 export function buildMindmapSvg(view,resources,{orientation="landscape",includeHidden=false,background="#ffffff"}={}){
   const resMap=new Map(resources.map(r=>[r.id,r])),hide=includeHidden?new Set():hiddenNodes(view);
-  const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)),nodeMap=new Map(nodes.map(n=>[n.id,n]));
-  const b=bounds(nodes),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
+  const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)),nodeMap=new Map(nodes.map(n=>[n.id,n])),objects=Array.isArray(view.objects)?view.objects:[];
+  const b=bounds(nodes,objects),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
 
   const frames=(view.frames||[]).map(frame=>{
     const ns=descendants(view,frame.rootNodeId).filter(id=>!hide.has(id)).map(id=>nodeMap.get(id)).filter(Boolean);if(!ns.length)return"";
@@ -70,6 +74,18 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
     const a=nodeMap.get(e.from),z=nodeMap.get(e.to),sx=a.x+NODE_W,sy=a.y+37,tx=z.x,ty=z.y+37,dx=Math.max(70,Math.abs(tx-sx)*.45);
     const stroke=e.kind==="manual"?"#3b82f6":"#94a3b8",dash=e.kind==="manual"?' stroke-dasharray="7 5"':"";
     return `<path d="M ${sx} ${sy} C ${sx+dx} ${sy}, ${tx-dx} ${ty}, ${tx} ${ty}" fill="none" stroke="${stroke}" stroke-width="2.2"${dash}/>`
+  }).join("");
+
+  const visualObjects=objects.map(o=>{
+    const x=Number(o.x)||0,y=Number(o.y)||0,w=Math.max(1,Number(o.w)||120),h=Math.max(1,Number(o.h)||60);
+    if(o.type==="text"){
+      const fs=Math.max(10,Number(o.fontSize)||18),lines=wrapText(o.text||"Texte",Math.max(10,Math.floor(w/(fs*.56))),Math.max(1,Math.floor(h/(fs*1.25))));
+      return `<g>${lines.map((line,i)=>`<text x="${x+8}" y="${y+fs+4+i*fs*1.2}" font-family="Arial, sans-serif" font-size="${fs}" fill="${xml(o.textColor||"#172033")}">${xml(line)}</text>`).join("")}</g>`
+    }
+    const fill=xml(o.fill||"#e0e7ff"),stroke=xml(o.stroke||"#6366f1");
+    if(o.shape==="ellipse")return `<ellipse cx="${x+w/2}" cy="${y+h/2}" rx="${w/2}" ry="${h/2}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    if(o.shape==="diamond")return `<polygon points="${x+w/2},${y} ${x+w},${y+h/2} ${x+w/2},${y+h} ${x},${y+h/2}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`
   }).join("");
 
   const cards=nodes.map(n=>{
@@ -86,7 +102,7 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
     </g>`
   }).join("");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${a4.w}" height="${a4.h}" viewBox="${area.x} ${area.y} ${area.w} ${area.h}" preserveAspectRatio="xMidYMid meet"><rect x="${area.x}" y="${area.y}" width="${area.w}" height="${area.h}" fill="${background}"/>${frames}${edges}${cards}</svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${a4.w}" height="${a4.h}" viewBox="${area.x} ${area.y} ${area.w} ${area.h}" preserveAspectRatio="xMidYMid meet"><rect x="${area.x}" y="${area.y}" width="${area.w}" height="${area.h}" fill="${background}"/>${frames}${edges}${visualObjects}${cards}</svg>`
 }
 function blobDownload(name,blob){const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
 export function exportSvg(name,view,resources,options){const svg=buildMindmapSvg(view,resources,options);blobDownload(name,new Blob([svg],{type:"image/svg+xml;charset=utf-8"}))}
