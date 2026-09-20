@@ -1,4 +1,3 @@
-const NODE_W=240,NODE_H=74;
 const TYPE_COLORS={root:"#16a34a",folder:"#f59e0b",file:"#64748b",virtual:"#8b5cf6",url:"#0ea5e9"};
 const FONT_STACKS={system:"Arial, sans-serif",rounded:"Trebuchet MS, Arial, sans-serif",serif:"Georgia, Times New Roman, serif",mono:"Consolas, Courier New, monospace"};
 
@@ -10,7 +9,8 @@ function iconFor(r){
   if(["mp4","webm","mov"].includes(e))return"🎬";if(e==="pdf")return"📕";if(["md","txt","rtf"].includes(e))return"📝";
   if(["js","ts","py","html","css","json","yaml","yml"].includes(e))return"💻";if(["xls","xlsx","ods","csv"].includes(e))return"📊";return"📄"
 }
-function styleFor(n,r){return Object.assign({icon:"",fontSize:14,fontFamily:"system",fontWeight:"650",italic:false,textAlign:"left",textColor:"#172033",backgroundColor:"#ffffff",borderColor:TYPE_COLORS[r?.type]||"#d8deea",borderWidth:1,shape:"rounded"},n.style||{})}
+function styleFor(n,r){return Object.assign({icon:"",fontSize:14,width:240,height:74,fontFamily:"system",fontWeight:"650",italic:false,textAlign:"left",textColor:"#172033",backgroundColor:"#ffffff",borderColor:TYPE_COLORS[r?.type]||"#d8deea",borderWidth:1,shape:"rounded"},n.style||{})}
+function nodeDims(n,r){const s=styleFor(n,r);return{w:Math.max(140,Number(s.width)||240),h:Math.max(60,Number(s.height)||74)}}
 function radius(shape){return shape==="rectangle"?2:shape==="pill"?37:12}
 function wrapText(text,max=28,lines=2){
   const words=String(text||"").split(/\s+/).filter(Boolean),out=[];let line="";
@@ -36,10 +36,10 @@ function descendants(view,rootId){
   while(stack.length){const id=stack.pop();(byParent.get(id)||[]).forEach(c=>{if(!seen.has(c)){seen.add(c);out.push(c);stack.push(c)}})}
   return out
 }
-function bounds(nodes,objects=[]){
+function bounds(nodes,resMap,objects=[]){
   const boxes=[
-    ...nodes.map(n=>({x:n.x,y:n.y,w:NODE_W,h:NODE_H})),
-    ...objects.map(o=>({x:o.x||0,y:o.y||0,w:o.w||120,h:o.h||60}))
+    ...nodes.map(n=>{const d=nodeDims(n,resMap.get(n.resourceId));return{x:n.x,y:n.y,w:d.w,h:d.h}}),
+    ...objects.map(o=>({x:Number(o.x)||0,y:Number(o.y)||0,w:Number(o.w)||120,h:Number(o.h)||60}))
   ];
   if(!boxes.length)return{x:0,y:0,w:100,h:100};
   const minX=Math.min(...boxes.map(b=>b.x)),minY=Math.min(...boxes.map(b=>b.y));
@@ -61,17 +61,17 @@ function rgbaFromHex(hex,alpha){
 export function buildMindmapSvg(view,resources,{orientation="landscape",includeHidden=false,background="#ffffff"}={}){
   const resMap=new Map(resources.map(r=>[r.id,r])),hide=includeHidden?new Set():hiddenNodes(view);
   const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)&&!resMap.get(n.resourceId).excluded),nodeMap=new Map(nodes.map(n=>[n.id,n])),objects=Array.isArray(view.objects)?view.objects:[];
-  const b=bounds(nodes,objects),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
+  const b=bounds(nodes,resMap,objects),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
 
   const frames=(view.frames||[]).map(frame=>{
     const ns=descendants(view,frame.rootNodeId).filter(id=>!hide.has(id)).map(id=>nodeMap.get(id)).filter(Boolean);if(!ns.length)return"";
-    const p=Number(frame.padding)||28,minX=Math.min(...ns.map(n=>n.x))-p,minY=Math.min(...ns.map(n=>n.y))-p-20,maxX=Math.max(...ns.map(n=>n.x+NODE_W))+p,maxY=Math.max(...ns.map(n=>n.y+NODE_H))+p;
-    const dash=frame.borderStyle==="dashed"?' stroke-dasharray="8 6"':"";
-    return `<g><rect x="${minX}" y="${minY}" width="${maxX-minX}" height="${maxY-minY}" rx="18" fill="${rgbaFromHex(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)))}" stroke="${xml(frame.borderColor||"#6366f1")}" stroke-width="2"${dash}/><text x="${minX+14}" y="${minY-6}" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="${xml(frame.borderColor||"#6366f1")}">${xml(frame.title||"Branche")}</text></g>`
+    const p=Number(frame.padding)||28,minX=Math.min(...ns.map(n=>n.x))-p,minY=Math.min(...ns.map(n=>n.y))-p-28,maxX=Math.max(...ns.map(n=>n.x+nodeDims(n,resMap.get(n.resourceId)).w))+p,maxY=Math.max(...ns.map(n=>n.y+nodeDims(n,resMap.get(n.resourceId)).h))+p;
+    const dash=frame.borderStyle==="dashed"?' stroke-dasharray="8 6"':"",fs=Math.max(8,Number(frame.fontSize)||12),family=FONT_STACKS[frame.fontFamily]||FONT_STACKS.system;
+    return `<g><rect x="${minX}" y="${minY}" width="${maxX-minX}" height="${maxY-minY}" rx="18" fill="${rgbaFromHex(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)))}" stroke="${xml(frame.borderColor||"#6366f1")}" stroke-width="2"${dash}/><text x="${minX+14}" y="${minY-7}" font-family="${xml(family)}" font-size="${fs}" font-weight="${xml(frame.fontWeight||"800")}" font-style="${frame.italic?"italic":"normal"}" fill="${xml(frame.textColor||frame.borderColor||"#6366f1")}">${xml(frame.title||"Branche")}</text></g>`
   }).join("");
 
   const edges=(view.edges||[]).filter(e=>nodeMap.has(e.from)&&nodeMap.has(e.to)).map(e=>{
-    const a=nodeMap.get(e.from),z=nodeMap.get(e.to),sx=a.x+NODE_W,sy=a.y+37,tx=z.x,ty=z.y+37,dx=Math.max(70,Math.abs(tx-sx)*.45);
+    const a=nodeMap.get(e.from),z=nodeMap.get(e.to),ad=nodeDims(a,resMap.get(a.resourceId)),zd=nodeDims(z,resMap.get(z.resourceId)),sx=a.x+ad.w,sy=a.y+ad.h/2,tx=z.x,ty=z.y+zd.h/2,dx=Math.max(70,Math.abs(tx-sx)*.45);
     const stroke=e.kind==="manual"?"#3b82f6":"#94a3b8",dash=e.kind==="manual"?' stroke-dasharray="7 5"':"";
     return `<path d="M ${sx} ${sy} C ${sx+dx} ${sy}, ${tx-dx} ${ty}, ${tx} ${ty}" fill="none" stroke="${stroke}" stroke-width="2.2"${dash}/>`
   }).join("");
@@ -79,8 +79,8 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
   const visualObjects=objects.map(o=>{
     const x=Number(o.x)||0,y=Number(o.y)||0,w=Math.max(1,Number(o.w)||120),h=Math.max(1,Number(o.h)||60);
     if(o.type==="text"){
-      const fs=Math.max(10,Number(o.fontSize)||18),lines=wrapText(o.text||"Texte",Math.max(10,Math.floor(w/(fs*.56))),Math.max(1,Math.floor(h/(fs*1.25))));
-      return `<g>${lines.map((line,i)=>`<text x="${x+8}" y="${y+fs+4+i*fs*1.2}" font-family="Arial, sans-serif" font-size="${fs}" fill="${xml(o.textColor||"#172033")}">${xml(line)}</text>`).join("")}</g>`
+      const fs=Math.max(8,Number(o.fontSize)||18),lines=wrapText(o.text||"Texte",Math.max(10,Math.floor(w/(fs*.56))),Math.max(1,Math.floor(h/(fs*1.25)))),family=FONT_STACKS[o.fontFamily]||FONT_STACKS.system,anchor=o.textAlign==="center"?"middle":o.textAlign==="right"?"end":"start",tx=o.textAlign==="center"?x+w/2:o.textAlign==="right"?x+w-8:x+8;
+      return `<g>${lines.map((line,i)=>`<text x="${tx}" y="${y+fs+4+i*fs*1.2}" text-anchor="${anchor}" font-family="${xml(family)}" font-size="${fs}" font-weight="${xml(o.fontWeight||"500")}" font-style="${o.italic?"italic":"normal"}" fill="${xml(o.textColor||"#172033")}">${xml(line)}</text>`).join("")}</g>`
     }
     const fill=xml(o.fill||"#e0e7ff"),stroke=xml(o.stroke||"#6366f1");
     if(o.shape==="ellipse")return `<ellipse cx="${x+w/2}" cy="${y+h/2}" rx="${w/2}" ry="${h/2}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
@@ -89,16 +89,16 @@ export function buildMindmapSvg(view,resources,{orientation="landscape",includeH
   }).join("");
 
   const cards=nodes.map(n=>{
-    const r=resMap.get(n.resourceId),s=styleFor(n,r),title=wrapText(r.title,Math.max(16,Math.round(31-(Number(s.fontSize)||14)/2)),2),meta=metaFor(r);
+    const r=resMap.get(n.resourceId),s=styleFor(n,r),d=nodeDims(n,r),title=wrapText(r.title,Math.max(12,Math.floor((d.w-70)/Math.max(7,(Number(s.fontSize)||14)*.56))),Math.max(2,Math.floor((d.h-34)/Math.max(14,(Number(s.fontSize)||14)*1.2)))),meta=metaFor(r);
     const align=s.textAlign==="center"?"middle":s.textAlign==="right"?"end":"start";
-    const tx=s.textAlign==="center"?n.x+144:s.textAlign==="right"?n.x+224:n.x+48;
-    const titleSvg=title.map((line,i)=>`<text x="${tx}" y="${n.y+25+i*17}" text-anchor="${align}" font-family="${xml(FONT_STACKS[s.fontFamily]||FONT_STACKS.system)}" font-size="${Number(s.fontSize)||14}" font-weight="${xml(s.fontWeight||"650")}" font-style="${s.italic?"italic":"normal"}" fill="${xml(s.textColor||"#172033")}">${xml(line)}</text>`).join("");
+    const tx=s.textAlign==="center"?n.x+d.w/2:s.textAlign==="right"?n.x+d.w-16:n.x+48;
+    const titleSvg=title.map((line,i)=>`<text x="${tx}" y="${n.y+24+i*(Number(s.fontSize)||14)*1.2}" text-anchor="${align}" font-family="${xml(FONT_STACKS[s.fontFamily]||FONT_STACKS.system)}" font-size="${Number(s.fontSize)||14}" font-weight="${xml(s.fontWeight||"650")}" font-style="${s.italic?"italic":"normal"}" fill="${xml(s.textColor||"#172033")}">${xml(line)}</text>`).join("");
     const bw=Math.max(0,Number(s.borderWidth)||0);
     return `<g>
-      <rect x="${n.x}" y="${n.y}" width="${NODE_W}" height="${NODE_H}" rx="${radius(s.shape)}" fill="${xml(s.backgroundColor||"#ffffff")}" stroke="${xml(s.borderColor||TYPE_COLORS[r.type]||"#cbd5e1")}" stroke-width="${bw}"/>
+      <rect x="${n.x}" y="${n.y}" width="${d.w}" height="${d.h}" rx="${radius(s.shape)}" fill="${xml(s.backgroundColor||"#ffffff")}" stroke="${xml(s.borderColor||TYPE_COLORS[r.type]||"#cbd5e1")}" stroke-width="${bw}"/>
       <text x="${n.x+18}" y="${n.y+32}" font-size="21">${xml(s.icon||iconFor(r))}</text>
       ${titleSvg}
-      <text x="${n.x+48}" y="${n.y+61}" font-family="Arial, sans-serif" font-size="10.5" fill="#64748b">${xml(meta)}</text>
+      <text x="${n.x+48}" y="${n.y+d.h-12}" font-family="Arial, sans-serif" font-size="10.5" fill="#64748b">${xml(meta)}</text>
     </g>`
   }).join("");
 
