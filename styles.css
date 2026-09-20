@@ -37,3 +37,6 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
 .viewer-warnings{margin-top:1rem;border:1px solid var(--border);border-radius:8px;padding:.5rem .65rem;color:var(--muted)}
 .gallery-head{color:var(--muted);font-size:.86rem}.resource-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem}.resource-card{min-height:120px;padding:.8rem;display:flex;flex-direction:column;align-items:flex-start;gap:.4rem;text-align:left;background:var(--surface2)}.resource-card-icon{font-size:2rem}.resource-card strong{overflow-wrap:anywhere}.resource-card small{color:var(--muted);overflow-wrap:anywhere}
 @media(max-width:700px){dialog{width:98vw;height:92vh}.resource-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.source-line{grid-template-columns:40px minmax(0,1fr)}}
+
+/* File explorer V0.2.1 */
+.tree-row{position:relative}.tree-toggle,.tree-toggle-placeholder{width:24px;height:24px;flex:0 0 24px;padding:0;border:0;background:transparent;display:grid;place-items:center;color:var(--muted)}.tree-toggle:hover{color:var(--primary);background:var(--surface2)}.tree-row[draggable="true"]{cursor:grab}.tree-row.dragging{opacity:.45}.tree-row.drop-target{outline:2px solid var(--primary);background:var(--primary2)}.tree-row.drop-target .tree-label{font-weight:700}

@@ -5,15 +5,15 @@ const ui={
   openBtn:el("openBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
-  noSelection:el("noSelection"),form:el("form"),selectionKind:el("selectionKind"),title:el("title"),kind:el("kind"),path:el("path"),tags:el("tags"),notes:el("notes"),
+  noSelection:el("noSelection"),form:el("form"),selectionKind:el("selectionKind"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),
   openResource:el("openResource"),linkBtn:el("linkBtn"),collapseBtn:el("collapseBtn"),deleteBtn:el("deleteBtn"),
   preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn")
 };
 const state={
-  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null
+  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null
 };
-const FORMAT=1,APP="0.2.0",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.2.1",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -39,13 +39,21 @@ function parentOf(r,list){
   const p=parentPath(r.path);if(!p)return list.find(x=>x.type==="root")||null;
   return list.find(x=>x.type==="folder"&&x.path===p)||list.find(x=>x.type==="root")||null
 }
+function applyFolderSizes(list){
+  const files=list.filter(r=>r.type==="file"&&!r.missing&&Number.isFinite(r.size));
+  list.forEach(r=>{
+    if(r.type==="root")r.size=files.reduce((s,f)=>s+f.size,0);
+    else if(r.type==="folder"){const p=r.path+"/";r.size=files.reduce((s,f)=>s+(f.path.startsWith(p)?f.size:0),0)}
+  });
+  return list
+}
 function reconcile(workspace,entries,old=[]){
   const oldMap=new Map();old.forEach(r=>{if(["root","folder","file"].includes(r.type))oldMap.set(r.type+":"+(r.path||""),r)});
-  const rootOld=oldMap.get("root:");const out=[{id:rootOld&&rootOld.id||"root-"+workspace.id,type:"root",path:"",title:rootOld&&rootOld.title||workspace.name,tags:rootOld&&rootOld.tags||[],notes:rootOld&&rootOld.notes||"",missing:false}];
+  const rootOld=oldMap.get("root:");const out=[{id:rootOld&&rootOld.id||"root-"+workspace.id,type:"root",path:"",title:rootOld&&rootOld.title||workspace.name,tags:rootOld&&rootOld.tags||[],notes:rootOld&&rootOld.notes||"",missing:false,size:0,lastModified:null}];
   const seen=new Set(["root:"]);
-  entries.forEach(e=>{const k=e.type+":"+e.path,o=oldMap.get(k);out.push({id:o&&o.id||"r-"+hash(k),type:e.type,path:e.path,title:o&&o.title||e.name||base(e.path),tags:o&&o.tags||[],notes:o&&o.notes||"",missing:false});seen.add(k)});
+  entries.forEach(e=>{const k=e.type+":"+e.path,o=oldMap.get(k);out.push({id:o&&o.id||"r-"+hash(k),type:e.type,path:e.path,title:o&&o.title||e.name||base(e.path),tags:o&&o.tags||[],notes:o&&o.notes||"",missing:false,size:Number.isFinite(e.size)?e.size:(o&&Number.isFinite(o.size)?o.size:null),lastModified:e.lastModified??o?.lastModified??null});seen.add(k)});
   old.forEach(o=>{if(["virtual","url"].includes(o.type))out.push(Object.assign({},o,{missing:false}));else{const k=o.type+":"+(o.path||"");if(o.type!=="root"&&!seen.has(k))out.push(Object.assign({},o,{missing:true}))}});
-  return out
+  return applyFolderSizes(out)
 }
 function layout(resources){
   const root=resources.find(r=>r.type==="root"),pos=new Map();if(!root)return pos;
@@ -68,12 +76,24 @@ async function dirByParts(root,parts,create){let d=root;for(const part of parts)
 async function readJson(root,path){try{const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name),f=await h.getFile();return JSON.parse(await f.text())}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e);return null}}
 async function writeJson(root,path,obj){const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,true),h=await d.getFileHandle(name,{create:true}),w=await h.createWritable();await w.write(JSON.stringify(obj,null,2)+"\n");await w.close()}
 async function scan(root){
-  const entries=[];let truncated=false;async function walk(d,b,depth){if(depth>10||entries.length>=1200){truncated=true;return}const arr=[];for await(const pair of d.entries()){if(!IGNORED.has(pair[0]))arr.push(pair)}arr.sort((a,b)=>a[1].kind!==b[1].kind?(a[1].kind==="directory"?-1:1):a[0].localeCompare(b[0],undefined,{numeric:true}));for(const pair of arr){if(entries.length>=1200){truncated=true;return}const path=b?b+"/"+pair[0]:pair[0];entries.push({type:pair[1].kind==="directory"?"folder":"file",path:path,name:pair[0]});if(pair[1].kind==="directory")await walk(pair[1],path,depth+1)}}await walk(root,"",0);return{entries:entries,truncated:truncated}
+  const entries=[];let truncated=false;
+  async function walk(d,b,depth){
+    if(depth>10||entries.length>=1200){truncated=true;return}
+    const arr=[];for await(const pair of d.entries()){if(!IGNORED.has(pair[0]))arr.push(pair)}
+    arr.sort((a,b)=>a[1].kind!==b[1].kind?(a[1].kind==="directory"?-1:1):a[0].localeCompare(b[0],undefined,{numeric:true}));
+    for(const pair of arr){
+      if(entries.length>=1200){truncated=true;return}
+      const path=b?b+"/"+pair[0]:pair[0];
+      if(pair[1].kind==="directory"){entries.push({type:"folder",path,name:pair[0],size:null,lastModified:null});await walk(pair[1],path,depth+1)}
+      else{const file=await pair[1].getFile();entries.push({type:"file",path,name:pair[0],size:file.size,lastModified:file.lastModified})}
+    }
+  }
+  await walk(root,"",0);return{entries,truncated}
 }
 async function permission(handle,user){try{if(handle.queryPermission){const q=await handle.queryPermission({mode:"readwrite"});if(q==="granted")return true}if(user&&handle.requestPermission)return(await handle.requestPermission({mode:"readwrite"}))==="granted"}catch(e){}return false}
 function fallbackScan(files){
   const map=new Map(),fileMap=new Map();let rootName="Workspace importé";
-  Array.from(files||[]).forEach(f=>{let parts=(f.webkitRelativePath||f.name).split("/").filter(Boolean);if(parts.length>1){rootName=parts[0]||rootName;parts.shift()}if([".glom",".git","node_modules"].includes(parts[0]))return;const rel=parts.join("/");if(!rel)return;for(let i=1;i<parts.length;i++){const p=parts.slice(0,i).join("/");if(!map.has("folder:"+p))map.set("folder:"+p,{type:"folder",path:p,name:parts[i-1]})}map.set("file:"+rel,{type:"file",path:rel,name:parts[parts.length-1]});fileMap.set(rel,f)});
+  Array.from(files||[]).forEach(f=>{let parts=(f.webkitRelativePath||f.name).split("/").filter(Boolean);if(parts.length>1){rootName=parts[0]||rootName;parts.shift()}if([".glom",".git","node_modules"].includes(parts[0]))return;const rel=parts.join("/");if(!rel)return;for(let i=1;i<parts.length;i++){const p=parts.slice(0,i).join("/");if(!map.has("folder:"+p))map.set("folder:"+p,{type:"folder",path:p,name:parts[i-1]})}map.set("file:"+rel,{type:"file",path:rel,name:parts[parts.length-1],size:f.size,lastModified:f.lastModified});fileMap.set(rel,f)});
   return{entries:Array.from(map.values()),files:fileMap,rootName:rootName}
 }
 function normalizeFallback(raw){const p=raw.split("/").filter(Boolean);if(p.length>1)p.shift();return p.join("/")}
@@ -82,23 +102,30 @@ async function fallbackMetadata(files){
 }
 async function fileFromPath(root,path){const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name);return h.getFile()}
 function download(name,obj){const b=new Blob([JSON.stringify(obj,null,2)+"\n"],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function formatSize(n){return Number.isFinite(n)?(n/1048576).toFixed(n===0?0:n<1048576?3:2)+" Mo":"—"}
+function formatDate(n){return Number.isFinite(n)?new Intl.DateTimeFormat("fr-BE",{dateStyle:"medium",timeStyle:"short"}).format(new Date(n)):"—"}
+function initTreeExpansion(){
+  state.treeExpanded=new Set();
+  const root=state.resources.find(r=>r.type==="root");if(root)state.treeExpanded.add(root.id);
+  state.resources.filter(r=>r.type==="folder"&&!r.missing&&!r.path.includes("/")).forEach(r=>state.treeExpanded.add(r.id))
+}
 function safeName(s){return(s||"workspace").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase()||"workspace"}
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
 }
 async function loadHandle(h,user){
   setStatus("Lecture du workspace…");const s=await scan(h),w0=await readJson(h,WS),r0=await readJson(h,RES),v0=await readJson(h,VIEW),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),v=mergeView(v0,r),can=await permission(h,user);
-  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0});
+  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0});initTreeExpansion();
   try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated)alert("Le scan a atteint la limite de sécurité de la V0.1.");if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false)
 }
 async function loadFallback(files){
   if(!files||!files.length)return;setStatus("Import du dossier…");const s=fallbackScan(files),m=await fallbackMetadata(files),w=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace(s.rootName),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),v=mergeView(m.view,r);
-  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:false,dirty:false});show();fit();setStatus("Mode compatibilité — export manuel")
+  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:false,dirty:false});initTreeExpansion();show();fit();setStatus("Mode compatibilité — export manuel")
 }
 function demo(){
   const w=newWorkspace("Chef-d'œuvre — Les jeux vidéo");w.id="demo-marjolaine";const raw=[["folder","Histoire"],["folder","Histoire/Premiers jeux"],["file","Histoire/Premiers jeux/Tennis for Two.pdf"],["file","Histoire/Premiers jeux/Spacewar-notes.md"],["folder","Game design"],["file","Game design/Fiche de concept.md"],["folder","Level design"],["file","Level design/Plan niveau 1.png"],["folder","Mon jeu"],["folder","Mon jeu/Sprites"],["file","Mon jeu/Sprites/personnage.png"],["folder","Sources"],["file","Sources/Bibliographie.md"]].map(x=>({type:x[0],path:x[1],name:base(x[1])}));
   const r=reconcile(w,raw,[]),idea={id:"v-"+uuid(),type:"virtual",title:"💡 Pourquoi un jeu est-il amusant ?",tags:["question"],notes:"À relier au game design et aux playtests."},url={id:"u-"+uuid(),type:"url",title:"Brookhaven — Tennis for Two",url:"https://www.bnl.gov/about/history/firstvideo.php",tags:["source"],notes:""};r.push(idea,url);const v=freshView(r);const ni=nodeFrom(v,idea.id),nu=nodeFrom(v,url.id);if(ni){ni.x=1000;ni.y=680}if(nu){nu.x=1300;nu.y=220}const gd=r.find(x=>x.path==="Game design"),tf=r.find(x=>x.path&&x.path.includes("Tennis for Two"));if(gd&&ni)v.edges.push({id:"m-"+uuid(),from:"n-"+gd.id,to:ni.id,kind:"manual"});if(tf&&nu)v.edges.push({id:"m-"+uuid(),from:"n-"+tf.id,to:nu.id,kind:"manual"});
-  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:false,dirty:false});show();fit();setStatus("Démo locale")
+  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,linkSource:null,canWrite:false,dirty:false});initTreeExpansion();show();fit();setStatus("Démo locale")
 }
 function nodeFrom(v,rid){return v.nodes.find(n=>n.resourceId===rid)}
 async function rescan(){
@@ -114,12 +141,78 @@ function show(){
 }
 function match(r){if(!state.search)return true;const h=[r.title,r.path,r.url,r.notes].concat(r.tags||[]).filter(Boolean).join(" ").toLowerCase();return h.includes(state.search.toLowerCase())}
 function render(){renderTree();renderMap();renderInspector();transform()}
-function renderTree(){
-  ui.tree.replaceChildren();if(!state.workspace)return;const phys=state.resources.filter(r=>["root","folder","file"].includes(r.type)&&match(r)),extra=state.resources.filter(r=>["virtual","url"].includes(r.type)&&match(r));
-  phys.forEach(r=>ui.tree.appendChild(treeRow(r,r.type==="root"?0:(r.path.split("/").length||1))));if(extra.length){const h=document.createElement("div");h.className="tree-section";h.textContent="Idées et liens";ui.tree.appendChild(h);extra.forEach(r=>ui.tree.appendChild(treeRow(r,0)))}
+function physicalChildrenOf(r){
+  return state.resources.filter(x=>!x.missing&&["folder","file"].includes(x.type)&&parentOf(x,state.resources)?.id===r.id)
+    .sort((a,b)=>a.type!==b.type?(a.type==="folder"?-1:1):a.title.localeCompare(b.title,undefined,{numeric:true}))
 }
+function renderTree(){
+  ui.tree.replaceChildren();if(!state.workspace)return;
+  const root=state.resources.find(r=>r.type==="root");
+  if(state.search){
+    state.resources.filter(r=>["root","folder","file"].includes(r.type)&&match(r)).sort((a,b)=>(a.path||"").localeCompare(b.path||"",undefined,{numeric:true}))
+      .forEach(r=>ui.tree.appendChild(treeRow(r,r.type==="root"?0:(r.path.split("/").length||1))));
+  }else if(root){
+    const walk=(r,d)=>{ui.tree.appendChild(treeRow(r,d));if((r.type==="root"||r.type==="folder")&&state.treeExpanded.has(r.id))physicalChildrenOf(r).forEach(ch=>walk(ch,d+1))};
+    walk(root,0);
+  }
+  const extra=state.resources.filter(r=>["virtual","url"].includes(r.type)&&match(r));
+  if(extra.length){const h=document.createElement("div");h.className="tree-section";h.textContent="Idées et liens";ui.tree.appendChild(h);extra.forEach(r=>ui.tree.appendChild(treeRow(r,0)))}
+}
+function canMoveResource(r){return state.mode==="fs"&&state.canWrite&&r&&!r.missing&&["file","folder"].includes(r.type)}
 function treeRow(r,d){
-  const row=document.createElement("div");row.className="tree-row"+(r.missing?" missing":"");const n=nodeForResource(r.id);if(n&&n.id===state.selected)row.classList.add("selected");row.style.setProperty("--depth",d);const ind=document.createElement("span");ind.className="tree-indent";const ic=document.createElement("span");ic.textContent=icon(r);const lab=document.createElement("span");lab.className="tree-label";lab.textContent=r.title;row.append(ind,ic,lab);row.onclick=()=>{if(n){select(n.id);focus(n.id);closePanels()}};return row
+  const row=document.createElement("div");row.className="tree-row"+(r.missing?" missing":"");row.dataset.resourceId=r.id;
+  const n=nodeForResource(r.id);if(n&&n.id===state.selected)row.classList.add("selected");row.style.setProperty("--depth",d);
+  const ind=document.createElement("span");ind.className="tree-indent";
+  let toggle;
+  if(r.type==="root"||r.type==="folder"){
+    toggle=document.createElement("button");toggle.type="button";toggle.className="tree-toggle";toggle.textContent=state.treeExpanded.has(r.id)?"▾":"▸";toggle.title=state.treeExpanded.has(r.id)?"Replier":"Déplier";
+    toggle.onclick=e=>{e.stopPropagation();if(state.treeExpanded.has(r.id))state.treeExpanded.delete(r.id);else state.treeExpanded.add(r.id);renderTree()}
+  }else{toggle=document.createElement("span");toggle.className="tree-toggle-placeholder"}
+  const ic=document.createElement("span");ic.textContent=icon(r);const lab=document.createElement("span");lab.className="tree-label";lab.textContent=r.title;row.append(ind,toggle,ic,lab);
+  row.onclick=()=>{if(n){select(n.id);focus(n.id);closePanels()}};
+  row.draggable=canMoveResource(r);
+  if(row.draggable){
+    row.addEventListener("dragstart",e=>{state.draggedResource=r.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",r.id);row.classList.add("dragging")});
+    row.addEventListener("dragend",()=>{state.draggedResource=null;row.classList.remove("dragging");document.querySelectorAll(".tree-row.drop-target").forEach(x=>x.classList.remove("drop-target"))})
+  }
+  if((r.type==="root"||r.type==="folder")&&state.mode==="fs"&&state.canWrite){
+    row.addEventListener("dragover",e=>{if(!state.draggedResource||state.draggedResource===r.id)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drop-target")});
+    row.addEventListener("dragleave",()=>row.classList.remove("drop-target"));
+    row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await moveResource(source,r)})
+  }
+  return row
+}
+async function entryExists(dir,name){for await(const [n] of dir.entries())if(n===name)return true;return false}
+async function copyFileHandle(srcHandle,targetDir,name){
+  const f=await srcHandle.getFile(),dest=await targetDir.getFileHandle(name,{create:true}),w=await dest.createWritable();await w.write(f);await w.close()
+}
+async function copyDirectoryHandle(srcHandle,targetDir,name){
+  const dest=await targetDir.getDirectoryHandle(name,{create:true});
+  for await(const [childName,child] of srcHandle.entries()){
+    if(child.kind==="directory")await copyDirectoryHandle(child,dest,childName);else await copyFileHandle(child,dest,childName)
+  }
+}
+async function moveResource(source,target){
+  if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return;
+  if(source.type==="folder"&&(target.path===source.path||target.path.startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return}
+  const sourceParentPath=parentPath(source.path),targetPath=target.path||"";
+  if(sourceParentPath===targetPath)return;
+  const name=base(source.path),sourceParent=await dirByParts(state.handle,sourceParentPath.split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,targetPath.split("/").filter(Boolean),false);
+  if(await entryExists(targetDir,name)){alert("Un élément nommé « "+name+" » existe déjà dans ce dossier.");return}
+  setStatus("Déplacement de « "+name+" »…");
+  try{
+    if(source.type==="file"){const h=await sourceParent.getFileHandle(name);await copyFileHandle(h,targetDir,name);await sourceParent.removeEntry(name)}
+    else{const h=await sourceParent.getDirectoryHandle(name);await copyDirectoryHandle(h,targetDir,name);await sourceParent.removeEntry(name,{recursive:true})}
+  }catch(e){console.error(e);setStatus("Déplacement impossible","bad");alert("Impossible de déplacer cet élément : "+(e.message||e));return}
+  const oldPath=source.path,newPath=targetPath?targetPath+"/"+name:name,prefix=oldPath+"/";
+  state.resources.forEach(r=>{if(r.path===oldPath)r.path=newPath;else if(r.path&&r.path.startsWith(prefix))r.path=newPath+r.path.slice(oldPath.length)});
+  applyFolderSizes(state.resources);
+  const movedNode=nodeForResource(source.id),targetNode=nodeForResource(target.id);
+  if(movedNode&&targetNode){
+    state.view.edges=state.view.edges.filter(e=>!(e.kind==="hierarchy"&&e.to===movedNode.id));
+    state.view.edges.push({id:"h-"+target.id+"-"+source.id,from:targetNode.id,to:movedNode.id,kind:"hierarchy"})
+  }
+  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderInspector();setStatus("Déplacement terminé","ok")
 }
 function children(id){return state.view?state.view.edges.filter(e=>e.kind==="hierarchy"&&e.from===id).map(e=>e.to):[]}
 function hiddenNodes(){const h=new Set();function hide(id){children(id).forEach(c=>{h.add(c);hide(c)})}(state.view&&state.view.nodes||[]).forEach(n=>{if(n.collapsed)hide(n.id)});return h}
@@ -142,7 +235,7 @@ function dragNode(ev,n,e){
 function select(id){state.selected=id;renderTree();renderMap();renderInspector()}
 function manualEdge(a,b){if(state.view.edges.some(e=>e.from===a&&e.to===b))return;state.view.edges.push({id:"m-"+uuid(),from:a,to:b,kind:"manual"});setDirty()}
 function renderInspector(){
-  const r=selectedResource(),n=selectedNode();ui.noSelection.classList.toggle("hidden",!!r);ui.form.classList.toggle("hidden",!r);ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n)return;ui.title.value=r.title||"";ui.kind.textContent=typeLabel(r)+(r.missing?" — absent":"");ui.path.textContent=r.path||r.url||"(nœud conceptuel)";ui.tags.value=(r.tags||[]).join(", ");ui.notes.value=r.notes||"";ui.openResource.disabled=r.type==="virtual";ui.openResource.textContent=["root","folder"].includes(r.type)?"▦ Galerie du dossier":"👁️ Ouvrir / prévisualiser";ui.deleteBtn.classList.toggle("hidden",!["virtual","url"].includes(r.type));ui.collapseBtn.classList.toggle("hidden",!children(n.id).length);ui.collapseBtn.textContent=n.collapsed?"▸ Déplier":"▾ Replier";ui.linkBtn.textContent=state.linkSource===n.id?"✕ Annuler le lien":"⛓️ Relier à…"
+  const r=selectedResource(),n=selectedNode();ui.noSelection.classList.toggle("hidden",!!r);ui.form.classList.toggle("hidden",!r);ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n)return;ui.title.value=r.title||"";ui.kind.textContent=typeLabel(r)+(r.missing?" — absent":"");ui.path.textContent=r.path||r.url||"(nœud conceptuel)";ui.size.textContent=["root","folder","file"].includes(r.type)?formatSize(r.size):"—";ui.modified.textContent=r.type==="file"?formatDate(r.lastModified):"—";ui.tags.value=(r.tags||[]).join(", ");ui.notes.value=r.notes||"";ui.openResource.disabled=r.type==="virtual";ui.openResource.textContent=["root","folder"].includes(r.type)?"▦ Galerie du dossier":"👁️ Ouvrir / prévisualiser";ui.deleteBtn.classList.toggle("hidden",!["virtual","url"].includes(r.type));ui.collapseBtn.classList.toggle("hidden",!children(n.id).length);ui.collapseBtn.textContent=n.collapsed?"▸ Déplier":"▾ Replier";ui.linkBtn.textContent=state.linkSource===n.id?"✕ Annuler le lien":"⛓️ Relier à…"
 }
 function updateForm(){const r=selectedResource();if(!r)return;r.title=ui.title.value.trim()||r.title;r.tags=ui.tags.value.split(",").map(x=>x.trim()).filter(Boolean);r.notes=ui.notes.value;setDirty();renderTree();renderMap()}
 function toggleCollapse(){const n=selectedNode();if(!n)return;n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}
