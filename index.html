@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="description" content="G.L.O.M. Visual Workspace — explorateur visuel local-first de fichiers, ressources et idées.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>G.L.O.M. Visual Workspace</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">G</span>
+      <div><strong>G.L.O.M. Visual Workspace</strong><small id="workspaceName">Aucun workspace ouvert</small></div>
+    </div>
+    <nav class="toolbar">
+      <button id="openBtn" class="primary">📂 Ouvrir un workspace</button>
+      <button id="demoBtn">🧪 Démo</button>
+      <button id="scanBtn" disabled>↻ Rescanner</button>
+      <button id="saveBtn" disabled>💾 Enregistrer</button>
+      <span class="sep"></span>
+      <button id="ideaBtn" disabled>＋ Idée</button>
+      <button id="urlBtn" disabled>🔗 Lien</button>
+      <button id="fitBtn" disabled>⊙ Recentrer</button>
+      <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
+      <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
+    </nav>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.1.0</span></div>
+  </header>
+
+  <main class="shell">
+    <aside id="resourcesPanel" class="panel resources">
+      <div class="panel-head"><div><strong>Ressources</strong><small id="count">0 élément</small></div><button class="close mobile-only" data-close="resourcesPanel">×</button></div>
+      <div class="panel-body">
+        <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Fichier, tag, note…"></label>
+        <div class="legend"><span>📁 dossier</span><span>📄 fichier</span><span>💡 idée</span><span>🔗 web</span></div>
+        <div id="tree"></div>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-tools">
+        <button id="zoomOut">−</button><span id="zoomValue">100%</span><button id="zoomIn">＋</button>
+        <span class="sep"></span><span id="hint">Glisser le fond pour déplacer la vue</span>
+      </div>
+
+      <div id="welcome" class="welcome">
+        <div class="welcome-icon">🗺️</div>
+        <h1>Vos fichiers, mais vus autrement.</h1>
+        <p>Choisissez un dossier : G.L.O.M. construit une carte visuelle de ses ressources sans déplacer ni enfermer vos fichiers.</p>
+        <div><button id="welcomeOpen" class="primary">📂 Choisir un dossier</button> <button id="welcomeDemo">🧪 Charger la démo</button></div>
+        <small>Local-first : le contenu du workspace n'est pas envoyé par l'application.</small>
+      </div>
+
+      <div id="viewport" class="viewport hidden">
+        <div id="world" class="world">
+          <svg id="edges" width="8000" height="8000"></svg>
+          <div id="nodes"></div>
+        </div>
+      </div>
+
+      <div id="compat" class="compat hidden"><strong>Mode compatibilité :</strong> le navigateur fournit une copie de lecture du dossier. Les métadonnées seront exportées en JSON au lieu d'être écrites directement dans .glom/.</div>
+    </section>
+
+    <aside id="inspectorPanel" class="panel inspector">
+      <div class="panel-head"><div><strong>Détails</strong><small id="selectionKind">Aucune sélection</small></div><button class="close mobile-only" data-close="inspectorPanel">×</button></div>
+      <div id="noSelection" class="no-selection">👆<p>Sélectionnez un nœud pour modifier son titre d'affichage, ses tags et ses notes.</p></div>
+      <form id="form" class="form hidden">
+        <label>Titre d'affichage<input id="title" type="text"></label>
+        <label>Type<code id="kind"></code></label>
+        <label>Chemin / URL<code id="path"></code></label>
+        <label>Tags <small>(séparés par des virgules)</small><input id="tags" type="text"></label>
+        <label>Notes<textarea id="notes" rows="8"></textarea></label>
+        <div class="form-actions">
+          <button type="button" id="openResource">👁️ Ouvrir / prévisualiser</button>
+          <button type="button" id="linkBtn">⛓️ Relier à…</button>
+          <button type="button" id="collapseBtn">▾ Replier</button>
+          <button type="button" id="deleteBtn" class="danger hidden">🗑️ Supprimer ce nœud</button>
+        </div>
+      </form>
+    </aside>
+  </main>
+
+  <dialog id="preview">
+    <header><div><strong id="previewTitle"></strong><small id="previewMeta"></small></div><button id="previewClose">×</button></header>
+    <div id="previewBody"></div>
+  </dialog>
+
+  <input id="folderFallback" type="file" webkitdirectory multiple hidden>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
