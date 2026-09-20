@@ -21,6 +21,12 @@ try{
   }));
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
+  const version=await page.$eval(".badge",el=>el.textContent||"");
+  if(version.trim()!=="v0.2.4")throw new Error("Unexpected UI version: "+version);
+  const recentVisible=await page.$eval("#recentBtn",el=>!!el && getComputedStyle(el).display!=="none");
+  if(!recentVisible)throw new Error("Recent workspaces button is not visible");
+  const folderToggle=await page.$(".tree-row .tree-toggle");
+  if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   await page.click("#exportBtn");
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);
