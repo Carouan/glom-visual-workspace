@@ -262,6 +262,35 @@ function demo(){
   Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,linkSource:null,canWrite:false,dirty:false});initTreeExpansion();show();fit();setStatus("Démo locale")
 }
 function nodeFrom(v,rid){return v.nodes.find(n=>n.resourceId===rid)}
+function applyCurrentExclusions(){
+  if(!state.workspace)return;markExclusions(state.resources,state.workspace);applyFolderSizes(state.resources);render();setDirty(true)
+}
+function addExclusionRule(raw){
+  if(!state.workspace)return false;const rule=normalizeExcludePattern(raw);if(!rule)return false;
+  state.workspace.excludes=exclusionPatterns(state.workspace);if(state.workspace.excludes.some(x=>x.toLowerCase()===rule.toLowerCase()))return false;
+  state.workspace.excludes.push(rule);applyCurrentExclusions();return true
+}
+async function removeExclusionRule(rule){
+  if(!state.workspace)return;state.workspace.excludes=exclusionPatterns(state.workspace).filter(x=>x!==rule);setDirty(true);
+  if(state.mode==="fs")await rescan();
+  else{markExclusions(state.resources,state.workspace);render();if(state.mode==="fallback")setStatus("Exclusion retirée — réimportez le dossier si une ressource manque","ok")}
+  renderExclusionsList()
+}
+function renderExclusionsList(){
+  if(!ui.exclusionsList)return;ui.exclusionsList.replaceChildren();const rules=exclusionPatterns();
+  if(!rules.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucune exclusion. Les fichiers et dossiers du workspace sont tous visibles.";ui.exclusionsList.append(p);return}
+  rules.forEach(rule=>{
+    const row=document.createElement("div");row.className="exclusion-item";const code=document.createElement("code");code.textContent=rule;
+    const del=document.createElement("button");del.type="button";del.textContent="Réactiver";del.onclick=()=>removeExclusionRule(rule);row.append(code,del);ui.exclusionsList.append(row)
+  })
+}
+function openExclusionsDialog(){if(!state.workspace)return;renderExclusionsList();ui.exclusionPattern.value="";if(!ui.exclusionsDialog.open)ui.exclusionsDialog.showModal()}
+function excludeSelectedResource(){
+  const r=selectedResource();if(!r||!["file","folder"].includes(r.type)||!r.path)return;
+  const kind=r.type==="folder"?"dossier":"fichier";
+  if(!confirm("Exclure ce "+kind+" du workspace ?\n\n"+r.path+"\n\nLe contenu reste intact sur le disque."))return;
+  if(addExclusionRule(r.path)){state.selected=null;render();setStatus("Ressource exclue du workspace","ok")}
+}
 async function rescan(){
   if(state.mode==="fallback"){ui.folderFallback.click();return}if(state.mode!=="fs"||!state.handle)return;setStatus("Rescan…");const s=await scan(state.handle,state.workspace);state.resources=reconcile(state.workspace,s.entries,state.resources);state.view=mergeView(state.view,state.resources);setDirty(true);render();if(s.truncated)alert("Scan partiel : limite de sécurité atteinte.")
 }
