@@ -25,9 +25,9 @@ try{
   if(version.trim()!=="v0.3.4")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
-  const menuCount=await page.$eval(".toolbar-menu",els=>els.length);
+  const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
   if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
-  const topIconCount=await page.$eval(".toolbar .ui-icon",els=>els.length);
+  const topIconCount=await page.$$eval(".toolbar .ui-icon",els=>els.length);
   if(topIconCount<9)throw new Error("Expected representative SVG icons in toolbar, got "+topIconCount);
   const visibleTopCommands=await page.$$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
