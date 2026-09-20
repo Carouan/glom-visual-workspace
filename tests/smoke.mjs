@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.7")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.8")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -144,6 +144,19 @@ try{
   await page.$eval("#nodeHeight",el=>{el.value="120";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootGeometry=await page.$eval(".node.root",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height}));
   if(rootGeometry.w!=="420px"||rootGeometry.h!=="120px")throw new Error("Variable node geometry failed: "+JSON.stringify(rootGeometry));
+
+  // Connectors switch to top/bottom ports when nodes are mainly stacked vertically.
+  const verticalDrag=await page.evaluate(()=>{
+    const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
+    const root=byTitle("Chef-d'œuvre — Les jeux vidéo"),src=byTitle("Sources");if(!root||!src)return null;
+    const a=root.getBoundingClientRect(),b=src.getBoundingClientRect();
+    return{sx:b.left+b.width/2,sy:b.top+b.height/2,tx:a.left+a.width/2,ty:a.bottom+260}
+  });
+  if(!verticalDrag)throw new Error("Could not prepare adaptive-edge drag");
+  await page.mouse.move(verticalDrag.sx,verticalDrag.sy);await page.mouse.down();await page.mouse.move(verticalDrag.tx,verticalDrag.ty,{steps:14});await page.mouse.up();
+  await page.waitForFunction(()=>document.querySelectorAll('#edges path[data-axis="vertical"]').length>0,{timeout:3000});
+  const verticalPath=await page.$eval('#edges path[data-axis="vertical"]',el=>el.getAttribute("d")||"");
+  if(!verticalPath.includes(" C "))throw new Error("Vertical adaptive connector was not drawn as a curve: "+verticalPath);
   const sliderCheck=await page.evaluate(()=>({fontMax:document.getElementById("fontSize").max,borderMax:document.getElementById("borderWidth").max,padding:getComputedStyle(document.getElementById("fontSize")).paddingLeft}));
   if(Number(sliderCheck.fontMax)<72||Number(sliderCheck.borderMax)<12||sliderCheck.padding!=="0px")throw new Error("Range controls are still artificially constrained: "+JSON.stringify(sliderCheck));
 
@@ -251,9 +264,23 @@ try{
     return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
   });
   if(!svgCheck.includes('x="-300"')||!svgCheck.includes('width="420"')||!svgCheck.includes('height="120"'))throw new Error("Exporter still assumes fixed or positive-only canvas geometry");
+  const exportEdge=await page.evaluate(async()=>{
+    const api=await import("./src/exporters/mindmap.js");
+    const view={nodes:[
+      {id:"a",resourceId:"ra",x:100,y:100,collapsed:false,style:{width:240,height:80}},
+      {id:"b",resourceId:"rb",x:120,y:500,collapsed:false,style:{width:240,height:80}}
+    ],edges:[{id:"e",from:"a",to:"b",kind:"hierarchy"}],frames:[],objects:[]};
+    const resources=[{id:"ra",type:"folder",title:"A",path:"A"},{id:"rb",type:"folder",title:"B",path:"A/B"}];
+    return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
+  });
+  const d=(exportEdge.match(/<path d="([^"]+)"/)||[])[1]||"";
+  if(!d||!/^M\s+220\s+180\s+C\s+220\s+/.test(d))throw new Error("Exporter did not use vertical node ports: "+d);
 
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
+  if(canvasSource.includes("limite de sécurité de la V0.1")||canvasSource.includes("entries.length>=1200")||canvasSource.includes("depth>10"))throw new Error("Legacy V0.1 scan limits are still present");
+  const scanLimitMatch=canvasSource.match(/SCAN_MAX_ENTRIES=(\d+),SCAN_MAX_DEPTH=(\d+)/);
+  if(!scanLimitMatch||Number(scanLimitMatch[1])<10000||Number(scanLimitMatch[2])<32)throw new Error("Large-workspace scan guard is unexpectedly low: "+String(scanLimitMatch));
   const worldGeometry=await page.$eval(".world",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height,overflow:getComputedStyle(el).overflow}));
   if(worldGeometry.w!=="1px"||worldGeometry.h!=="1px"||worldGeometry.overflow!=="visible")throw new Error("Canvas still exposes a finite workspace boundary: "+JSON.stringify(worldGeometry));
 
