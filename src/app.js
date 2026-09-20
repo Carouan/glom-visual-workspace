@@ -615,10 +615,13 @@ function renderInspector(){
     ui.edgeForm.dataset.edgeId=ed.id;const s=effectiveEdgeStyle(ed);ui.selectionKind.textContent=ed.kind==="hierarchy"?"Relation hiérarchique":"Relation manuelle";ui.edgeKind.textContent=ed.kind==="hierarchy"?"Hiérarchie":"Manuelle";ui.edgeLabel.value=ed.label||"";ui.edgeColor.value=s.color;ui.edgeWidth.value=s.width;ui.edgeWidthValue.value=s.width+" px";ui.edgeLineStyle.value=s.lineStyle;ui.edgeArrow.value=s.arrow;ui.edgeCurvature.value=s.curvature;ui.edgeCurvatureValue.value=s.curvature+" %";ui.deleteEdgeBtn.classList.toggle("hidden",ed.kind!=="manual");updateActionStates();return
   }
   if(vo){
-    ui.selectionKind.textContent=vo.type==="shape"?"Forme graphique":"Annotation";
-    ui.visualKind.textContent=vo.type==="shape"?"Forme":"Texte";ui.visualTextLabel.classList.toggle("hidden",vo.type!=="text");ui.visualShapeLabel.classList.toggle("hidden",vo.type!=="shape");
-    [ui.visualFontSizeLabel,ui.visualFontFamilyLabel,ui.visualFontWeightLabel,ui.visualTextAlignLabel,ui.visualItalicLabel,ui.visualTextColorLabel].forEach(x=>x.classList.toggle("hidden",vo.type!=="text"));ui.visualFillLabel.classList.toggle("hidden",vo.type!=="shape");ui.visualStrokeLabel.classList.toggle("hidden",vo.type!=="shape");
+    const isText=vo.type==="text",isShape=vo.type==="shape",isImage=vo.type==="image";
+    ui.selectionKind.textContent=isShape?"Forme graphique":isImage?"Image libre":"Annotation";
+    ui.visualKind.textContent=isShape?"Forme":isImage?"Image":"Texte";ui.visualTextLabel.classList.toggle("hidden",!isText);ui.visualShapeLabel.classList.toggle("hidden",!isShape);
+    [ui.visualFontSizeLabel,ui.visualFontFamilyLabel,ui.visualFontWeightLabel,ui.visualTextAlignLabel,ui.visualItalicLabel,ui.visualTextColorLabel].forEach(x=>x.classList.toggle("hidden",!isText));ui.visualFillLabel.classList.toggle("hidden",!isShape);ui.visualStrokeLabel.classList.toggle("hidden",!isShape);
+    [ui.visualImageSourceLabel,ui.visualImageFitLabel,ui.visualImageOpacityLabel,ui.visualImageRadiusLabel].forEach(x=>x.classList.toggle("hidden",!isImage));
     ui.visualText.value=vo.text||"";ui.visualShape.value=vo.shape||"rectangle";ui.visualWidth.value=Math.round(vo.w||180);ui.visualHeight.value=Math.round(vo.h||80);ui.visualFontSize.value=Number(vo.fontSize)||18;ui.visualFontFamily.value=vo.fontFamily||"system";ui.visualFontWeight.value=String(vo.fontWeight||"500");ui.visualTextAlign.value=vo.textAlign||"left";ui.visualItalic.checked=!!vo.italic;ui.visualTextColor.value=vo.textColor||"#172033";ui.visualFill.value=vo.fill||"#e0e7ff";ui.visualStroke.value=vo.stroke||"#6366f1";
+    if(isImage){const ir=imageResourceForObject(vo);ui.visualImageSource.textContent=ir?.path||vo.path||"Ressource introuvable";ui.visualImageFit.value=vo.fit||"contain";ui.visualImageOpacity.value=Number(vo.opacity)||100;ui.visualImageOpacityValue.value=(Number(vo.opacity)||100)+" %";ui.visualImageRadius.value=Number(vo.radius)||0;ui.visualImageRadiusValue.value=(Number(vo.radius)||0)+" px"}
     updateActionStates();return
   }
   ui.selectionKind.textContent=r?typeLabel(r):"Aucune sélection";if(!r||!n){updateActionStates();return}
@@ -668,7 +671,8 @@ function deleteSelectedEdge(){
 function updateVisualObject(){
   const o=selectedVisualObject();if(!o)return;o.w=Math.max(40,Number(ui.visualWidth.value)||o.w||180);o.h=Math.max(30,Number(ui.visualHeight.value)||o.h||80);
   if(o.type==="text"){o.text=ui.visualText.value;o.fontSize=Math.max(8,Number(ui.visualFontSize.value)||18);o.fontFamily=ui.visualFontFamily.value;o.fontWeight=ui.visualFontWeight.value;o.textAlign=ui.visualTextAlign.value;o.italic=ui.visualItalic.checked;o.textColor=ui.visualTextColor.value}
-  else{o.shape=ui.visualShape.value;o.fill=ui.visualFill.value;o.stroke=ui.visualStroke.value}
+  else if(o.type==="shape"){o.shape=ui.visualShape.value;o.fill=ui.visualFill.value;o.stroke=ui.visualStroke.value}
+  else if(o.type==="image"){o.fit=ui.visualImageFit.value;o.opacity=Math.max(10,Math.min(100,Number(ui.visualImageOpacity.value)||100));o.radius=Math.max(0,Math.min(60,Number(ui.visualImageRadius.value)||0));ui.visualImageOpacityValue.value=o.opacity+" %";ui.visualImageRadiusValue.value=o.radius+" px"}
   setDirty();renderMap()
 }
 function deleteVisualObject(){
@@ -677,6 +681,24 @@ function deleteVisualObject(){
 function addShape(){
   if(!state.view)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"shape",shape:"rectangle",x:p.x-90,y:p.y-45,w:180,h:90,fill:"#e0e7ff",stroke:"#6366f1"};
   state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
+}
+function availableImageResources(){
+  return state.resources.filter(r=>isImageResource(r)&&!r.missing&&!r.excluded)
+}
+function renderImageObjectList(){
+  ui.imageObjectList.replaceChildren();const q=(ui.imageObjectSearch.value||"").trim().toLowerCase(),images=availableImageResources().filter(r=>!q||(r.title||"").toLowerCase().includes(q)||(r.path||"").toLowerCase().includes(q));
+  if(!images.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucune image disponible dans ce workspace.";ui.imageObjectList.append(p);return}
+  images.forEach(r=>{
+    const b=document.createElement("button");b.type="button";b.className="image-picker-item";const thumb=document.createElement("span");thumb.className="image-picker-thumb";thumb.textContent="🖼️";const txt=document.createElement("span"),strong=document.createElement("strong"),small=document.createElement("small");strong.textContent=r.title||base(r.path);small.textContent=r.path||"";txt.append(strong,small);b.append(thumb,txt);b.onclick=()=>addImageObject(r);ui.imageObjectList.append(b);
+    imageUrlFor(r).then(url=>{if(!url||!thumb.isConnected)return;thumb.replaceChildren();const img=document.createElement("img");img.src=url;img.alt="";img.draggable=false;thumb.append(img)})
+  })
+}
+function openImageObjectDialog(){
+  if(!state.workspace)return;ui.imageObjectSearch.value="";renderImageObjectList();if(!ui.imageObjectDialog.open)ui.imageObjectDialog.showModal()
+}
+function addImageObject(r){
+  if(!r||!isImageResource(r)||r.missing)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"image",resourceId:r.id,path:r.path,x:p.x-160,y:p.y-110,w:320,h:220,fit:"contain",opacity:100,radius:8};
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();ui.imageObjectDialog.close();render()
 }
 function addTextObject(){
   if(!state.view)return;const text=prompt("Texte de l’annotation :","Nouvelle annotation");if(text===null)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"text",text:text||"Annotation",x:p.x-110,y:p.y-35,w:220,h:70,fontSize:18,fontFamily:"system",fontWeight:"500",textAlign:"left",italic:false,textColor:"#172033"};
