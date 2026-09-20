@@ -1,4 +1,4 @@
-const CACHE="glom-v0.2.4";
+const CACHE="glom-v0.3.0";
 const CORE=["./","./index.html","./styles.css","./manifest.webmanifest","./icons/icon.svg","./src/app.js","./src/viewers/index.js","./src/exporters/mindmap.js","./src/workspaces/recent.js"];
 
 async function precache(){
