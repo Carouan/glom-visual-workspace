@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.6")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.7")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -105,6 +105,30 @@ try{
     return row?.style.getPropertyValue("--depth")==="2"
   },{timeout:5000});
 
+  // A branch can move as a rigid group while descendants keep their relative positions.
+  await page.evaluate(()=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent==="Histoire")?.click());
+  await page.waitForSelector("#form:not(.hidden)",{timeout:3000});
+  await page.$eval("#moveBranch",el=>{el.checked=true;el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const branchBefore=await page.evaluate(()=>{
+    const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
+    const a=byTitle("Histoire"),b=byTitle("Premiers jeux");if(!a||!b)return null;
+    return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top),locked:a.classList.contains("locked")}
+  });
+  if(!branchBefore||branchBefore.locked)throw new Error("Could not prepare branch-group drag: "+JSON.stringify(branchBefore));
+  await page.evaluate(()=>{
+    const a=[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent==="Histoire"),icon=a?.querySelector(".node-icon");if(!a||!icon)throw new Error("Histoire node missing");
+    const r=icon.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,opts={bubbles:true,button:0,pointerId:91,pointerType:"mouse",isPrimary:true};
+    icon.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+55,clientY:y+35}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+55,clientY:y+35}));
+  });
+  const branchAfter=await page.evaluate(()=>{
+    const byTitle=t=>[...document.querySelectorAll(".node")].find(n=>n.querySelector(".node-title")?.textContent===t);
+    const a=byTitle("Histoire"),b=byTitle("Premiers jeux");return{ax:parseFloat(a.style.left),ay:parseFloat(a.style.top),bx:parseFloat(b.style.left),by:parseFloat(b.style.top)}
+  });
+  const dax=branchAfter.ax-branchBefore.ax,day=branchAfter.ay-branchBefore.ay,dbx=branchAfter.bx-branchBefore.bx,dby=branchAfter.by-branchBefore.by;
+  if(Math.abs(dax-dbx)>1||Math.abs(day-dby)>1||Math.abs(dax)<5)throw new Error("Branch descendants did not preserve relative positions: "+JSON.stringify({branchBefore,branchAfter}));
+
   // Return to the root before testing inspector-driven styling.
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
@@ -114,10 +138,23 @@ try{
   await page.$eval("#backgroundColor",el=>{el.value="#fff3bf";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootBg=await page.$eval(".node.root",el=>getComputedStyle(el).backgroundColor);
   if(!rootBg.includes("255"))throw new Error("Node background style did not apply: "+rootBg);
+
+  // Node geometry is editable and range controls are not padded away from their endpoints.
+  await page.$eval("#nodeWidth",el=>{el.value="420";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#nodeHeight",el=>{el.value="120";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const rootGeometry=await page.$eval(".node.root",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height}));
+  if(rootGeometry.w!=="420px"||rootGeometry.h!=="120px")throw new Error("Variable node geometry failed: "+JSON.stringify(rootGeometry));
+  const sliderCheck=await page.evaluate(()=>({fontMax:document.getElementById("fontSize").max,borderMax:document.getElementById("borderWidth").max,padding:getComputedStyle(document.getElementById("fontSize")).paddingLeft}));
+  if(Number(sliderCheck.fontMax)<72||Number(sliderCheck.borderMax)<12||sliderCheck.padding!=="0px")throw new Error("Range controls are still artificially constrained: "+JSON.stringify(sliderCheck));
+
   await page.$eval("#frameToggleBtn",el=>el.click());
   await page.waitForSelector(".branch-frame",{timeout:5000});
-  const frameCount=await page.$eval(".branch-frame",els=>els.length);
+  const frameCount=await page.evaluate(()=>document.querySelectorAll(".branch-frame").length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
+  await page.$eval("#frameTitle",el=>{el.value="Cadre édité";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#frameFontSize",el=>{el.value="24";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const frameTitle=await page.$eval(".branch-frame-title",el=>({text:el.textContent||"",size:getComputedStyle(el).fontSize,pointer:getComputedStyle(el).pointerEvents}));
+  if(frameTitle.text!=="Cadre édité"||frameTitle.size!=="24px"||frameTitle.pointer==="none")throw new Error("Frame title editing/typography failed: "+JSON.stringify(frameTitle));
 
   // Exclusion rules hide matching resources without deleting them from the model.
   await page.$eval("#exclusionsBtn",el=>el.click());
@@ -179,11 +216,24 @@ try{
   await page.waitForSelector("#visualForm:not(.hidden)",{timeout:3000});
   await page.select("#visualShape","ellipse");
   await page.waitForFunction(()=>document.querySelector(".visual-object.shape")?.classList.contains("ellipse"),{timeout:3000});
+  // Move the shape to a clear area first: a free object may legitimately sit behind a node.
+  await page.evaluate(()=>{
+    const shape=document.querySelector(".visual-object.shape"),r=shape.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,opts={bubbles:true,button:0,pointerId:92,pointerType:"mouse",isPrimary:true};
+    shape.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+320,clientY:y+120}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+320,clientY:y+120}));
+  });
+  await page.click(".node.root");
+  await page.waitForSelector("#form:not(.hidden)",{timeout:3000});
+  await page.click(".visual-object.shape");
+  await page.waitForSelector("#visualForm:not(.hidden)",{timeout:3000});
+  const shapeReselected=await page.$eval(".visual-object.shape",el=>el.classList.contains("selected"));
+  if(!shapeReselected)throw new Error("A visible free shape cannot be re-selected after selecting a node");
 
   page.once("dialog",d=>d.accept("À retenir"));
   await page.click("#mapTextBtn");
   await page.waitForFunction(()=>[...document.querySelectorAll(".visual-object.text")].some(el=>el.textContent.includes("À retenir")),{timeout:3000});
-  const objectCount=await page.$eval(".visual-object",els=>els.length);
+  const objectCount=await page.evaluate(()=>document.querySelectorAll(".visual-object").length);
   if(objectCount<2)throw new Error("Free visual objects were not created");
 
   await page.$eval("#exportBtn",el=>el.click());
@@ -192,6 +242,20 @@ try{
   if(!zipReady)throw new Error("Workspace ZIP export is not available for a draft workspace");
   await page.click("#zipWorkspaceBtn");
   await page.waitForFunction(()=>document.getElementById("status")?.textContent?.includes("Template ZIP créé"),{timeout:5000});
+
+  // Export is computed from real content bounds, not from a fixed A4 canvas.
+  const svgCheck=await page.evaluate(async()=>{
+    const api=await import("./src/exporters/mindmap.js");
+    const view={nodes:[{id:"n-r",resourceId:"r",x:-300,y:-120,collapsed:false,style:{width:420,height:120}}],edges:[],frames:[],objects:[]};
+    const resources=[{id:"r",type:"file",title:"large.md",path:"large.md",tags:[]}];
+    return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
+  });
+  if(!svgCheck.includes('x="-300"')||!svgCheck.includes('width="420"')||!svgCheck.includes('height="120"'))throw new Error("Exporter still assumes fixed or positive-only canvas geometry");
+
+  const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
+  if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
+  const worldGeometry=await page.$eval(".world",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height,overflow:getComputedStyle(el).overflow}));
+  if(worldGeometry.w!=="1px"||worldGeometry.h!=="1px"||worldGeometry.overflow!=="visible")throw new Error("Canvas still exposes a finite workspace boundary: "+JSON.stringify(worldGeometry));
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));

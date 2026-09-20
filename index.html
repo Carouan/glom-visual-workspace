@@ -97,7 +97,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.6</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.7</span></div>
   </header>
 
   <main class="shell">
@@ -169,7 +169,17 @@
               </label>
               <label>Largeur<input id="visualWidth" type="number" min="40" max="1200" step="10"></label>
               <label>Hauteur<input id="visualHeight" type="number" min="30" max="800" step="10"></label>
-              <label id="visualFontSizeLabel">Taille du texte<input id="visualFontSize" type="number" min="10" max="72" step="1"></label>
+              <label id="visualFontSizeLabel">Taille du texte<input id="visualFontSize" type="number" min="8" max="96" step="1"></label>
+              <label id="visualFontFamilyLabel">Police
+                <select id="visualFontFamily"><option value="system">Système</option><option value="rounded">Arrondie</option><option value="serif">Serif</option><option value="mono">Monospace</option></select>
+              </label>
+              <label id="visualFontWeightLabel">Graisse
+                <select id="visualFontWeight"><option value="500">Normale</option><option value="650">Semi-gras</option><option value="800">Gras</option></select>
+              </label>
+              <label id="visualTextAlignLabel">Alignement
+                <select id="visualTextAlign"><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select>
+              </label>
+              <label id="visualItalicLabel" class="check-row"><input id="visualItalic" type="checkbox"> Italique</label>
               <label id="visualTextColorLabel">Couleur du texte<input id="visualTextColor" type="color" value="#172033"></label>
               <label id="visualFillLabel">Fond<input id="visualFill" type="color" value="#e0e7ff"></label>
               <label id="visualStrokeLabel">Bordure<input id="visualStroke" type="color" value="#6366f1"></label>
@@ -210,7 +220,13 @@
           <div class="style-grid">
             <label>Icône / emoji<input id="nodeIcon" type="text" maxlength="8" placeholder="Auto"></label>
             <label>Taille du texte
-              <div class="range-row"><input id="fontSize" type="range" min="10" max="28" step="1" value="14"><output id="fontSizeValue">14 px</output></div>
+              <div class="range-row"><input id="fontSize" type="range" min="8" max="72" step="1" value="14"><output id="fontSizeValue">14 px</output></div>
+            </label>
+            <label>Largeur du nœud
+              <div class="range-row"><input id="nodeWidth" type="range" min="140" max="720" step="10" value="240"><output id="nodeWidthValue">240 px</output></div>
+            </label>
+            <label>Hauteur du nœud
+              <div class="range-row"><input id="nodeHeight" type="range" min="60" max="360" step="10" value="74"><output id="nodeHeightValue">74 px</output></div>
             </label>
             <label>Police
               <select id="fontFamily">
@@ -235,12 +251,13 @@
             <label>Fond<input id="backgroundColor" type="color" value="#ffffff"></label>
             <label>Bordure<input id="borderColor" type="color" value="#d8deea"></label>
             <label>Épaisseur bordure
-              <div class="range-row"><input id="borderWidth" type="range" min="0" max="6" step="1" value="1"><output id="borderWidthValue">1 px</output></div>
+              <div class="range-row"><input id="borderWidth" type="range" min="0" max="12" step="1" value="1"><output id="borderWidthValue">1 px</output></div>
             </label>
             <label>Forme
               <select id="nodeShape"><option value="rounded">Arrondie</option><option value="rectangle">Rectangle</option><option value="pill">Capsule</option></select>
             </label>
             <label class="check-row"><input id="nodeLocked" type="checkbox"> Verrouiller la position</label>
+            <label class="check-row"><input id="moveBranch" type="checkbox"> Déplacer cette branche comme un groupe</label>
             <label id="imageToggleLabel" class="check-row hidden"><input id="showNodeImage" type="checkbox"> Afficher l’image dans le nœud</label>
           </div>
           <div class="mini-actions">
@@ -256,6 +273,17 @@
             <button type="button" id="frameToggleBtn">＋ Créer un cadre autour de cette branche</button>
             <div id="frameFields" class="style-grid hidden">
               <label>Titre du cadre<input id="frameTitle" type="text" placeholder="Nom du groupe"></label>
+              <label>Taille du titre
+                <div class="range-row"><input id="frameFontSize" type="range" min="8" max="48" step="1" value="12"><output id="frameFontSizeValue">12 px</output></div>
+              </label>
+              <label>Police
+                <select id="frameFontFamily"><option value="system">Système</option><option value="rounded">Arrondie</option><option value="serif">Serif</option><option value="mono">Monospace</option></select>
+              </label>
+              <label>Graisse
+                <select id="frameFontWeight"><option value="500">Normale</option><option value="650">Semi-gras</option><option value="800">Gras</option></select>
+              </label>
+              <label class="check-row"><input id="frameItalic" type="checkbox"> Italique</label>
+              <label>Couleur du titre<input id="frameTextColor" type="color" value="#6366f1"></label>
               <label>Couleur du cadre<input id="frameBorderColor" type="color" value="#6366f1"></label>
               <label>Couleur de fond<input id="frameBackgroundColor" type="color" value="#eef2ff"></label>
               <label>Opacité du fond
@@ -299,7 +327,7 @@
         <select id="exportOrientation"><option value="landscape">Paysage</option><option value="portrait">Portrait</option></select>
       </label>
       <label class="check-row"><input id="exportHidden" type="checkbox"> Inclure les branches repliées</label>
-      <p>SVG et PNG sont cadrés au format A4. « Imprimer / PDF » ouvre le dialogue d'impression du navigateur : choisissez « Enregistrer au format PDF » pour créer le PDF.</p>
+      <p>Le canvas de travail est libre et non limité au format A4. Au moment de l’export, G.L.O.M. calcule les limites réelles du contenu puis redimensionne l’ensemble pour tenir sur l’A4 choisi. « Imprimer / PDF » ouvre le dialogue d’impression du navigateur.</p>
       <div class="export-actions">
         <button id="exportSvgBtn" type="button">⬇️ SVG A4</button>
         <button id="exportPngBtn" type="button">🖼️ PNG A4</button>

@@ -309,3 +309,54 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 .viewer-markdown p{margin:.7em 0}
 .viewer-markdown ul,.viewer-markdown ol{padding-left:1.6rem}
 @media(max-width:600px){.exclusion-add{grid-template-columns:1fr}.viewer-editor,.viewer-editor-area{min-height:320px}}
+
+/* V0.3.7 — free canvas, reliable selection and variable node geometry */
+.world{
+  width:1px;
+  height:1px;
+  overflow:visible;
+}
+.world svg,#visualObjects,#nodes,#frames{
+  width:1px;
+  height:1px;
+  overflow:visible;
+}
+#nodes{pointer-events:none}
+.node{pointer-events:auto;min-width:140px;min-height:60px}
+.node-main{height:100%;min-height:100%}
+#visualObjects{pointer-events:none}
+.visual-object{pointer-events:auto}
+.branch-frame{pointer-events:none}
+.branch-frame-title{
+  pointer-events:auto;
+  cursor:text;
+  z-index:2;
+}
+.branch-frame-title:hover{outline:1px dashed currentColor;outline-offset:2px}
+.range-row{grid-template-columns:minmax(0,1fr) 64px}
+.range-row input[type="range"]{
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  accent-color:var(--primary);
+}
+.details-grid .check-row{
+  flex-direction:row;
+  align-items:center;
+  gap:.5rem;
+  color:var(--text);
+  font-weight:500;
+}
+.details-grid .check-row input{width:18px;height:18px}
+.visual-object.text{justify-content:flex-start}
+
+/* V0.3.7 hit testing: logical layers must not impose a 1px hit-test box */
+#visualObjects,#nodes,#frames{display:contents}
+.visual-object{z-index:2}
+.node{z-index:3}
+.branch-frame{z-index:0}
+.branch-frame-title{z-index:4}
