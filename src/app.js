@@ -82,16 +82,16 @@ function newWorkspace(name){const now=new Date().toISOString();return{format:"gl
 function parentPath(path){if(!path||!path.includes("/"))return"";return path.slice(0,path.lastIndexOf("/"))}
 function normalizeExcludePattern(raw){return String(raw||"").trim().replace(/\\\\/g,"/").replace(/^\.\//,"").replace(/^\/+|\/+$/g,"")}
 function globRegex(pattern){
-  let p=normalizeExcludePattern(pattern),out="",i=0;
-  const escapeChar=ch=>/[.\+^$(){}|\[\]\\]/.test(ch)?"\\\\ "+ch:ch;
-  while(i<p.length){
+  const p=normalizeExcludePattern(pattern);let out="";
+  for(let i=0;i<p.length;i++){
     const ch=p[i];
-    if(ch==="*"&&p[i+1]==="*"){out+=".*";i+=2;continue}
-    if(ch==="*"){out+="[^/]*";i++;continue}
-    if(ch==="?"){out+="[^/]";i++;continue}
-    out+=escapeChar(ch).replace("\\\\ ","\\\\");i++
+    if(ch==="*"&&p[i+1]==="*"){out+=".*";i++;continue}
+    if(ch==="*"){out+="[^/]*";continue}
+    if(ch==="?"){out+="[^/]";continue}
+    if(".+^$(){}|[]\\ ".includes(ch)&&ch!==" ")out+="\\\"+ch;else out+=ch
   }
-  const prefix=p.includes("/")?"^":"(?:^|.*/)";return new RegExp(prefix+out+"(?:$|/.*$)","i")
+  const prefix=p.includes("/")?"^":"(?:^|.*/)";
+  return new RegExp(prefix+out+"(?:$|/.*$)","i")
 }
 function exclusionPatterns(workspace=state.workspace){return Array.isArray(workspace?.excludes)?workspace.excludes.map(normalizeExcludePattern).filter(Boolean):[]}
 function pathExcluded(path,workspace=state.workspace){
