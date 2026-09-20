@@ -17,6 +17,11 @@
     <symbol id="i-plus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
     <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+    <symbol id="i-file-plus" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3"/><path d="M7 16h10"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.5-2L20 8M4 16l2.4 2A7 7 0 0 0 18 16"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h12l3 3v15H4V4a1 1 0 0 1 1-1z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></symbol>
     <symbol id="i-folder-plus" viewBox="0 0 24 24"><path d="M3 6.5h6l2 2h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v6M9 14h6"/></symbol>
     <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M8.5 15.5C7 14.3 6 12.6 6 10.5a6 6 0 1 1 12 0c0 2.1-1 3.8-2.5 5-.8.7-1.2 1.3-1.3 2H9.8c-.1-.7-.5-1.3-1.3-2z"/></symbol>
     <symbol id="i-link" viewBox="0 0 24 24"><path d="M8.5 15.5 15.5 8.5"/><path d="m7 17-2 2a4 4 0 0 1-5.7-5.7l3-3A4 4 0 0 1 8 10"/><path d="m17 7 2-2a4 4 0 0 1 5.7 5.7l-3 3A4 4 0 0 1 16 14"/></symbol>
@@ -43,12 +48,12 @@
       <details class="toolbar-menu" data-menu>
         <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-workspace"></use></svg><span>Workspace</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
-          <button id="newWorkspaceBtn">🆕 Nouveau workspace</button>
-          <button id="recentBtn">🕘 Workspaces récents</button>
-          <button id="demoBtn">🧪 Charger la démo</button>
+          <button id="newWorkspaceBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-plus"></use></svg><span class="button-label">Nouveau workspace</span></button>
+          <button id="recentBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-clock"></use></svg><span class="button-label">Workspaces récents</span></button>
+          <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
           <span class="menu-divider"></span>
-          <button id="scanBtn" disabled>↻ Rescanner le dossier</button>
-          <button id="saveBtn" disabled>💾 Enregistrer</button>
+          <button id="scanBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-refresh"></use></svg><span class="button-label">Rescanner le dossier</span></button>
+          <button id="saveBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-save"></use></svg><span class="button-label">Enregistrer</span></button>
         </div>
       </details>
 
