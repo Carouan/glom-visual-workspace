@@ -143,7 +143,7 @@ try{
 
   await page.$eval("#frameToggleBtn",el=>el.click());
   await page.waitForSelector(".branch-frame",{timeout:5000});
-  const frameCount=await page.$eval(".branch-frame",els=>els.length);
+  const frameCount=await page.evaluate(()=>document.querySelectorAll(".branch-frame").length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
   await page.$eval("#frameTitle",el=>{el.value="Cadre édité";el.dispatchEvent(new Event("input",{bubbles:true}))});
   await page.$eval("#frameFontSize",el=>{el.value="24";el.dispatchEvent(new Event("input",{bubbles:true}))});
@@ -220,7 +220,7 @@ try{
   page.once("dialog",d=>d.accept("À retenir"));
   await page.click("#mapTextBtn");
   await page.waitForFunction(()=>[...document.querySelectorAll(".visual-object.text")].some(el=>el.textContent.includes("À retenir")),{timeout:3000});
-  const objectCount=await page.$eval(".visual-object",els=>els.length);
+  const objectCount=await page.evaluate(()=>document.querySelectorAll(".visual-object").length);
   if(objectCount<2)throw new Error("Free visual objects were not created");
 
   await page.$eval("#exportBtn",el=>el.click());
