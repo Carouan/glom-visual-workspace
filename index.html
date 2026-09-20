@@ -18,6 +18,7 @@
     </div>
     <nav class="toolbar">
       <button id="openBtn" class="primary">📂 Ouvrir un workspace</button>
+      <button id="recentBtn">🕘 Récents</button>
       <button id="demoBtn">🧪 Démo</button>
       <button id="scanBtn" disabled>↻ Rescanner</button>
       <button id="saveBtn" disabled>💾 Enregistrer</button>
@@ -29,7 +30,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.2.2</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.2.3</span></div>
   </header>
 
   <main class="shell">
@@ -90,6 +91,14 @@
   <dialog id="preview">
     <header><div><strong id="previewTitle"></strong><small id="previewMeta"></small></div><button id="previewClose">×</button></header>
     <div id="previewBody"></div>
+  </dialog>
+
+  <dialog id="recentDialog" class="small-dialog">
+    <header><div><strong>Workspaces récents</strong><small>Basculer rapidement entre vos dossiers</small></div><button id="recentClose">×</button></header>
+    <div class="recent-panel">
+      <p class="recent-help">Les autorisations restent gérées par le navigateur. Il peut vous demander de confirmer de nouveau l’accès après un redémarrage.</p>
+      <div id="recentList" class="recent-list"></div>
+    </div>
   </dialog>
 
   <dialog id="exportDialog" class="small-dialog">
