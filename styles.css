@@ -365,7 +365,7 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 .edge{pointer-events:none}
 .edge-hit{
   fill:none;
-  stroke:transparent;
+  stroke:rgba(0,0,0,.001);
   pointer-events:stroke;
   cursor:pointer;
 }
