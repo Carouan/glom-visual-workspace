@@ -221,9 +221,9 @@ Le cas d'une image ajoutée **uniquement à la vue** (donc absente de l'arboresc
 Ordre de travail proposé après v0.3.10 :
 
 1. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
-3. **sélection multiple** et groupes/cadres arbitraires ;
-4. **auto-layout horizontal, vertical et radial** ;
-5. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+2. **sélection multiple** et groupes/cadres arbitraires ;
+3. **auto-layout horizontal, vertical et radial** ;
+4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
