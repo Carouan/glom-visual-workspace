@@ -92,6 +92,13 @@
   </dialog>
 
   <input id="folderFallback" type="file" webkitdirectory multiple hidden>
+  <script>
+    window.addEventListener("error",function(e){
+      var s=document.getElementById("status");if(s){s.textContent="Erreur de démarrage — rechargez la page";s.style.color="#b42318"}
+      console.error("G.L.O.M. bootstrap error",e.error||e.message||e);
+    });
+    window.addEventListener("unhandledrejection",function(e){console.error("G.L.O.M. unhandled rejection",e.reason||e)});
+  </script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
