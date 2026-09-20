@@ -43,7 +43,7 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - objets graphiques libres : rectangle, ellipse, losange et annotation texte ;
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
-- relations sélectionnables, nommées et stylables : couleur, épaisseur, trait, flèches et courbure ;
+- relations sélectionnables directement sur la carte, nommées et stylables : couleur, épaisseur, trait, flèches et courbure ;
 - connecteurs adaptatifs : gauche/droite ou haut/bas selon la géométrie réelle des nœuds ;
 - auto-layout de base en respectant les nœuds verrouillés ;
 - panneaux Ressources et Détails rabattables indépendamment.
