@@ -702,11 +702,11 @@ async function materializeWorkspace(){
     const parent=await window.showDirectoryPicker({mode:"readwrite"}),suggested=safeFolderName(state.workspace.name),raw=prompt("Nom du dossier à créer :",suggested);if(raw===null)return;
     const folderName=safeFolderName(raw);if(await entryExists(parent,folderName)){alert("Un dossier portant ce nom existe déjà dans l’emplacement choisi.");return}
     setStatus("Création de l’arborescence…");const root=await parent.getDirectoryHandle(folderName,{create:true});
-    const folders=state.resources.filter(r=>r.type==="folder"&&!r.missing&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length);
+    const folders=state.resources.filter(r=>r.type==="folder"&&!r.missing&&!r.excluded&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length);
     for(const r of folders)await dirByParts(root,r.path.split("/").filter(Boolean),true);
     const payload=workspaceMetadataSnapshot();
     await Promise.all([writeJson(root,WS,payload.workspace),writeJson(root,RES,payload.resources),writeJson(root,VIEW,payload.view)]);
-    const planned=state.resources.filter(r=>r.type==="file"&&r.path).length;ui.exportDialog.close();await loadHandle(root,false);
+    const planned=state.resources.filter(r=>r.type==="file"&&!r.excluded&&r.path).length;ui.exportDialog.close();await loadHandle(root,false);
     setStatus("Workspace créé sur disque","ok");if(planned)alert(planned+" ressource(s) fichier sont conservées comme références planifiées. Elles apparaîtront « absentes » jusqu’à ce que les vrais fichiers correspondants soient ajoutés.")
   }catch(e){if(e&&e.name==="AbortError")return;console.error(e);setStatus("Création sur disque impossible","bad");alert("Impossible de créer le workspace : "+(e.message||e))}
 }
