@@ -489,10 +489,10 @@ function makeVisualObject(o){
 function dragVisualObject(ev,o,e){
   if(ev.button!==0)return;ev.stopPropagation();
   if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
-  const s={x:ev.clientX,y:ev.clientY,ox:o.x,oy:o.y};let moved=false;e.setPointerCapture&&e.setPointerCapture(ev.pointerId);
+  const s={x:ev.clientX,y:ev.clientY,ox:o.x,oy:o.y};let moved=false;
   function mv(x){const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;o.x=s.ox+dx;o.y=s.oy+dy;e.style.left=o.x+"px";e.style.top=o.y+"px"}
-  function end(){e.removeEventListener("pointermove",mv);e.removeEventListener("pointerup",end);e.removeEventListener("pointercancel",end);if(moved)setDirty()}
-  e.addEventListener("pointermove",mv);e.addEventListener("pointerup",end);e.addEventListener("pointercancel",end)
+  function end(){window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);if(moved)setDirty()}
+  window.addEventListener("pointermove",mv);window.addEventListener("pointerup",end);window.addEventListener("pointercancel",end)
 }
 async function attachNodeImage(ic,r){
   const u=await imageUrlFor(r);if(!u||!ic.isConnected)return;
@@ -523,17 +523,17 @@ function clearCentralDropHighlight(){ui.nodes.querySelectorAll(".node.drop-targe
 function dragNode(ev,n,e){
   const source=resource(n.resourceId),style=effectiveNodeStyle(n,source);if(ev.button!==0||ev.target.closest("button")||style.locked)return;
   ev.stopPropagation();if(state.selected!==n.id){state.selected=n.id;ui.nodes.querySelectorAll(".node.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
-  const groupIds=style.moveBranch?hierarchyDescendants(n.id):[n.id],starts=new Map(groupIds.map(id=>{const x=node(id);return[id,{x:x.x,y:x.y}]})),s={x:ev.clientX,y:ev.clientY};let moved=false,drop=null;e.setPointerCapture&&e.setPointerCapture(ev.pointerId);
+  const groupIds=style.moveBranch?hierarchyDescendants(n.id):[n.id],starts=new Map(groupIds.map(id=>{const x=node(id);return[id,{x:x.x,y:x.y}]})),s={x:ev.clientX,y:ev.clientY};let moved=false,drop=null;
   function mv(x){
     const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;
     groupIds.forEach(id=>{const nn=node(id),st=starts.get(id);if(!nn||!st)return;nn.x=st.x+dx;nn.y=st.y+dy;const card=ui.nodes.querySelector('[data-node="'+id+'"]');if(card){card.style.left=nn.x+"px";card.style.top=nn.y+"px"}});
     renderEdges();renderFrames(hiddenNodes());clearCentralDropHighlight();drop=moved?centralDropCandidate(x.clientX,x.clientY,n.id):null;if(drop&&!groupIds.includes(nodeForResource(drop.resource.id)?.id))drop.element.classList.add("drop-target");else if(drop&&groupIds.includes(nodeForResource(drop.resource.id)?.id))drop=null
   }
   async function end(x){
-    e.removeEventListener("pointermove",mv);e.removeEventListener("pointerup",end);e.removeEventListener("pointercancel",end);clearCentralDropHighlight();
+    window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);clearCentralDropHighlight();
     if(!moved)return;if(x.type!=="pointercancel"&&drop){await reparentFromMindmap(source,drop.resource);renderMap()}else setDirty()
   }
-  e.addEventListener("pointermove",mv);e.addEventListener("pointerup",end);e.addEventListener("pointercancel",end)
+  window.addEventListener("pointermove",mv);window.addEventListener("pointerup",end);window.addEventListener("pointercancel",end)
 }
 function select(id){state.selected=id;state.selectedVisual=null;renderTree();renderMap();renderInspector()}
 function selectVisual(id){state.selectedVisual=id;state.selected=null;state.linkSource=null;renderTree();renderMap();renderInspector()}
