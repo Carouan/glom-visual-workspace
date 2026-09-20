@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.8")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.9")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -128,6 +128,30 @@ try{
   });
   const dax=branchAfter.ax-branchBefore.ax,day=branchAfter.ay-branchBefore.ay,dbx=branchAfter.bx-branchBefore.bx,dby=branchAfter.by-branchBefore.by;
   if(Math.abs(dax-dbx)>1||Math.abs(day-dby)>1||Math.abs(dax)<5)throw new Error("Branch descendants did not preserve relative positions: "+JSON.stringify({branchBefore,branchAfter}));
+
+  // Relations are directly selectable, nameable and stylable.
+  const manualReady=await page.evaluate(()=>{
+    const visible=document.querySelector("#edges .edge.manual"),group=visible?.parentElement,hit=group?.querySelector(".edge-hit");
+    if(!hit||!visible)return null;
+    const hitPE=getComputedStyle(hit).pointerEvents,visiblePE=getComputedStyle(visible).pointerEvents;
+    hit.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true}));
+    return{hitPE,visiblePE};
+  });
+  if(!manualReady)throw new Error("No manual relation available for style test");
+  if(manualReady.hitPE!=="stroke"||manualReady.visiblePE!=="stroke")throw new Error("Relation paths are not pointer-selectable: "+JSON.stringify(manualReady));
+  await page.waitForSelector("#edgeForm:not(.hidden)",{timeout:3000});
+  await page.$eval("#edgeLabel",el=>{el.value="inspire";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#edgeColor",el=>{el.value="#dc2626";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#edgeWidth",el=>{el.value="4";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.select("#edgeLineStyle","dotted");
+  await page.select("#edgeArrow","end");
+  await page.$eval("#edgeCurvature",el=>{el.value="0";el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))});
+  const relationStyle=await page.evaluate(()=>{
+    const hit=document.querySelector("#edges .edge-hit.selected"),group=hit?.closest(".edge-group"),p=group?.querySelector(".edge"),label=group?.querySelector(".edge-label");
+    if(!p)return null;const cs=getComputedStyle(p);
+    return{label:label?.textContent||"",stroke:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray,marker:p.getAttribute("marker-end")||"",d:p.getAttribute("d")||""}
+  });
+  if(!relationStyle||relationStyle.label!=="inspire"||relationStyle.stroke!=="rgb(220, 38, 38)"||parseFloat(relationStyle.width)!==4||!relationStyle.dash.includes("2")||!relationStyle.marker||!relationStyle.d.includes(" L "))throw new Error("Relation styling failed: "+JSON.stringify(relationStyle));
 
   // Return to the root before testing inspector-driven styling.
   await page.$eval(".node.root",el=>el.click());
@@ -275,6 +299,16 @@ try{
   });
   const d=(exportEdge.match(/<path d="([^"]+)"/)||[])[1]||"";
   if(!d||!/^M\s+220\s+180\s+C\s+220\s+/.test(d))throw new Error("Exporter did not use vertical node ports: "+d);
+  const styledRelationSvg=await page.evaluate(async()=>{
+    const api=await import("./src/exporters/mindmap.js");
+    const view={nodes:[
+      {id:"a",resourceId:"ra",x:100,y:100,collapsed:false,style:{width:240,height:80}},
+      {id:"b",resourceId:"rb",x:500,y:100,collapsed:false,style:{width:240,height:80}}
+    ],edges:[{id:"rel",from:"a",to:"b",kind:"manual",label:"inspire",style:{color:"#dc2626",width:4,lineStyle:"dotted",arrow:"end",curvature:0}}],frames:[],objects:[]};
+    const resources=[{id:"ra",type:"folder",title:"A",path:"A"},{id:"rb",type:"file",title:"B",path:"A/B.md"}];
+    return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
+  });
+  if(!styledRelationSvg.includes(">inspire</text>")||!styledRelationSvg.includes('stroke="#dc2626"')||!styledRelationSvg.includes('stroke-width="4"')||!styledRelationSvg.includes('stroke-dasharray="2 6"')||!styledRelationSvg.includes('marker-end="url(#rel-rel)"'))throw new Error("Styled relation was not preserved in SVG export");
 
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");

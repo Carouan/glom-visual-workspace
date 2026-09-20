@@ -360,3 +360,29 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 .node{z-index:3}
 .branch-frame{z-index:0}
 .branch-frame-title{z-index:4}
+
+/* V0.3.9 — relations nommées et stylables */
+.edge{pointer-events:none}
+.edge-hit{
+  fill:none;
+  stroke:rgba(0,0,0,.001);
+  pointer-events:stroke;
+  cursor:pointer;
+}
+.edge-hit.selected{
+  stroke:color-mix(in srgb,var(--primary) 34%,transparent);
+}
+.edge-label{
+  pointer-events:auto;
+  cursor:pointer;
+  font:600 12px/1.2 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  paint-order:stroke fill;
+  stroke:var(--bg);
+  stroke-width:5px;
+  stroke-linejoin:round;
+  dominant-baseline:central;
+}
+.edge-label.selected{font-weight:800}
+#edgeForm .details-grid{padding-bottom:.8rem}
+#edgeForm select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text)}
+#edgeForm input[type="text"]{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text)}
