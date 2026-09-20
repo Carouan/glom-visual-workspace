@@ -22,7 +22,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.1")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.2")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el && getComputedStyle(el).display!=="none");
   if(!recentVisible)throw new Error("Recent workspaces button is not visible");
   const folderToggle=await page.$(".tree-row .tree-toggle");
@@ -42,6 +42,28 @@ try{
     const leftAfterSelection=await page.$eval(".resources-scroll",el=>el.scrollTop);
     if(leftAfterSelection<=0)throw new Error("Left sidebar scroll position was lost after selecting a mindmap node");
   }
+
+  // Central drag/drop must change hierarchy and immediately update the file tree.
+  const dragPoints=await page.evaluate(()=>{
+    const nodes=[...document.querySelectorAll(".node")];
+    const byTitle=t=>nodes.find(n=>n.querySelector(".node-title")?.textContent===t);
+    const src=byTitle("Game design"),dst=byTitle("Histoire");if(!src||!dst)return null;
+    const a=src.getBoundingClientRect(),b=dst.getBoundingClientRect();
+    return{sx:a.left+a.width/2,sy:a.top+a.height/2,tx:b.left+b.width/2,ty:b.top+b.height/2}
+  });
+  if(!dragPoints)throw new Error("Could not locate demo nodes for central drag/drop");
+  await page.mouse.move(dragPoints.sx,dragPoints.sy);
+  await page.mouse.down();
+  await page.mouse.move(dragPoints.tx,dragPoints.ty,{steps:12});
+  await page.mouse.up();
+  await page.waitForFunction(()=>{
+    const row=[...document.querySelectorAll(".tree-row")].find(r=>r.querySelector(".tree-label")?.textContent==="Game design");
+    return row?.style.getPropertyValue("--depth")==="2"
+  },{timeout:5000});
+
+  // Return to the root before testing inspector-driven styling.
+  await page.$eval(".node.root",el=>el.click());
+  await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
   await page.$eval("#nodeIcon",el=>{el.value="⭐";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const rootIcon=await page.$eval(".node.root .node-icon",el=>el.textContent||"");
   if(!rootIcon.includes("⭐"))throw new Error("Custom node icon was not rendered: "+rootIcon);
@@ -60,6 +82,24 @@ try{
   await page.click("#recentBtn");
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
   await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
+  await page.click("#recentClose");
+
+  // A workspace can be started from scratch and populated visually with folders.
+  page.once("dialog",d=>d.accept("Workspace vierge test"));
+  await page.click("#newWorkspaceBtn");
+  await page.waitForFunction(()=>document.getElementById("workspaceName")?.textContent==="Workspace vierge test",{timeout:5000});
+  page.once("dialog",d=>d.accept("Recherche"));
+  await page.click("#folderBtn");
+  await page.waitForFunction(()=>[...document.querySelectorAll(".tree-label")].some(el=>el.textContent==="Recherche"),{timeout:5000});
+  const draftNode=await page.$eval(".node.folder .node-title",el=>el.textContent||"");
+  if(draftNode!=="Recherche")throw new Error("Folder created from scratch was not rendered: "+draftNode);
+  await page.click("#exportBtn");
+  await page.waitForSelector("#exportDialog[open]",{timeout:5000});
+  const zipReady=await page.$eval("#zipWorkspaceBtn",el=>!el.disabled);
+  if(!zipReady)throw new Error("Workspace ZIP export is not available for a draft workspace");
+  await page.click("#zipWorkspaceBtn");
+  await page.waitForFunction(()=>document.getElementById("status")?.textContent?.includes("Template ZIP créé"),{timeout:5000});
+
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
 }finally{

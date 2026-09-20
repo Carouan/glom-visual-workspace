@@ -1,4 +1,5 @@
-let viewerApi=null,viewerLoadFailed=false,exporterApi=null,recentApi=null;
+let viewerApi=null,viewerLoadFailed=false,exporterApi=null,workspaceExporterApi=null,recentApi=null;
+async function getWorkspaceExporterApi(){if(workspaceExporterApi)return workspaceExporterApi;try{workspaceExporterApi=await import("./exporters/workspace.js");return workspaceExporterApi}catch(e){console.error("Workspace exporter failed to load",e);setStatus("Export workspace indisponible","bad");return null}}
 async function getRecentApi(){if(recentApi)return recentApi;try{recentApi=await import("./workspaces/recent.js");return recentApi}catch(e){console.error("Recent workspaces module failed to load",e);return null}}
 async function getExporterApi(){if(exporterApi)return exporterApi;try{exporterApi=await import("./exporters/mindmap.js");return exporterApi}catch(e){console.error("Exporter module failed to load",e);setStatus("Export image/PDF indisponible","bad");return null}}
 async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)return null;try{viewerApi=await import("./viewers/index.js");return viewerApi}catch(e){viewerLoadFailed=true;console.error("Viewer module failed to load",e);setStatus("Viewer avancé indisponible — fonctions principales actives","bad");return null}}
@@ -6,18 +7,18 @@ function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.cle
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),
-  openBtn:el("openBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),
+  openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
   noSelection:el("noSelection"),form:el("form"),selectionKind:el("selectionKind"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),nodeIcon:el("nodeIcon"),fontSize:el("fontSize"),fontSizeValue:el("fontSizeValue"),fontFamily:el("fontFamily"),fontWeight:el("fontWeight"),textAlign:el("textAlign"),fontItalic:el("fontItalic"),textColor:el("textColor"),backgroundColor:el("backgroundColor"),borderColor:el("borderColor"),borderWidth:el("borderWidth"),borderWidthValue:el("borderWidthValue"),nodeShape:el("nodeShape"),nodeLocked:el("nodeLocked"),imageToggleLabel:el("imageToggleLabel"),showNodeImage:el("showNodeImage"),copyStyleBtn:el("copyStyleBtn"),pasteStyleBtn:el("pasteStyleBtn"),resetStyleBtn:el("resetStyleBtn"),branchFrameSection:el("branchFrameSection"),frameToggleBtn:el("frameToggleBtn"),frameFields:el("frameFields"),frameTitle:el("frameTitle"),frameBorderColor:el("frameBorderColor"),frameBackgroundColor:el("frameBackgroundColor"),frameOpacity:el("frameOpacity"),frameOpacityValue:el("frameOpacityValue"),frameBorderStyle:el("frameBorderStyle"),
   openResource:el("openResource"),linkBtn:el("linkBtn"),collapseBtn:el("collapseBtn"),deleteBtn:el("deleteBtn"),
-  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),
+  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),zipWorkspaceBtn:el("zipWorkspaceBtn"),materializeBtn:el("materializeBtn"),
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn")
 };
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map()
 };
-const FORMAT=1,APP="0.3.1",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.2",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -159,6 +160,42 @@ function initTreeExpansion(){
   state.resources.filter(r=>r.type==="folder"&&!r.missing&&!r.path.includes("/")).forEach(r=>state.treeExpanded.add(r.id))
 }
 function safeName(s){return(s||"workspace").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase()||"workspace"}
+function safeFolderName(s){
+  const cleaned=String(s||"").replace(/[<>:"/\\|?*\u0000-\u001F]/g,"-").replace(/[. ]+$/g,"").trim();
+  return cleaned||"Nouveau dossier"
+}
+function workspaceRoot(){return state.resources.find(r=>r.type==="root")||null}
+function workspaceMetadataSnapshot(){
+  const now=new Date().toISOString(),workspace={...state.workspace,updatedAt:now,appVersion:APP},view={...state.view,updatedAt:now};
+  const resources={format:"glom-resources",version:1,workspaceId:workspace.id,updatedAt:now,resources:state.resources};
+  return{workspace,resources,view}
+}
+function newDraftWorkspace(){
+  const raw=prompt("Nom du nouveau workspace :","Nouveau workspace");if(raw===null)return;
+  const name=(raw||"").trim()||"Nouveau workspace";clearNodeImageCache();
+  const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
+  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:v.nodes[0]?.id||null,linkSource:null,canWrite:false,dirty:true});
+  initTreeExpansion();show();fit();setStatus("Workspace brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
+}
+async function addFolder(){
+  if(!state.workspace||!state.view)return;
+  if(state.mode==="fallback"){alert("La création de dossiers n’est pas disponible en mode compatibilité lecture seule.");return}
+  const selected=selectedResource(),parent=(selected&&["root","folder"].includes(selected.type)?selected:(selected?parentOf(selected,state.resources):null))||workspaceRoot();
+  if(!parent)return;
+  const raw=prompt("Nom du dossier :","Nouveau dossier");if(raw===null)return;const name=safeFolderName(raw);
+  const path=parent.path?parent.path+"/"+name:name;
+  if(state.resources.some(r=>["folder","file"].includes(r.type)&&!r.missing&&r.path===path)){alert("Un élément existe déjà à cet emplacement.");return}
+  if(state.mode==="fs"){
+    if(!(await ensureWritePermission()))return;
+    try{await dirByParts(state.handle,path.split("/").filter(Boolean),true)}catch(e){console.error(e);alert("Impossible de créer le dossier : "+(e.message||e));return}
+  }
+  const r={id:"r-"+uuid(),type:"folder",path,title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},parentNode=nodeForResource(parent.id);
+  const siblings=state.resources.filter(x=>x.type==="folder"&&parentOf(x,state.resources)?.id===parent.id).length;
+  const n={id:"n-"+r.id,resourceId:r.id,x:Math.max(0,(parentNode?.x||120)+330),y:Math.max(0,(parentNode?.y||130)+siblings*112),collapsed:false,style:{}};
+  state.resources.push(r);state.view.nodes.push(n);
+  if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
+  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;setDirty(true);render();setStatus("Dossier créé","ok")
+}
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
 }
@@ -187,7 +224,10 @@ async function save(quiet){
   const exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views:{"main-mindmap":state.view}};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");ui.saveBtn.textContent=state.mode==="fs"&&state.canWrite?"💾 Enregistrer":"⬇️ Exporter les vues";[ui.scanBtn,ui.saveBtn,ui.exportBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);if(state.mode==="demo")ui.scanBtn.disabled=true;render()
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");ui.saveBtn.textContent=state.mode==="fs"&&state.canWrite?"💾 Enregistrer":"⬇️ Exporter les vues";
+  [ui.scanBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
+  if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
+  ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render()
 }
 function match(r){if(!state.search)return true;const h=[r.title,r.path,r.url,r.notes].concat(r.tags||[]).filter(Boolean).join(" ").toLowerCase();return h.includes(state.search.toLowerCase())}
 function render(){renderTree();renderMap();renderInspector();transform()}
@@ -208,7 +248,7 @@ function renderTree(){
   const extra=state.resources.filter(r=>["virtual","url"].includes(r.type)&&match(r));
   if(extra.length){const h=document.createElement("div");h.className="tree-section";h.textContent="Idées et liens";ui.tree.appendChild(h);extra.forEach(r=>ui.tree.appendChild(treeRow(r,0)))}
 }
-function canMoveResource(r){return state.mode==="fs"&&r&&!r.missing&&["file","folder"].includes(r.type)}
+function canMoveResource(r){return["fs","demo","draft"].includes(state.mode)&&r&&!r.missing&&["file","folder"].includes(r.type)}
 function treeRow(r,d){
   const row=document.createElement("div");row.className="tree-row"+(r.missing?" missing":"");row.dataset.resourceId=r.id;
   const n=nodeForResource(r.id);if(n&&n.id===state.selected)row.classList.add("selected");row.style.setProperty("--depth",d);
@@ -222,14 +262,14 @@ function treeRow(r,d){
   row.onclick=()=>{if(n){select(n.id);focus(n.id);closePanels()}};
   row.draggable=canMoveResource(r);
   if(row.draggable){
-    row.title=state.canWrite?"Glisser pour déplacer":"Glisser pour déplacer — une autorisation d’écriture pourra être demandée";
+    row.title=state.mode==="fs"&&!state.canWrite?"Glisser pour déplacer — une autorisation d’écriture pourra être demandée":"Glisser pour déplacer";
     row.addEventListener("dragstart",e=>{state.draggedResource=r.id;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",r.id);row.classList.add("dragging")});
     row.addEventListener("dragend",()=>{state.draggedResource=null;row.classList.remove("dragging");document.querySelectorAll(".tree-row.drop-target").forEach(x=>x.classList.remove("drop-target"))})
   }
-  if((r.type==="root"||r.type==="folder")&&state.mode==="fs"){
+  if((r.type==="root"||r.type==="folder")&&["fs","demo","draft"].includes(state.mode)){
     row.addEventListener("dragover",e=>{if(!state.draggedResource||state.draggedResource===r.id)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drop-target")});
     row.addEventListener("dragleave",()=>row.classList.remove("drop-target"));
-    row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await moveResource(source,r)})
+    row.addEventListener("drop",async e=>{e.preventDefault();row.classList.remove("drop-target");const source=resource(state.draggedResource||e.dataTransfer.getData("text/plain"));state.draggedResource=null;if(source)await reparentFromMindmap(source,r)})
   }
   return row
 }
@@ -243,28 +283,46 @@ async function copyDirectoryHandle(srcHandle,targetDir,name){
     if(child.kind==="directory")await copyDirectoryHandle(child,dest,childName);else await copyFileHandle(child,dest,childName)
   }
 }
-async function moveResource(source,target){
-  if(!canMoveResource(source)||!target||!["root","folder"].includes(target.type))return;
-  if(!(await ensureWritePermission()))return;
-  if(source.type==="folder"&&(target.path===source.path||target.path.startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return}
-  const sourceParentPath=parentPath(source.path),targetPath=target.path||"";
-  if(sourceParentPath===targetPath)return;
-  const name=base(source.path),sourceParent=await dirByParts(state.handle,sourceParentPath.split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,targetPath.split("/").filter(Boolean),false);
-  if(await entryExists(targetDir,name)){alert("Un élément nommé « "+name+" » existe déjà dans ce dossier.");return}
-  setStatus("Déplacement de « "+name+" »…");
-  try{
-    if(source.type==="file"){const h=await sourceParent.getFileHandle(name);await copyFileHandle(h,targetDir,name);await sourceParent.removeEntry(name)}
-    else{const h=await sourceParent.getDirectoryHandle(name);await copyDirectoryHandle(h,targetDir,name);await sourceParent.removeEntry(name,{recursive:true})}
-  }catch(e){console.error(e);setStatus("Déplacement impossible","bad");alert("Impossible de déplacer cet élément : "+(e.message||e));return}
-  const oldPath=source.path,newPath=targetPath?targetPath+"/"+name:name,prefix=oldPath+"/";
-  state.resources.forEach(r=>{if(r.path===oldPath)r.path=newPath;else if(r.path&&r.path.startsWith(prefix))r.path=newPath+r.path.slice(oldPath.length)});
+function reparentPlan(source,target){
+  if(!source||!target||!["file","folder"].includes(source.type)||!["root","folder"].includes(target.type)||source.id===target.id)return null;
+  if(source.type==="folder"&&(target.path===source.path||(target.path||"").startsWith(source.path+"/"))){alert("Impossible de déplacer un dossier dans lui-même.");return null}
+  const oldPath=source.path,targetPath=target.path||"",name=base(oldPath),newPath=targetPath?targetPath+"/"+name:name;
+  if(parentPath(oldPath)===targetPath)return null;
+  if(state.resources.some(r=>r.id!==source.id&&["file","folder"].includes(r.type)&&!r.missing&&r.path===newPath)){alert("Un élément nommé « "+name+" » existe déjà dans ce dossier.");return null}
+  return{oldPath,targetPath,name,newPath,prefix:oldPath+"/"}
+}
+function applyReparentModel(source,target,plan){
+  if(!plan)return false;
+  state.resources.forEach(r=>{if(r.path===plan.oldPath)r.path=plan.newPath;else if(r.path&&r.path.startsWith(plan.prefix))r.path=plan.newPath+r.path.slice(plan.oldPath.length)});
   applyFolderSizes(state.resources);
   const movedNode=nodeForResource(source.id),targetNode=nodeForResource(target.id);
   if(movedNode&&targetNode){
     state.view.edges=state.view.edges.filter(e=>!(e.kind==="hierarchy"&&e.to===movedNode.id));
     state.view.edges.push({id:"h-"+target.id+"-"+source.id,from:targetNode.id,to:movedNode.id,kind:"hierarchy"})
   }
-  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderInspector();setStatus("Déplacement terminé","ok")
+  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderFrames(hiddenNodes());renderInspector();return true
+}
+async function moveResource(source,target){
+  if(state.mode!=="fs"||!source||source.missing||!["file","folder"].includes(source.type)||!target||!["root","folder"].includes(target.type))return false;
+  const plan=reparentPlan(source,target);if(!plan)return false;
+  if(!(await ensureWritePermission()))return false;
+  const sourceParent=await dirByParts(state.handle,parentPath(source.path).split("/").filter(Boolean),false),targetDir=await dirByParts(state.handle,plan.targetPath.split("/").filter(Boolean),false);
+  if(await entryExists(targetDir,plan.name)){alert("Un élément nommé « "+plan.name+" » existe déjà dans ce dossier.");return false}
+  setStatus("Déplacement de « "+plan.name+" »…");
+  try{
+    if(source.type==="file"){const h=await sourceParent.getFileHandle(plan.name);await copyFileHandle(h,targetDir,plan.name);await sourceParent.removeEntry(plan.name)}
+    else{const h=await sourceParent.getDirectoryHandle(plan.name);await copyDirectoryHandle(h,targetDir,plan.name);await sourceParent.removeEntry(plan.name,{recursive:true})}
+  }catch(e){console.error(e);setStatus("Déplacement impossible","bad");alert("Impossible de déplacer cet élément : "+(e.message||e));return false}
+  applyReparentModel(source,target,plan);setStatus("Déplacement terminé","ok");return true
+}
+function canCentralReparent(source,target){
+  return["fs","demo","draft"].includes(state.mode)&&source&&target&&["file","folder"].includes(source.type)&&["root","folder"].includes(target.type)&&source.id!==target.id
+}
+async function reparentFromMindmap(source,target){
+  if(!canCentralReparent(source,target))return false;
+  if(state.mode==="fs")return moveResource(source,target);
+  const plan=reparentPlan(source,target);if(!plan)return false;
+  const ok=applyReparentModel(source,target,plan);if(ok)setStatus("Arborescence mise à jour depuis la mindmap","ok");return ok
 }
 function children(id){return state.view?state.view.edges.filter(e=>e.kind==="hierarchy"&&e.from===id).map(e=>e.to):[]}
 function hiddenNodes(){const h=new Set();function hide(id){children(id).forEach(c=>{h.add(c);hide(c)})}(state.view&&state.view.nodes||[]).forEach(n=>{if(n.collapsed)hide(n.id)});return h}
@@ -302,9 +360,31 @@ function makeNode(n,r){
 function renderEdges(){
   if(!state.view)return;const hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)).map(n=>[n.id,n]));state.view.edges.forEach(ed=>{const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;const ar=resource(a.resourceId),br=resource(b.resourceId),sx=a.x+240,sy=a.y+37,tx=b.x,ty=b.y+37,dx=Math.max(70,Math.abs(tx-sx)*.45),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M "+sx+" "+sy+" C "+(sx+dx)+" "+sy+", "+(tx-dx)+" "+ty+", "+tx+" "+ty);p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));ui.edges.appendChild(p)})
 }
+function centralDropCandidate(clientX,clientY,sourceNodeId){
+  const sourceNode=node(sourceNodeId),source=sourceNode&&resource(sourceNode.resourceId);if(!source)return null;
+  const elements=document.elementsFromPoint(clientX,clientY);
+  for(const el of elements){
+    const card=el.closest&&el.closest(".node");if(!card||card.dataset.node===sourceNodeId)continue;
+    const targetNode=node(card.dataset.node),target=targetNode&&resource(targetNode.resourceId);
+    if(canCentralReparent(source,target))return{element:card,resource:target}
+  }
+  return null
+}
+function clearCentralDropHighlight(){ui.nodes.querySelectorAll(".node.drop-target").forEach(x=>x.classList.remove("drop-target"))}
 function dragNode(ev,n,e){
-  if(ev.button!==0||ev.target.closest("button")||effectiveNodeStyle(n,resource(n.resourceId)).locked)return;ev.stopPropagation();if(state.selected!==n.id){state.selected=n.id;ui.nodes.querySelectorAll(".node.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
-  const s={x:ev.clientX,y:ev.clientY,nx:n.x,ny:n.y};let moved=false;e.setPointerCapture&&e.setPointerCapture(ev.pointerId);function mv(x){const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;n.x=Math.max(0,s.nx+dx);n.y=Math.max(0,s.ny+dy);e.style.left=n.x+"px";e.style.top=n.y+"px";renderEdges();renderFrames(hiddenNodes())}function end(x){e.removeEventListener("pointermove",mv);e.removeEventListener("pointerup",end);e.removeEventListener("pointercancel",end);if(moved)setDirty()}e.addEventListener("pointermove",mv);e.addEventListener("pointerup",end);e.addEventListener("pointercancel",end)
+  const source=resource(n.resourceId);if(ev.button!==0||ev.target.closest("button")||effectiveNodeStyle(n,source).locked)return;
+  ev.stopPropagation();if(state.selected!==n.id){state.selected=n.id;ui.nodes.querySelectorAll(".node.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
+  const s={x:ev.clientX,y:ev.clientY,nx:n.x,ny:n.y};let moved=false,drop=null;e.setPointerCapture&&e.setPointerCapture(ev.pointerId);
+  function mv(x){
+    const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;
+    n.x=Math.max(0,s.nx+dx);n.y=Math.max(0,s.ny+dy);e.style.left=n.x+"px";e.style.top=n.y+"px";renderEdges();renderFrames(hiddenNodes());
+    clearCentralDropHighlight();drop=moved?centralDropCandidate(x.clientX,x.clientY,n.id):null;if(drop)drop.element.classList.add("drop-target")
+  }
+  async function end(x){
+    e.removeEventListener("pointermove",mv);e.removeEventListener("pointerup",end);e.removeEventListener("pointercancel",end);clearCentralDropHighlight();
+    if(!moved)return;if(x.type!=="pointercancel"&&drop){await reparentFromMindmap(source,drop.resource);renderMap()}else setDirty()
+  }
+  e.addEventListener("pointermove",mv);e.addEventListener("pointerup",end);e.addEventListener("pointercancel",end)
 }
 function select(id){state.selected=id;renderTree();renderMap();renderInspector()}
 function manualEdge(a,b){if(state.view.edges.some(e=>e.from===a&&e.to===b))return;state.view.edges.push({id:"m-"+uuid(),from:a,to:b,kind:"manual"});setDirty()}
@@ -421,27 +501,46 @@ async function openRecentDialog(){
 }
 async function openExportDialog(){
   if(!state.workspace||!state.view)return;
-  setStatus("Préparation de l’export…");
-  const api=await getExporterApi();
-  if(!api){alert("Le module d’export n’a pas pu être chargé.");return}
   setStatus(state.dirty?"Modifications non enregistrées":"Prêt");
+  ui.materializeBtn.disabled=!supportsFS();
   if(!ui.exportDialog.open)ui.exportDialog.showModal()
 }
 function exportOptions(){return{orientation:ui.exportOrientation.value,includeHidden:ui.exportHidden.checked}}
 function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-mindmap"}
-function runExport(kind){
-  if(!exporterApi||!state.view)return;
+async function runExport(kind){
+  if(!state.view)return;
+  const api=await getExporterApi();if(!api){alert("Le module d’export de la mindmap n’a pas pu être chargé.");return}
   try{
     const o=exportOptions(),base=exportBaseName();
-    if(kind==="svg")exporterApi.exportSvg(base+".svg",state.view,state.resources,o);
-    else if(kind==="png")exporterApi.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
-    else if(kind==="print")exporterApi.printA4(state.workspace.name,state.view,state.resources,o);
+    if(kind==="svg")api.exportSvg(base+".svg",state.view,state.resources,o);
+    else if(kind==="png")api.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
+    else if(kind==="print")api.printA4(state.workspace.name,state.view,state.resources,o);
     if(kind!=="print")setStatus("Export "+kind.toUpperCase()+" généré","ok")
   }catch(e){console.error(e);alert("Export impossible : "+(e.message||e))}
 }
+async function exportWorkspaceZip(){
+  if(!state.workspace||!state.view)return;setStatus("Création du template ZIP…");
+  const api=await getWorkspaceExporterApi();if(!api){alert("Le module ZIP n’a pas pu être chargé.");return}
+  try{const result=await api.exportWorkspaceTemplateZip(state.workspace,state.resources,state.view,APP);setStatus("Template ZIP créé — "+result.folders+" dossier(s), "+result.plannedFiles+" fichier(s) planifié(s)","ok")}
+  catch(e){console.error(e);setStatus("Export ZIP impossible","bad");alert("Impossible de créer le ZIP : "+(e.message||e))}
+}
+async function materializeWorkspace(){
+  if(!state.workspace||!state.view)return;if(!supportsFS()){alert("Ce navigateur ne permet pas de créer directement une arborescence locale.");return}
+  try{
+    const parent=await window.showDirectoryPicker({mode:"readwrite"}),suggested=safeFolderName(state.workspace.name),raw=prompt("Nom du dossier à créer :",suggested);if(raw===null)return;
+    const folderName=safeFolderName(raw);if(await entryExists(parent,folderName)){alert("Un dossier portant ce nom existe déjà dans l’emplacement choisi.");return}
+    setStatus("Création de l’arborescence…");const root=await parent.getDirectoryHandle(folderName,{create:true});
+    const folders=state.resources.filter(r=>r.type==="folder"&&!r.missing&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length);
+    for(const r of folders)await dirByParts(root,r.path.split("/").filter(Boolean),true);
+    const payload=workspaceMetadataSnapshot();
+    await Promise.all([writeJson(root,WS,payload.workspace),writeJson(root,RES,payload.resources),writeJson(root,VIEW,payload.view)]);
+    const planned=state.resources.filter(r=>r.type==="file"&&r.path).length;ui.exportDialog.close();await loadHandle(root,false);
+    setStatus("Workspace créé sur disque","ok");if(planned)alert(planned+" ressource(s) fichier sont conservées comme références planifiées. Elles apparaîtront « absentes » jusqu’à ce que les vrais fichiers correspondants soient ajoutés.")
+  }catch(e){if(e&&e.name==="AbortError")return;console.error(e);setStatus("Création sur disque impossible","bad");alert("Impossible de créer le workspace : "+(e.message||e))}
+}
 function closePanels(){ui.resourcesPanel.classList.remove("open");ui.inspectorPanel.classList.remove("open")}
 function wire(){
-  ui.openBtn.onclick=openWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
+  ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node")){state.selected=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));
   [ui.nodeIcon,ui.fontSize,ui.fontFamily,ui.fontWeight,ui.textAlign,ui.fontItalic,ui.textColor,ui.backgroundColor,ui.borderColor,ui.borderWidth,ui.nodeShape,ui.nodeLocked,ui.showNodeImage].forEach(x=>x.addEventListener("input",updateNodeStyle));

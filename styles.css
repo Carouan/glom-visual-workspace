@@ -95,3 +95,21 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
 .resources-scroll{padding:.75rem;display:block}
 .inspector-scroll{padding:0}
 .details-grid textarea{min-height:100px}
+
+/* Workspace builder V0.3.2 */
+.node.drop-target{
+  outline:4px solid color-mix(in srgb,var(--primary) 45%,transparent);
+  box-shadow:0 0 0 7px color-mix(in srgb,var(--primary) 12%,transparent),var(--shadow);
+}
+.workspace-export-box{
+  display:grid;
+  gap:.55rem;
+  padding:.8rem;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--surface2) 45%,transparent);
+}
+.workspace-export-box>strong{font-size:.9rem}
+.workspace-export-box p{margin:0}
+.workspace-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:600px){.workspace-actions{grid-template-columns:1fr}}
