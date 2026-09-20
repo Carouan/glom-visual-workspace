@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check src/app.js && node --check sw.js
+        run: node --check src/app.js && node --check src/viewers/index.js && node --check sw.js
       - name: Validate manifest
         run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'))"
       - name: Required files
