@@ -107,6 +107,20 @@ Objectif : faire de la carte mentale une vraie surface d'édition, pas seulement
 
 Les choix visuels appartiennent à la **vue** et non à la ressource : un même fichier peut donc être affiché différemment dans deux cartes.
 
+### V0.3.2 — construction visuelle du workspace
+
+- glisser un fichier ou dossier **sur un dossier dans la mindmap** pour le reparent dans l'arborescence ;
+- déplacement physique correspondant en mode File System Access ;
+- reparentage purement logique dans les workspaces brouillon/démo ;
+- mise à jour immédiate de la barre gauche sans rescan complet ;
+- créer un workspace vide (« mindmap from scratch ») ;
+- créer des dossiers comme enfants du dossier sélectionné ;
+- exporter un **template ZIP** contenant l'arborescence de dossiers et `.glom/` ;
+- matérialiser un workspace brouillon/démo dans un dossier local choisi ;
+- conserver les ressources « fichier » sans contenu comme références planifiées/absentes tant qu'un vrai fichier n'existe pas.
+
+Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est destiné à transporter la **structure + la carte + les métadonnées**. Un export de sauvegarde complète avec contenus sera traité séparément.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
