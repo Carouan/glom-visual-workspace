@@ -1,4 +1,6 @@
-import {showFilePreview,showFolderPreview,clearPreview} from "./viewers/index.js";
+let viewerApi=null,viewerLoadFailed=false;
+async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)return null;try{viewerApi=await import("./viewers/index.js");return viewerApi}catch(e){viewerLoadFailed=true;console.error("Viewer module failed to load",e);setStatus("Viewer avancé indisponible — fonctions principales actives","bad");return null}}
+function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.clearPreview()}catch(e){console.warn(e)}}
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),
@@ -245,18 +247,32 @@ function centerWorld(){const r=ui.viewport.getBoundingClientRect();return{x:(r.w
 function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:Math.max(0,c.x-120),y:Math.max(0,c.y-37),collapsed:false};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;setDirty();render()}
 function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:Math.max(0,c.x-120),y:Math.max(0,c.y-37),collapsed:false};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;setDirty();render()}
 function previewUi(){return{dialog:ui.preview,title:ui.previewTitle,meta:ui.previewMeta,body:ui.previewBody}}
+async function basicPreview(r,f){
+  ui.previewTitle.textContent=r.title;ui.previewMeta.textContent=(r.path||f.name)+" — "+formatSize(f.size);ui.previewBody.replaceChildren();
+  const ext=(r.path||f.name).split(".").pop().toLowerCase(),m=f.type||"",u=URL.createObjectURL(f);
+  ui.preview.addEventListener("close",()=>URL.revokeObjectURL(u),{once:true});
+  if(m.startsWith("image/")||["png","jpg","jpeg","gif","webp","svg"].includes(ext)){const x=document.createElement("img");x.src=u;x.alt=r.title;ui.previewBody.append(x)}
+  else if(m==="application/pdf"||ext==="pdf"){const x=document.createElement("iframe");x.src=u;x.title=r.title;ui.previewBody.append(x)}
+  else if(m.startsWith("text/")||["md","txt","json","csv","js","ts","css","html","xml","yaml","yml","py","ini","log"].includes(ext)){const x=document.createElement("pre");x.textContent=await f.text();ui.previewBody.append(x)}
+  else{const p=document.createElement("div");p.className="preview-fallback";p.textContent="Viewer avancé indisponible pour ce format.";ui.previewBody.append(p)}
+  if(!ui.preview.open)ui.preview.showModal()
+}
 async function openResource(r){
   if(!r)return;
   if(r.type==="url"){window.open(r.url,"_blank","noopener,noreferrer");return}
-  if(["root","folder"].includes(r.type)){showFolderPreview(r,state.resources,previewUi(),openResource);return}
+  if(["root","folder"].includes(r.type)){
+    const api=await getViewerApi();
+    if(api&&api.showFolderPreview){api.showFolderPreview(r,state.resources,previewUi(),openResource);return}
+    const n=nodeForResource(r.id);if(n){n.collapsed=false;renderMap();focus(n.id)}return
+  }
   if(r.type==="virtual")return;
   if(state.mode==="demo"){previewDemo(r);return}
   let f=null;try{f=state.mode==="fs"?await fileFromPath(state.handle,r.path):state.fallbackFiles.get(r.path)}catch(e){console.warn(e)}
   if(!f){alert("Fichier inaccessible ou déplacé. Essayez de rescanner.");return}
-  await showFilePreview(r,f,previewUi())
+  const api=await getViewerApi();if(api&&api.showFilePreview)await api.showFilePreview(r,f,previewUi());else await basicPreview(r,f)
 }
 function previewDemo(r){
-  clearPreview();ui.previewTitle.textContent=r.title;ui.previewMeta.textContent="Ressource fictive de démonstration";ui.previewBody.replaceChildren();
+  clearPreviewSafe();ui.previewTitle.textContent=r.title;ui.previewMeta.textContent="Ressource fictive de démonstration";ui.previewBody.replaceChildren();
   const d=document.createElement("div");d.className="preview-fallback";const i=document.createElement("div");i.style.fontSize="4rem";i.textContent=icon(r);
   const p=document.createElement("p");p.textContent="En mode démo, les fichiers sont fictifs. Ouvrez un vrai dossier pour tester les viewers locaux de la V0.2.";
   d.append(i,p);ui.previewBody.appendChild(d);ui.preview.showModal()
@@ -271,7 +287,7 @@ function wire(){
   ui.openBtn.onclick=openWorkspace;ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node")){state.selected=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;
-  ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreview);
+  ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
   ui.showResourcesBtn.onclick=()=>ui.resourcesPanel.classList.toggle("open");ui.showInspectorBtn.onclick=()=>ui.inspectorPanel.classList.toggle("open");document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove("open"));
   window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save(false)}if(e.key==="Escape"){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";closePanels();renderInspector()}});window.addEventListener("resize",()=>{if(innerWidth>900)closePanels()})
 }
