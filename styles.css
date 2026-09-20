@@ -6,7 +6,7 @@
 button,input,textarea{font:inherit}button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:.5rem .68rem;cursor:pointer}button:hover:not(:disabled){border-color:var(--primary)}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.danger{color:var(--danger)}.hidden{display:none!important}.mobile-only{display:none}
 .topbar{height:var(--top);display:grid;grid-template-columns:minmax(250px,1fr) auto minmax(130px,.5fr);align-items:center;gap:.8rem;padding:.5rem .75rem;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:30}
 .brand{display:flex;gap:.7rem;align-items:center;min-width:0}.brand-mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#1d4ed8,#7c3aed);color:#fff;font-weight:800;font-size:1.2rem}.brand strong,.brand small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.brand small{color:var(--muted);margin-top:.1rem}
-.toolbar{display:flex;align-items:center;gap:.3rem;overflow-x:auto}.toolbar button{white-space:nowrap}.sep{display:inline-block;width:1px;height:24px;background:var(--border);margin:0 .15rem}.status{justify-self:end;display:flex;gap:.5rem;align-items:center;color:var(--muted);font-size:.82rem}.badge{background:var(--surface2);padding:.2rem .42rem;border-radius:999px}
+.toolbar{display:flex;align-items:center;gap:.3rem;overflow:visible;min-width:0}.toolbar button{white-space:nowrap}.sep{display:inline-block;width:1px;height:24px;background:var(--border);margin:0 .15rem}.status{justify-self:end;display:flex;gap:.5rem;align-items:center;color:var(--muted);font-size:.82rem}.badge{background:var(--surface2);padding:.2rem .42rem;border-radius:999px}
 .shell{height:calc(100vh - var(--top));display:grid;grid-template-columns:270px minmax(0,1fr) 320px}.panel{background:var(--surface);min-width:0;display:flex;flex-direction:column;z-index:15}.resources{border-right:1px solid var(--border)}.inspector{border-left:1px solid var(--border)}.panel-head{min-height:56px;padding:.7rem .8rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}.panel-head strong,.panel-head small{display:block}.panel-head small{color:var(--muted);margin-top:.1rem}.panel-body{padding:.75rem;min-height:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column}.close{width:34px;height:34px;padding:0;font-size:1.2rem}
 .search{display:grid;grid-template-columns:22px 1fr;gap:.3rem;align-items:center;padding:.45rem .55rem;border:1px solid var(--border);border-radius:9px;background:var(--bg)}.search input{border:0;outline:0;background:transparent;color:var(--text);min-width:0}.legend{display:flex;flex-wrap:wrap;gap:.35rem .55rem;font-size:.72rem;color:var(--muted);padding:.65rem .1rem}
 .tree-row{display:flex;align-items:center;gap:.35rem;min-height:32px;padding:.25rem .35rem;border-radius:7px;cursor:pointer;font-size:.88rem}.tree-row:hover{background:var(--surface2)}.tree-row.selected{background:var(--primary2);outline:1px solid color-mix(in srgb,var(--primary) 25%,transparent)}.tree-row.missing{opacity:.55;text-decoration:line-through}.tree-indent{display:inline-block;width:calc(var(--depth)*15px);flex:0 0 auto}.tree-label{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.tree-section{margin:.7rem 0 .25rem;color:var(--muted);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
@@ -113,3 +113,91 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
 .workspace-export-box p{margin:0}
 .workspace-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:600px){.workspace-actions{grid-template-columns:1fr}}
+
+/* Compact command menus and mindmap palette V0.3.3 */
+.toolbar-menu{position:relative}
+.toolbar-menu>summary{
+  list-style:none;
+  user-select:none;
+  white-space:nowrap;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  border-radius:9px;
+  padding:.5rem .68rem;
+  line-height:1.2;
+}
+.toolbar-menu>summary::-webkit-details-marker{display:none}
+.toolbar-menu>summary:hover,.toolbar-menu[open]>summary{border-color:var(--primary);background:var(--surface2)}
+.toolbar-menu-panel{
+  position:absolute;
+  top:calc(100% + .4rem);
+  left:0;
+  z-index:120;
+  min-width:230px;
+  display:grid;
+  gap:.18rem;
+  padding:.4rem;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:11px;
+  box-shadow:var(--shadow);
+}
+.toolbar-menu:last-of-type .toolbar-menu-panel{left:auto;right:0}
+.toolbar-menu-panel button{
+  width:100%;
+  border:0;
+  background:transparent;
+  text-align:left;
+  border-radius:7px;
+  padding:.55rem .62rem;
+}
+.toolbar-menu-panel button:hover:not(:disabled){background:var(--surface2)}
+.menu-divider{height:1px;background:var(--border);margin:.25rem .2rem}
+
+.map-palette{
+  position:absolute;
+  left:.7rem;
+  top:4.2rem;
+  z-index:24;
+  display:grid;
+  gap:.25rem;
+  padding:.35rem;
+  background:color-mix(in srgb,var(--surface) 94%,transparent);
+  backdrop-filter:blur(8px);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  cursor:default;
+}
+.map-palette button{
+  width:38px;
+  height:38px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  font-size:1rem;
+  border-radius:8px;
+}
+.map-palette button.active{
+  color:var(--primary);
+  border-color:var(--primary);
+  background:var(--primary2);
+}
+.palette-divider{height:1px;background:var(--border);margin:.12rem .22rem}
+.context-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.4rem;
+  padding:.7rem;
+}
+.context-actions button{min-height:40px;padding:.45rem .5rem;font-size:.76rem}
+@media(max-width:1100px){
+  .toolbar-menu>summary,.toolbar>button{padding-inline:.48rem;font-size:.8rem}
+}
+@media(max-width:900px){
+  .toolbar{flex-wrap:wrap;overflow:visible}
+  .toolbar-menu-panel{position:fixed;top:var(--top);left:.6rem!important;right:.6rem!important;min-width:0;max-height:55vh;overflow:auto}
+  .map-palette{left:.5rem;top:4.1rem}
+}
