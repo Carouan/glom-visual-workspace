@@ -145,6 +145,10 @@ try{
   await page.waitForSelector(".branch-frame",{timeout:5000});
   const frameCount=await page.$eval(".branch-frame",els=>els.length);
   if(frameCount<1)throw new Error("Branch frame was not rendered");
+  await page.$eval("#frameTitle",el=>{el.value="Cadre édité";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.$eval("#frameFontSize",el=>{el.value="24";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const frameTitle=await page.$eval(".branch-frame-title",el=>({text:el.textContent||"",size:getComputedStyle(el).fontSize,pointer:getComputedStyle(el).pointerEvents}));
+  if(frameTitle.text!=="Cadre édité"||frameTitle.size!=="24px"||frameTitle.pointer==="none")throw new Error("Frame title editing/typography failed: "+JSON.stringify(frameTitle));
 
   // Exclusion rules hide matching resources without deleting them from the model.
   await page.$eval("#exclusionsBtn",el=>el.click());
