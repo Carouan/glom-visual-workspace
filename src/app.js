@@ -818,10 +818,11 @@ async function runExport(kind){
   if(!state.view)return;
   const api=await getExporterApi();if(!api){alert("Le module d’export de la mindmap n’a pas pu être chargé.");return}
   try{
+    const printWindow=kind==="print"?window.open("","_blank"):null;if(kind==="print"&&!printWindow)throw new Error("La fenêtre d'impression a été bloquée par le navigateur.");
     setStatus("Préparation de l’export…");const o=exportOptions(),base=exportBaseName(),view=await prepareViewForExport();
     if(kind==="svg")api.exportSvg(base+".svg",view,state.resources,o);
     else if(kind==="png")await api.exportPng(base+".png",view,state.resources,o);
-    else if(kind==="print")api.printA4(state.workspace.name,view,state.resources,o);
+    else if(kind==="print")api.printA4(state.workspace.name,view,state.resources,{...o,targetWindow:printWindow});
     if(kind!=="print")setStatus("Export "+kind.toUpperCase()+" généré","ok")
   }catch(e){console.error(e);setStatus("Export impossible","bad");alert("Export impossible : "+(e.message||e))}
 }
