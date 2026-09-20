@@ -105,7 +105,7 @@ function parentOf(r,list){
   return list.find(x=>x.type==="folder"&&x.path===p)||list.find(x=>x.type==="root")||null
 }
 function applyFolderSizes(list){
-  const files=list.filter(r=>r.type==="file"&&!r.missing&&Number.isFinite(r.size));
+  const files=list.filter(r=>r.type==="file"&&!r.missing&&!r.excluded&&Number.isFinite(r.size));
   list.forEach(r=>{
     if(r.type==="root")r.size=files.reduce((s,f)=>s+f.size,0);
     else if(r.type==="folder"){const p=r.path+"/";r.size=files.reduce((s,f)=>s+(f.path.startsWith(p)?f.size:0),0)}
@@ -114,27 +114,30 @@ function applyFolderSizes(list){
 }
 function reconcile(workspace,entries,old=[]){
   const oldMap=new Map();old.forEach(r=>{if(["root","folder","file"].includes(r.type))oldMap.set(r.type+":"+(r.path||""),r)});
-  const rootOld=oldMap.get("root:");const out=[{id:rootOld&&rootOld.id||"root-"+workspace.id,type:"root",path:"",title:rootOld&&rootOld.title||workspace.name,tags:rootOld&&rootOld.tags||[],notes:rootOld&&rootOld.notes||"",missing:false,size:0,lastModified:null}];
+  const rootOld=oldMap.get("root:");const out=[{id:rootOld&&rootOld.id||"root-"+workspace.id,type:"root",path:"",title:rootOld&&rootOld.title||workspace.name,tags:rootOld&&rootOld.tags||[],notes:rootOld&&rootOld.notes||"",missing:false,excluded:false,size:0,lastModified:null}];
   const seen=new Set(["root:"]);
-  entries.forEach(e=>{const k=e.type+":"+e.path,o=oldMap.get(k);out.push({id:o&&o.id||"r-"+hash(k),type:e.type,path:e.path,title:o&&o.title||e.name||base(e.path),tags:o&&o.tags||[],notes:o&&o.notes||"",missing:false,size:Number.isFinite(e.size)?e.size:(o&&Number.isFinite(o.size)?o.size:null),lastModified:e.lastModified??o?.lastModified??null});seen.add(k)});
-  old.forEach(o=>{if(["virtual","url"].includes(o.type))out.push(Object.assign({},o,{missing:false}));else{const k=o.type+":"+(o.path||"");if(o.type!=="root"&&!seen.has(k))out.push(Object.assign({},o,{missing:true}))}});
-  return applyFolderSizes(out)
+  entries.forEach(e=>{const k=e.type+":"+e.path,o=oldMap.get(k);out.push({id:o&&o.id||"r-"+hash(k),type:e.type,path:e.path,title:o&&o.title||e.name||base(e.path),tags:o&&o.tags||[],notes:o&&o.notes||"",missing:false,excluded:pathExcluded(e.path,workspace),size:Number.isFinite(e.size)?e.size:(o&&Number.isFinite(o.size)?o.size:null),lastModified:e.lastModified??o?.lastModified??null});seen.add(k)});
+  old.forEach(o=>{
+    if(["virtual","url"].includes(o.type))out.push(Object.assign({},o,{missing:false,excluded:false}));
+    else{const k=o.type+":"+(o.path||"");if(o.type!=="root"&&!seen.has(k)){const excluded=pathExcluded(o.path,workspace);out.push(Object.assign({},o,{excluded,missing:excluded?false:true}))}}
+  });
+  return applyFolderSizes(markExclusions(out,workspace))
 }
 function layout(resources){
   const root=resources.find(r=>r.type==="root"),pos=new Map();if(!root)return pos;
-  const active=resources.filter(r=>!r.missing&&!["virtual","url"].includes(r.type)),children=new Map();active.forEach(r=>children.set(r.id,[]));
+  const active=resources.filter(r=>!r.missing&&!r.excluded&&!["virtual","url"].includes(r.type)),children=new Map();active.forEach(r=>children.set(r.id,[]));
   active.forEach(r=>{if(r.id===root.id)return;const p=parentOf(r,active);if(p&&children.has(p.id))children.get(p.id).push(r)});
   children.forEach(a=>a.sort((x,y)=>x.type!==y.type?(x.type==="folder"?-1:1):x.title.localeCompare(y.title,undefined,{numeric:true})));
   let leaf=0;function place(r,d){const c=children.get(r.id)||[];let y;if(!c.length)y=130+leaf++*112;else{const ys=c.map(x=>place(x,d+1));y=ys.reduce((a,b)=>a+b,0)/ys.length}pos.set(r.id,{x:120+d*330,y:y});return y}place(root,0);return pos
 }
 function freshView(resources){
-  const p=layout(resources),nodes=resources.map((r,i)=>({id:"n-"+r.id,resourceId:r.id,x:p.get(r.id)?p.get(r.id).x:200+(i%5)*280,y:p.get(r.id)?p.get(r.id).y:160+Math.floor(i/5)*115,collapsed:false,style:{}})),edges=[];
-  resources.forEach(r=>{const par=parentOf(r,resources);if(par&&!r.missing)edges.push({id:"h-"+par.id+"-"+r.id,from:"n-"+par.id,to:"n-"+r.id,kind:"hierarchy"})});
+  const visible=resources.filter(r=>!r.excluded),p=layout(resources),nodes=visible.map((r,i)=>({id:"n-"+r.id,resourceId:r.id,x:p.get(r.id)?p.get(r.id).x:200+(i%5)*280,y:p.get(r.id)?p.get(r.id).y:160+Math.floor(i/5)*115,collapsed:false,style:{}})),edges=[];
+  visible.forEach(r=>{const par=parentOf(r,visible);if(par&&!r.missing&&!par.excluded)edges.push({id:"h-"+par.id+"-"+r.id,from:"n-"+par.id,to:"n-"+r.id,kind:"hierarchy"})});
   const now=new Date().toISOString();return{format:"glom-view",version:FORMAT,id:"main-mindmap",type:"mindmap",name:"Carte principale",createdAt:now,updatedAt:now,pan:{x:40,y:40},zoom:.92,nodes:nodes,edges:edges,frames:[],objects:[]}
 }
 function mergeView(view,resources){
   if(!view||view.type!=="mindmap")return freshView(resources);
-  const auto=freshView(resources),old=new Map((view.nodes||[]).map(n=>[n.resourceId,n])),fallback=new Map(auto.nodes.map(n=>[n.resourceId,n])),nodes=resources.map(r=>{
+  const visible=resources.filter(r=>!r.excluded),auto=freshView(resources),old=new Map((view.nodes||[]).map(n=>[n.resourceId,n])),fallback=new Map(auto.nodes.map(n=>[n.resourceId,n])),nodes=visible.map(r=>{
     const n=Object.assign({},old.get(r.id)||fallback.get(r.id));n.style=Object.assign({},n.style||{});return n
   });
   const ids=new Set(nodes.map(n=>n.id)),manual=(view.edges||[]).filter(e=>e.kind==="manual"&&ids.has(e.from)&&ids.has(e.to)),frames=(view.frames||[]).filter(f=>ids.has(f.rootNodeId)),objects=Array.isArray(view.objects)?view.objects:[];
