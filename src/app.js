@@ -1,4 +1,5 @@
-let viewerApi=null,viewerLoadFailed=false,exporterApi=null,recentApi=null;
+let viewerApi=null,viewerLoadFailed=false,exporterApi=null,workspaceExporterApi=null,recentApi=null;
+async function getWorkspaceExporterApi(){if(workspaceExporterApi)return workspaceExporterApi;try{workspaceExporterApi=await import("./exporters/workspace.js");return workspaceExporterApi}catch(e){console.error("Workspace exporter failed to load",e);setStatus("Export workspace indisponible","bad");return null}}
 async function getRecentApi(){if(recentApi)return recentApi;try{recentApi=await import("./workspaces/recent.js");return recentApi}catch(e){console.error("Recent workspaces module failed to load",e);return null}}
 async function getExporterApi(){if(exporterApi)return exporterApi;try{exporterApi=await import("./exporters/mindmap.js");return exporterApi}catch(e){console.error("Exporter module failed to load",e);setStatus("Export image/PDF indisponible","bad");return null}}
 async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)return null;try{viewerApi=await import("./viewers/index.js");return viewerApi}catch(e){viewerLoadFailed=true;console.error("Viewer module failed to load",e);setStatus("Viewer avancé indisponible — fonctions principales actives","bad");return null}}
@@ -6,18 +7,18 @@ function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.cle
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),
-  openBtn:el("openBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),
+  openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
   noSelection:el("noSelection"),form:el("form"),selectionKind:el("selectionKind"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),nodeIcon:el("nodeIcon"),fontSize:el("fontSize"),fontSizeValue:el("fontSizeValue"),fontFamily:el("fontFamily"),fontWeight:el("fontWeight"),textAlign:el("textAlign"),fontItalic:el("fontItalic"),textColor:el("textColor"),backgroundColor:el("backgroundColor"),borderColor:el("borderColor"),borderWidth:el("borderWidth"),borderWidthValue:el("borderWidthValue"),nodeShape:el("nodeShape"),nodeLocked:el("nodeLocked"),imageToggleLabel:el("imageToggleLabel"),showNodeImage:el("showNodeImage"),copyStyleBtn:el("copyStyleBtn"),pasteStyleBtn:el("pasteStyleBtn"),resetStyleBtn:el("resetStyleBtn"),branchFrameSection:el("branchFrameSection"),frameToggleBtn:el("frameToggleBtn"),frameFields:el("frameFields"),frameTitle:el("frameTitle"),frameBorderColor:el("frameBorderColor"),frameBackgroundColor:el("frameBackgroundColor"),frameOpacity:el("frameOpacity"),frameOpacityValue:el("frameOpacityValue"),frameBorderStyle:el("frameBorderStyle"),
   openResource:el("openResource"),linkBtn:el("linkBtn"),collapseBtn:el("collapseBtn"),deleteBtn:el("deleteBtn"),
-  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),
+  preview:el("preview"),previewTitle:el("previewTitle"),previewMeta:el("previewMeta"),previewBody:el("previewBody"),previewClose:el("previewClose"),recentDialog:el("recentDialog"),recentClose:el("recentClose"),recentList:el("recentList"),exportDialog:el("exportDialog"),exportClose:el("exportClose"),exportOrientation:el("exportOrientation"),exportHidden:el("exportHidden"),exportSvgBtn:el("exportSvgBtn"),exportPngBtn:el("exportPngBtn"),exportPrintBtn:el("exportPrintBtn"),zipWorkspaceBtn:el("zipWorkspaceBtn"),materializeBtn:el("materializeBtn"),
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn")
 };
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map()
 };
-const FORMAT=1,APP="0.3.1",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.2",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
@@ -159,6 +160,42 @@ function initTreeExpansion(){
   state.resources.filter(r=>r.type==="folder"&&!r.missing&&!r.path.includes("/")).forEach(r=>state.treeExpanded.add(r.id))
 }
 function safeName(s){return(s||"workspace").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase()||"workspace"}
+function safeFolderName(s){
+  const cleaned=String(s||"").replace(/[<>:"/\\|?*\u0000-\u001F]/g,"-").replace(/[. ]+$/g,"").trim();
+  return cleaned||"Nouveau dossier"
+}
+function workspaceRoot(){return state.resources.find(r=>r.type==="root")||null}
+function workspaceMetadataSnapshot(){
+  const now=new Date().toISOString(),workspace={...state.workspace,updatedAt:now,appVersion:APP},view={...state.view,updatedAt:now};
+  const resources={format:"glom-resources",version:1,workspaceId:workspace.id,updatedAt:now,resources:state.resources};
+  return{workspace,resources,view}
+}
+function newDraftWorkspace(){
+  const raw=prompt("Nom du nouveau workspace :","Nouveau workspace");if(raw===null)return;
+  const name=(raw||"").trim()||"Nouveau workspace";clearNodeImageCache();
+  const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
+  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:v.nodes[0]?.id||null,linkSource:null,canWrite:false,dirty:true});
+  initTreeExpansion();show();fit();setStatus("Workspace brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
+}
+async function addFolder(){
+  if(!state.workspace||!state.view)return;
+  if(state.mode==="fallback"){alert("La création de dossiers n’est pas disponible en mode compatibilité lecture seule.");return}
+  const selected=selectedResource(),parent=(selected&&["root","folder"].includes(selected.type)?selected:(selected?parentOf(selected,state.resources):null))||workspaceRoot();
+  if(!parent)return;
+  const raw=prompt("Nom du dossier :","Nouveau dossier");if(raw===null)return;const name=safeFolderName(raw);
+  const path=parent.path?parent.path+"/"+name:name;
+  if(state.resources.some(r=>["folder","file"].includes(r.type)&&!r.missing&&r.path===path)){alert("Un élément existe déjà à cet emplacement.");return}
+  if(state.mode==="fs"){
+    if(!(await ensureWritePermission()))return;
+    try{await dirByParts(state.handle,path.split("/").filter(Boolean),true)}catch(e){console.error(e);alert("Impossible de créer le dossier : "+(e.message||e));return}
+  }
+  const r={id:"r-"+uuid(),type:"folder",path,title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},parentNode=nodeForResource(parent.id);
+  const siblings=state.resources.filter(x=>x.type==="folder"&&parentOf(x,state.resources)?.id===parent.id).length;
+  const n={id:"n-"+r.id,resourceId:r.id,x:Math.max(0,(parentNode?.x||120)+330),y:Math.max(0,(parentNode?.y||130)+siblings*112),collapsed:false,style:{}};
+  state.resources.push(r);state.view.nodes.push(n);
+  if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
+  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;setDirty(true);render();setStatus("Dossier créé","ok")
+}
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
 }
