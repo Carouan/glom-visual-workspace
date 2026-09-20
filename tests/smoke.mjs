@@ -6,6 +6,7 @@ if(!executablePath)throw new Error("CHROME_BIN is required");
 const browser=await puppeteer.launch({headless:true,executablePath,args:["--no-sandbox","--disable-gpu"]});
 try{
   const page=await browser.newPage();
+  await page.setViewport({width:1440,height:900,deviceScaleFactor:1});
   const errors=[];
   page.on("pageerror",e=>errors.push("pageerror: "+e.message));
   page.on("console",msg=>{if(msg.type()==="error")errors.push("console: "+msg.text())});
@@ -22,11 +23,13 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.3")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.4")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
   if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
+  const topIconCount=await page.$$eval(".toolbar .ui-icon",els=>els.length);
+  if(topIconCount<9)throw new Error("Expected representative SVG icons in toolbar, got "+topIconCount);
   const visibleTopCommands=await page.$$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
@@ -40,7 +43,7 @@ try{
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
-  if(leftScroll.overflow!=="scroll")throw new Error("Left sidebar is not configured with a persistent scrollbar: "+JSON.stringify(leftScroll));
+  if(!["auto","scroll"].includes(leftScroll.overflow))throw new Error("Left sidebar is not configured as scrollable: "+JSON.stringify(leftScroll));
   if(leftScroll.scrollHeight>leftScroll.clientHeight)await page.$eval(".resources-scroll",el=>{el.scrollTop=Math.min(60,el.scrollHeight-el.clientHeight)});
 
   await page.$eval(".node.root",el=>el.click());
@@ -50,8 +53,13 @@ try{
   const relationEnabled=await page.$eval("#mapRelationBtn",el=>!el.disabled);
   if(!relationEnabled)throw new Error("Relation tool should be enabled for a selected node");
   const rightScroll=await page.$eval("#inspectorScroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
-  if(rightScroll.overflow!=="scroll")throw new Error("Right sidebar is not configured with a persistent scrollbar: "+JSON.stringify(rightScroll));
+  if(!["auto","scroll"].includes(rightScroll.overflow))throw new Error("Right sidebar is not configured as scrollable: "+JSON.stringify(rightScroll));
   if(rightScroll.scrollHeight<=rightScroll.clientHeight)throw new Error("Right sidebar content does not produce a scrollable area in the demo: "+JSON.stringify(rightScroll));
+  await page.hover("#inspectorScroll");
+  await page.mouse.wheel({deltaY:700});
+  await new Promise(resolve=>setTimeout(resolve,150));
+  const inspectorScrollTop=await page.$eval("#inspectorScroll",el=>el.scrollTop);
+  if(inspectorScrollTop<=0)throw new Error("Right sidebar scrollbar is visible but does not actually scroll");
   const detailsSummary=await page.$eval("#form .inspector-section summary",el=>el.textContent||"");
   if(!detailsSummary.includes("Détails"))throw new Error("Resource details are not wrapped in an inspector box: "+detailsSummary);
   if(leftScroll.scrollHeight>leftScroll.clientHeight){
