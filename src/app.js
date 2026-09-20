@@ -211,6 +211,12 @@ function safeFolderName(s){
   const cleaned=String(s||"").replace(/[<>:"/\\|?*\u0000-\u001F]/g,"-").replace(/[. ]+$/g,"").trim();
   return cleaned||"Nouveau dossier"
 }
+function safeFileName(s,ext){
+  let cleaned=String(s||"").replace(/[<>:"/\\|?*\u0000-\u001F]/g,"-").replace(/[. ]+$/g,"").trim();
+  if(!cleaned)cleaned=ext==="md"?"Notes.md":"Notes.txt";
+  if(ext&&!cleaned.toLowerCase().endsWith("."+ext))cleaned+="."+ext;
+  return cleaned
+}
 function workspaceRoot(){return state.resources.find(r=>r.type==="root")||null}
 function workspaceMetadataSnapshot(){
   const now=new Date().toISOString(),workspace={...state.workspace,updatedAt:now,appVersion:APP},view={...state.view,updatedAt:now};
@@ -242,6 +248,33 @@ async function addFolder(){
   state.resources.push(r);state.view.nodes.push(n);
   if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
   state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;setDirty(true);render();setStatus("Dossier créé","ok")
+}
+function insertionParent(){
+  const selected=selectedResource();
+  return(selected&&["root","folder"].includes(selected.type)?selected:(selected?parentOf(selected,state.resources):null))||workspaceRoot()
+}
+async function writeTextFileAtPath(path,text,create){
+  const parts=path.split("/").filter(Boolean),name=parts.pop(),dir=await dirByParts(state.handle,parts,false),handle=await dir.getFileHandle(name,{create:!!create}),writer=await handle.createWritable();
+  await writer.write(String(text??""));await writer.close();return handle.getFile()
+}
+async function saveTextResource(r,text){
+  if(state.mode!=="fs"||!state.handle||!r||r.type!=="file")throw new Error("Ce fichier n’est pas éditable dans ce mode.");
+  if(!(await ensureWritePermission()))throw new Error("Autorisation d’écriture refusée.");
+  const file=await writeTextFileAtPath(r.path,text,false);r.size=file.size;r.lastModified=file.lastModified;r.missing=false;setDirty(true);applyFolderSizes(state.resources);renderTree();renderInspector();await save(true);setStatus("Fichier enregistré","ok");
+  return{size:file.size,lastModified:file.lastModified}
+}
+async function addLocalTextFile(ext){
+  if(state.mode!=="fs"||!state.handle){alert("La création directe de fichiers nécessite un workspace local ouvert.");return}
+  if(!(await ensureWritePermission()))return;const parent=insertionParent();if(!parent)return;
+  const raw=prompt(ext==="md"?"Nom du fichier Markdown :":"Nom du fichier texte :",ext==="md"?"Notes.md":"Notes.txt");if(raw===null)return;
+  const name=safeFileName(raw,ext),path=parent.path?parent.path+"/"+name:name;if(pathExcluded(path)){alert("Ce chemin correspond à une règle d’exclusion du workspace.");return}
+  const dir=await dirByParts(state.handle,(parent.path||"").split("/").filter(Boolean),false);
+  if(await entryExists(dir,name)){alert("Un fichier ou dossier nommé « "+name+" » existe déjà à cet emplacement.");return}
+  let file;try{file=await writeTextFileAtPath(path,"",true)}catch(e){console.error(e);alert("Impossible de créer le fichier : "+(e.message||e));return}
+  const r={id:"r-"+hash("file:"+path),type:"file",path,title:name,tags:[],notes:"",missing:false,excluded:false,size:file.size,lastModified:file.lastModified},parentNode=nodeForResource(parent.id);
+  const siblings=physicalChildrenOf(parent).length,n={id:"n-"+r.id,resourceId:r.id,x:Math.max(0,(parentNode?.x||120)+330),y:Math.max(0,(parentNode?.y||130)+siblings*112),collapsed:false,style:{}};
+  state.resources.push(r);state.view.nodes.push(n);if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
+  state.treeExpanded.add(parent.id);state.selected=n.id;applyFolderSizes(state.resources);setDirty(true);render();await save(true);setStatus("Fichier "+name+" créé","ok");await openResource(r)
 }
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
