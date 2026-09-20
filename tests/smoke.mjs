@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.4")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.5")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -34,12 +34,32 @@ try{
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
+  const freeTools=await page.evaluate(()=>({shape:!document.getElementById("mapShapeBtn").disabled,text:!document.getElementById("mapTextBtn").disabled,image:document.getElementById("mapImageBtn").disabled}));
+  if(!freeTools.shape||!freeTools.text||!freeTools.image)throw new Error("Unexpected free-object tool availability: "+JSON.stringify(freeTools));
   await page.$eval(".toolbar-menu:first-of-type > summary",el=>el.click());
   await page.waitForSelector(".toolbar-menu:first-of-type[open]",{timeout:3000});
   const workspaceMenuOpen=await page.$eval(".toolbar-menu:first-of-type",el=>el.open);
   if(!workspaceMenuOpen)throw new Error("Workspace command menu did not open");
   await page.mouse.click(5,5);
   await page.waitForFunction(()=>![...document.querySelectorAll("[data-menu]")].some(m=>m.open),{timeout:3000});
+
+  // Both desktop side panels can be collapsed and restored independently.
+  await page.click("#collapseResourcesBtn");
+  await page.waitForFunction(()=>document.querySelector(".shell")?.classList.contains("left-collapsed"),{timeout:3000});
+  const leftRestoreVisible=await page.$eval("#restoreResourcesBtn",el=>!el.classList.contains("hidden"));
+  if(!leftRestoreVisible)throw new Error("Left restore tab is not visible after collapsing Resources");
+  await page.click("#restoreResourcesBtn");
+  await page.waitForFunction(()=>!document.querySelector(".shell")?.classList.contains("left-collapsed"),{timeout:3000});
+
+  await page.click("#collapseInspectorBtn");
+  await page.waitForFunction(()=>document.querySelector(".shell")?.classList.contains("right-collapsed"),{timeout:3000});
+  const rightRestoreVisible=await page.$eval("#restoreInspectorBtn",el=>!el.classList.contains("hidden"));
+  if(!rightRestoreVisible)throw new Error("Right restore tab is not visible after collapsing Details");
+  await page.click("#restoreInspectorBtn");
+  await page.waitForFunction(()=>!document.querySelector(".shell")?.classList.contains("right-collapsed"),{timeout:3000});
+  const panelPrefs=await page.evaluate(()=>JSON.parse(localStorage.getItem("glom-ui-panels-v1")||"{}"));
+  if(panelPrefs.left||panelPrefs.right)throw new Error("Panel preference did not return to expanded state: "+JSON.stringify(panelPrefs));
+
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
@@ -117,6 +137,20 @@ try{
   await page.waitForFunction(()=>[...document.querySelectorAll(".tree-label")].some(el=>el.textContent==="Recherche"),{timeout:5000});
   const draftNode=await page.$eval(".node.folder .node-title",el=>el.textContent||"");
   if(draftNode!=="Recherche")throw new Error("Folder created from scratch was not rendered: "+draftNode);
+
+  // Free shape + text annotation are real view objects, editable in the inspector.
+  await page.click("#mapShapeBtn");
+  await page.waitForSelector(".visual-object.shape",{timeout:3000});
+  await page.waitForSelector("#visualForm:not(.hidden)",{timeout:3000});
+  await page.select("#visualShape","ellipse");
+  await page.waitForFunction(()=>document.querySelector(".visual-object.shape")?.classList.contains("ellipse"),{timeout:3000});
+
+  page.once("dialog",d=>d.accept("À retenir"));
+  await page.click("#mapTextBtn");
+  await page.waitForFunction(()=>[...document.querySelectorAll(".visual-object.text")].some(el=>el.textContent.includes("À retenir")),{timeout:3000});
+  const objectCount=await page.$eval(".visual-object",els=>els.length);
+  if(objectCount<2)throw new Error("Free visual objects were not created");
+
   await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
   const zipReady=await page.$eval("#zipWorkspaceBtn",el=>!el.disabled);
