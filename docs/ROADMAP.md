@@ -36,6 +36,54 @@ Les modules externes nécessaires aux formats Office sont libres et chargés à 
 - cache local des miniatures ;
 - ouverture explicite dans l'application système quand l'API navigateur le permet.
 
+## V0.2.1 — Explorateur de fichiers et navigation de workspace
+
+Objectif : faire de la barre latérale gauche un **véritable navigateur de fichiers**, tout en conservant la mindmap comme représentation parallèle.
+
+- arborescence repliable/dépliable dossier par dossier ;
+- glisser-déposer de fichiers et dossiers vers un autre dossier ;
+- déplacement physique uniquement après permission explicite d'écriture ;
+- protection contre les déplacements invalides (dans soi-même, collision de nom, dossier protégé) ;
+- mise à jour **incrémentale** du modèle après déplacement : seuls les chemins, le lien hiérarchique et les branches concernées sont recalculés ;
+- pas de rescan complet après une opération locale connue ;
+- taille du fichier sélectionné dans le panneau Détails ;
+- taille agrégée des dossiers calculée à partir des métadonnées déjà indexées ;
+- date de dernière modification lorsque disponible ;
+- séparation stricte entre déplacement physique du fichier et disposition visuelle des nœuds de la mindmap.
+
+## V0.2.2 — Export, impression et workspaces récents
+
+### Export de la mindmap
+
+- export SVG ;
+- export PNG ;
+- mise en page imprimable A4 paysage/portrait ;
+- commande « Imprimer / PDF » utilisant le moteur d'impression du navigateur ;
+- ajustement automatique de l'échelle et marges ;
+- option d'inclure ou non les nœuds masqués/repliés.
+
+### Workspaces récents
+
+- registre local des workspaces déjà ouverts ;
+- conservation des `FileSystemDirectoryHandle` dans IndexedDB lorsque le navigateur l'autorise ;
+- menu « Workspaces récents » ;
+- réouverture et bascule rapide d'un workspace à l'autre ;
+- renouvellement explicite de la permission si le navigateur l'exige ;
+- possibilité d'oublier un workspace récent sans toucher au dossier lui-même.
+
+### Accès distant — étude
+
+Un accès SSH/SFTP direct n'est **pas une capacité standard d'une PWA** : le navigateur n'expose pas de socket TCP brut permettant d'ouvrir une session SSH.
+
+Pistes à étudier séparément :
+
+- adaptateur WebDAV/Nextcloud ;
+- adaptateur Git ;
+- passerelle locale ou serveur léger exposant un workspace distant via HTTPS/WebSocket ;
+- éventuellement SFTP derrière cette passerelle.
+
+L'objectif est de conserver la même abstraction « workspace » sans coupler le cœur de G.L.O.M. à SSH.
+
 ## V0.3 — Mindmap avancée
 
 Objectif : faire de la carte mentale une vraie surface d'édition, pas seulement une projection de l'arborescence.
