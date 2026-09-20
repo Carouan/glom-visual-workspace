@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.9")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.10")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -34,7 +34,12 @@ try{
   if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
-  const freeTools=await page.evaluate(()=>({shape:!document.getElementById("mapShapeBtn").disabled,text:!document.getElementById("mapTextBtn").disabled,image:document.getElementById("mapImageBtn").disabled}));
+  await page.click("#mapImageBtn");
+  await page.waitForSelector("#imageObjectDialog[open]",{timeout:3000});
+  const emptyImagePicker=await page.$eval("#imageObjectList",el=>el.textContent||"");
+  if(!emptyImagePicker.includes("Aucune image disponible"))throw new Error("Free-image picker did not handle demo's missing images cleanly: "+emptyImagePicker);
+  await page.click("#imageObjectClose");
+  const freeTools=await page.evaluate(()=>({shape:!document.getElementById("mapShapeBtn").disabled,text:!document.getElementById("mapTextBtn").disabled,image:!document.getElementById("mapImageBtn").disabled}));
   if(!freeTools.shape||!freeTools.text||!freeTools.image)throw new Error("Unexpected free-object tool availability: "+JSON.stringify(freeTools));
   await page.$eval(".toolbar-menu:first-of-type > summary",el=>el.click());
   await page.waitForSelector(".toolbar-menu:first-of-type[open]",{timeout:3000});
@@ -309,6 +314,14 @@ try{
     return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
   });
   if(!styledRelationSvg.includes(">inspire</text>")||!styledRelationSvg.includes('stroke="#dc2626"')||!styledRelationSvg.includes('stroke-width="4"')||!styledRelationSvg.includes('stroke-dasharray="2 6"')||!styledRelationSvg.includes('marker-end="url(#rel-rel)"'))throw new Error("Styled relation was not preserved in SVG export");
+
+  // Free image objects are embedded in exported SVG without storing binary data in .glom.
+  const freeImageSvg=await page.evaluate(async()=>{
+    const api=await import("./src/exporters/mindmap.js"),data="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSJyZWQiLz48L3N2Zz4=";
+    const view={nodes:[],edges:[],frames:[],objects:[{id:"img1",type:"image",resourceId:"r1",path:"Images/test.svg",x:20,y:30,w:320,h:180,fit:"cover",opacity:75,radius:12,dataUrl:data}]};
+    return api.buildMindmapSvg(view,[],{orientation:"landscape"});
+  });
+  if(!freeImageSvg.includes("<image ")||!freeImageSvg.includes('preserveAspectRatio="xMidYMid slice"')||!freeImageSvg.includes('opacity="0.75"')||!freeImageSvg.includes("data:image/svg+xml;base64"))throw new Error("Free image object was not preserved in SVG export");
 
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
