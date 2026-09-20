@@ -80,6 +80,25 @@ async function imageUrlFor(r){
 }
 function newWorkspace(name){const now=new Date().toISOString();return{format:"glom-workspace",version:FORMAT,appVersion:APP,id:uuid(),name:name||"Nouveau workspace",createdAt:now,updatedAt:now,defaultView:"views/main-mindmap.json",excludes:[]}}
 function parentPath(path){if(!path||!path.includes("/"))return"";return path.slice(0,path.lastIndexOf("/"))}
+function normalizeExcludePattern(raw){return String(raw||"").trim().replace(/\\\\/g,"/").replace(/^\.\//,"").replace(/^\/+|\/+$/g,"")}
+function globRegex(pattern){
+  let p=normalizeExcludePattern(pattern),out="",i=0;
+  const escapeChar=ch=>/[.\+^$(){}|\[\]\\]/.test(ch)?"\\\\ "+ch:ch;
+  while(i<p.length){
+    const ch=p[i];
+    if(ch==="*"&&p[i+1]==="*"){out+=".*";i+=2;continue}
+    if(ch==="*"){out+="[^/]*";i++;continue}
+    if(ch==="?"){out+="[^/]";i++;continue}
+    out+=escapeChar(ch).replace("\\\\ ","\\\\");i++
+  }
+  const prefix=p.includes("/")?"^":"(?:^|.*/)";return new RegExp(prefix+out+"(?:$|/.*$)","i")
+}
+function exclusionPatterns(workspace=state.workspace){return Array.isArray(workspace?.excludes)?workspace.excludes.map(normalizeExcludePattern).filter(Boolean):[]}
+function pathExcluded(path,workspace=state.workspace){
+  if(!path)return false;const p=String(path).replace(/\\\\/g,"/");
+  return exclusionPatterns(workspace).some(rule=>{if(!/[?*]/.test(rule))return p===rule||p.startsWith(rule+"/");try{return globRegex(rule).test(p)}catch{return false}})
+}
+function markExclusions(resources,workspace=state.workspace){resources.forEach(r=>{r.excluded=!!(r.path&&pathExcluded(r.path,workspace))});return resources}
 function parentOf(r,list){
   if(!r||["root","virtual","url"].includes(r.type))return null;
   const p=parentPath(r.path);if(!p)return list.find(x=>x.type==="root")||null;
