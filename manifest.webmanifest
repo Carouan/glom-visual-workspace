@@ -1,0 +1,14 @@
+{
+  "name": "G.L.O.M. Visual Workspace",
+  "short_name": "GLOM Workspace",
+  "description": "Explorateur visuel local-first de fichiers, ressources et idées.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {"src":"./icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}
