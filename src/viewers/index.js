@@ -250,7 +250,7 @@ function resourceIcon(r){
 function parentPath(path=""){const i=path.lastIndexOf("/");return i<0?"":path.slice(0,i)}
 export function showFolderPreview(folder,resources,ui,onOpen){
   clearPreview();ui.title.textContent=folder.title;ui.meta.textContent=folder.type==="root"?"Racine du workspace":"Dossier — "+folder.path;empty(ui.body);
-  const path=folder.path||"",children=resources.filter(r=>!r.missing&&r.id!==folder.id&&["folder","file","url","virtual"].includes(r.type)&&((r.type==="url"||r.type==="virtual")?false:parentPath(r.path||"")===path));
+  const path=folder.path||"",children=resources.filter(r=>!r.missing&&!r.excluded&&r.id!==folder.id&&["folder","file","url","virtual"].includes(r.type)&&((r.type==="url"||r.type==="virtual")?false:parentPath(r.path||"")===path));
   const head=document.createElement("div");head.className="gallery-head";const p=document.createElement("p");p.textContent=children.length+" élément"+(children.length>1?"s":"")+" directement dans ce dossier.";head.append(p);ui.body.append(head);
   const grid=document.createElement("div");grid.className="resource-gallery";
   if(!children.length){message(grid,"Dossier vide","Aucune ressource directe à afficher.");}
