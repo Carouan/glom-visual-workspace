@@ -4,9 +4,9 @@
 
 G.L.O.M. Visual Workspace est un prototype de **workspace visuel local-first** : vos vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags et les liens.
 
-La V0.1 valide un besoin simple : **ouvrir un dossier, le voir comme une carte mentale, annoter ses ressources et cliquer sur un nœud pour retrouver le fichier correspondant**.
+La V0.2 poursuit le prototype : **ouvrir un dossier, le voir comme une carte mentale, annoter ses ressources et consulter directement un maximum de formats dans la PWA**.
 
-## Fonctionnalités V0.1
+## Fonctionnalités V0.2
 
 - PWA statique et installable lorsque le navigateur le permet ;
 - ouverture d'un dossier via File System Access API sur les navigateurs compatibles ;
@@ -17,7 +17,8 @@ La V0.1 valide un besoin simple : **ouvrir un dossier, le voir comme une carte m
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
 - tags et notes ;
-- prévisualisation locale des images, PDF, audio, vidéo et fichiers texte courants ;
+- viewer local modulaire : images, PDF, audio, vidéo, texte/code, Markdown rendu, JSON structuré, CSV/TSV, DOCX, tableurs et ZIP ;
+- galerie de contenu pour les dossiers ;
 - persistance dans .glom/ lorsque l'écriture est autorisée ;
 - export JSON portable sinon ;
 - cache PWA hors ligne de l'application ;
@@ -87,13 +88,22 @@ La compatibilité est détectée à l'exécution. La V0.1 ne suppose donc pas qu
 
 ## Roadmap
 
-- V0.2 : retrouver un fichier déplacé via empreinte légère ;
-- V0.2 : plusieurs vues mindmap ;
-- V0.3 : vues Kanban, timeline et graphe sur les mêmes ressources ;
-- V0.3 : statut, date, priorité et filtres avancés ;
-- V0.4 : synchronisation et gestion des conflits ;
-- plus tard : plugins/scripts, templates et API d'extensions.
+La roadmap détaillée est maintenue dans [docs/ROADMAP.md](docs/ROADMAP.md) et dans les issues GitHub.
+
+Axes principaux :
+
+- V0.2.x : enrichir le viewer, miniatures et nouveaux formats ;
+- V0.3 : mindmap avancée — styles des nœuds, cadres de branches, images/icônes et cartes multiples ;
+- V0.4 : métadonnées avancées, Kanban, timeline et graphe ;
+- V0.5 : robustesse et suivi des fichiers déplacés/renommés ;
+- V0.6 : synchronisation et gestion des conflits ;
+- plus tard : plugins, scripts, templates et API d'extensions.
 
 ## Licence
 
 MIT — voir LICENSE.
+
+
+## Dépendances viewer chargées à la demande
+
+Les viewers Office utilisent des bibliothèques libres chargées uniquement lorsqu'un format en a besoin : Mammoth (DOCX, BSD-2-Clause), @keep-lts/xlsx (tableurs, Apache-2.0) et fflate (ZIP, MIT). Le cœur de l'application reste statique et les fichiers utilisateur ne sont pas envoyés à un service distant. Une étape V0.2.x prévoit de vendoriser ces dépendances pour un fonctionnement hors-ligne complet.
