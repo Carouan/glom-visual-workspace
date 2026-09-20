@@ -22,9 +22,15 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.2")throw new Error("Unexpected UI version: "+version);
-  const recentVisible=await page.$eval("#recentBtn",el=>!!el && getComputedStyle(el).display!=="none");
-  if(!recentVisible)throw new Error("Recent workspaces button is not visible");
+  if(version.trim()!=="v0.3.3")throw new Error("Unexpected UI version: "+version);
+  const recentVisible=await page.$eval("#recentBtn",el=>!!el);
+  if(!recentVisible)throw new Error("Recent workspaces command is missing");
+  const menuCount=await page.$eval(".toolbar-menu",els=>els.length);
+  if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
+  const visibleTopCommands=await page.$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
+  if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
+  const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
+  if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
   const folderToggle=await page.$(".tree-row .tree-toggle");
   if(!folderToggle)throw new Error("No collapsible folder toggle rendered in resource tree");
   const leftScroll=await page.$eval(".resources-scroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
@@ -33,6 +39,10 @@ try{
 
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
+  const contextualActions=await page.$eval(".context-actions button",els=>els.length);
+  if(contextualActions!==4)throw new Error("Contextual action group is incomplete: "+contextualActions);
+  const relationEnabled=await page.$eval("#mapRelationBtn",el=>!el.disabled);
+  if(!relationEnabled)throw new Error("Relation tool should be enabled for a selected node");
   const rightScroll=await page.$eval("#inspectorScroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
   if(rightScroll.overflow!=="scroll")throw new Error("Right sidebar is not configured with a persistent scrollbar: "+JSON.stringify(rightScroll));
   if(rightScroll.scrollHeight<=rightScroll.clientHeight)throw new Error("Right sidebar content does not produce a scrollable area in the demo: "+JSON.stringify(rightScroll));
