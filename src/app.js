@@ -88,7 +88,7 @@ function globRegex(pattern){
     if(ch==="*"&&p[i+1]==="*"){out+=".*";i++;continue}
     if(ch==="*"){out+="[^/]*";continue}
     if(ch==="?"){out+="[^/]";continue}
-    if(".+^$(){}|[]\\ ".includes(ch)&&ch!==" ")out+="\\\"+ch;else out+=ch
+    if("\\.^$+()[]{}|".includes(ch))out+="\\"+ch;else out+=ch
   }
   const prefix=p.includes("/")?"^":"(?:^|.*/)";
   return new RegExp(prefix+out+"(?:$|/.*$)","i")
