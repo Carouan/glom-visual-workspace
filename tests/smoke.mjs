@@ -230,6 +230,20 @@ try{
   await page.click("#zipWorkspaceBtn");
   await page.waitForFunction(()=>document.getElementById("status")?.textContent?.includes("Template ZIP créé"),{timeout:5000});
 
+  // Export is computed from real content bounds, not from a fixed A4 canvas.
+  const svgCheck=await page.evaluate(async()=>{
+    const api=await import("./src/exporters/mindmap.js");
+    const view={nodes:[{id:"n-r",resourceId:"r",x:-300,y:-120,collapsed:false,style:{width:420,height:120}}],edges:[],frames:[],objects:[]};
+    const resources=[{id:"r",type:"file",title:"large.md",path:"large.md",tags:[]}];
+    return api.buildMindmapSvg(view,resources,{orientation:"landscape"});
+  });
+  if(!svgCheck.includes('x="-300"')||!svgCheck.includes('width="420"')||!svgCheck.includes('height="120"'))throw new Error("Exporter still assumes fixed or positive-only canvas geometry");
+
+  const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
+  if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
+  const worldGeometry=await page.$eval(".world",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height,overflow:getComputedStyle(el).overflow}));
+  if(worldGeometry.w!=="1px"||worldGeometry.h!=="1px"||worldGeometry.overflow!=="visible")throw new Error("Canvas still exposes a finite workspace boundary: "+JSON.stringify(worldGeometry));
+
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
 }finally{
