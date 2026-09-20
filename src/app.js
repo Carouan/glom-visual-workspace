@@ -271,9 +271,9 @@ async function save(quiet){
   const exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views:{"main-mindmap":state.view}};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
 }
 function updateActionStates(){
-  const ok=!!(state.workspace&&state.view),r=selectedResource(),n=selectedNode(),folderSelected=!!(r&&["root","folder"].includes(r.type)),hasSelection=!!(r&&n),hasChildren=!!(n&&children(n.id).length),hasFrame=!!(n&&frameForNode(n.id));
+  const ok=!!(state.workspace&&state.view),r=selectedResource(),n=selectedNode(),folderSelected=!!(r&&["root","folder"].includes(r.type)),hasSelection=!!(r&&n),hasChildren=!!(n&&children(n.id).length),hasFrame=!!(n&&frameForNode(n.id)),canCreateLocalText=ok&&state.mode==="fs";
   if(ui.mapFolderBtn)ui.mapFolderBtn.disabled=!ok||state.mode==="fallback";
-  if(ui.mapIdeaBtn)ui.mapIdeaBtn.disabled=!ok;
+  if(ui.mapIdeaBtn)ui.mapIdeaBtn.disabled=!ok;if(ui.textFileBtn)ui.textFileBtn.disabled=!canCreateLocalText;if(ui.markdownFileBtn)ui.markdownFileBtn.disabled=!canCreateLocalText;
   if(ui.mapRelationBtn){ui.mapRelationBtn.disabled=!hasSelection;ui.mapRelationBtn.classList.toggle("active",!!state.linkSource)}
   if(ui.mapFrameBtn){ui.mapFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);ui.mapFrameBtn.classList.toggle("active",hasFrame)}
   if(ui.mapSelectBtn)ui.mapSelectBtn.classList.toggle("active",!state.linkSource);
@@ -281,25 +281,25 @@ function updateActionStates(){
   if(ui.contextFolderBtn)ui.contextFolderBtn.disabled=!folderSelected||state.mode==="fallback";
   if(ui.contextIdeaBtn)ui.contextIdeaBtn.disabled=!hasSelection;
   if(ui.contextRelationBtn){ui.contextRelationBtn.disabled=!hasSelection;setButtonLabel(ui.contextRelationBtn,state.linkSource===n?.id?"Annuler relation":"Relation")}
-  if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}
+  if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}if(ui.contextExcludeBtn)ui.contextExcludeBtn.disabled=!hasSelection||!["file","folder"].includes(r?.type)
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");
-  [ui.scanBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");
+  [ui.scanBtn,ui.exclusionsBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
   if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
   ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render();updateActionStates()
 }
 function match(r){if(!state.search)return true;const h=[r.title,r.path,r.url,r.notes].concat(r.tags||[]).filter(Boolean).join(" ").toLowerCase();return h.includes(state.search.toLowerCase())}
 function render(){renderTree();renderMap();renderInspector();transform()}
 function physicalChildrenOf(r){
-  return state.resources.filter(x=>!x.missing&&["folder","file"].includes(x.type)&&parentOf(x,state.resources)?.id===r.id)
+  return state.resources.filter(x=>!x.missing&&!x.excluded&&["folder","file"].includes(x.type)&&parentOf(x,state.resources)?.id===r.id)
     .sort((a,b)=>a.type!==b.type?(a.type==="folder"?-1:1):a.title.localeCompare(b.title,undefined,{numeric:true}))
 }
 function renderTree(){
   ui.tree.replaceChildren();if(!state.workspace)return;
   const root=state.resources.find(r=>r.type==="root");
   if(state.search){
-    state.resources.filter(r=>["root","folder","file"].includes(r.type)&&match(r)).sort((a,b)=>(a.path||"").localeCompare(b.path||"",undefined,{numeric:true}))
+    state.resources.filter(r=>!r.excluded&&["root","folder","file"].includes(r.type)&&match(r)).sort((a,b)=>(a.path||"").localeCompare(b.path||"",undefined,{numeric:true}))
       .forEach(r=>ui.tree.appendChild(treeRow(r,r.type==="root"?0:(r.path.split("/").length||1))));
   }else if(root){
     const walk=(r,d)=>{ui.tree.appendChild(treeRow(r,d));if((r.type==="root"||r.type==="folder")&&state.treeExpanded.has(r.id))physicalChildrenOf(r).forEach(ch=>walk(ch,d+1))};
