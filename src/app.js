@@ -799,16 +799,31 @@ async function openExportDialog(){
 }
 function exportOptions(){return{orientation:ui.exportOrientation.value,includeHidden:ui.exportHidden.checked}}
 function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-mindmap"}
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=()=>reject(reader.error||new Error("Lecture image impossible"));reader.readAsDataURL(file)})
+}
+async function prepareViewForExport(){
+  const view=typeof structuredClone==="function"?structuredClone(state.view):JSON.parse(JSON.stringify(state.view));
+  for(const o of view.objects||[]){
+    if(o.type!=="image")continue;
+    const r=resource(o.resourceId)||state.resources.find(x=>x.path&&x.path===o.path);if(!r||r.missing)continue;
+    try{
+      const file=state.mode==="fs"?await fileFromPath(state.handle,r.path):state.fallbackFiles.get(r.path);
+      if(file)o.dataUrl=await fileToDataUrl(file)
+    }catch(e){console.warn("Image export unavailable",r.path,e)}
+  }
+  return view
+}
 async function runExport(kind){
   if(!state.view)return;
   const api=await getExporterApi();if(!api){alert("Le module d’export de la mindmap n’a pas pu être chargé.");return}
   try{
-    const o=exportOptions(),base=exportBaseName();
-    if(kind==="svg")api.exportSvg(base+".svg",state.view,state.resources,o);
-    else if(kind==="png")api.exportPng(base+".png",state.view,state.resources,o).catch(e=>{console.error(e);alert("Export PNG impossible : "+(e.message||e))});
-    else if(kind==="print")api.printA4(state.workspace.name,state.view,state.resources,o);
+    setStatus("Préparation de l’export…");const o=exportOptions(),base=exportBaseName(),view=await prepareViewForExport();
+    if(kind==="svg")api.exportSvg(base+".svg",view,state.resources,o);
+    else if(kind==="png")await api.exportPng(base+".png",view,state.resources,o);
+    else if(kind==="print")api.printA4(state.workspace.name,view,state.resources,o);
     if(kind!=="print")setStatus("Export "+kind.toUpperCase()+" généré","ok")
-  }catch(e){console.error(e);alert("Export impossible : "+(e.message||e))}
+  }catch(e){console.error(e);setStatus("Export impossible","bad");alert("Export impossible : "+(e.message||e))}
 }
 async function exportWorkspaceZip(){
   if(!state.workspace||!state.view)return;setStatus("Création du template ZIP…");
