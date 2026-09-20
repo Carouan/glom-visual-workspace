@@ -131,13 +131,13 @@ function layout(resources){
   let leaf=0;function place(r,d){const c=children.get(r.id)||[];let y;if(!c.length)y=130+leaf++*112;else{const ys=c.map(x=>place(x,d+1));y=ys.reduce((a,b)=>a+b,0)/ys.length}pos.set(r.id,{x:120+d*330,y:y});return y}place(root,0);return pos
 }
 function freshView(resources){
-  const visible=resources.filter(r=>!r.excluded),p=layout(resources),nodes=visible.map((r,i)=>({id:"n-"+r.id,resourceId:r.id,x:p.get(r.id)?p.get(r.id).x:200+(i%5)*280,y:p.get(r.id)?p.get(r.id).y:160+Math.floor(i/5)*115,collapsed:false,style:{}})),edges=[];
+  const visible=resources.filter(r=>!r.excluded),p=layout(resources),nodes=resources.map((r,i)=>({id:"n-"+r.id,resourceId:r.id,x:p.get(r.id)?p.get(r.id).x:200+(i%5)*280,y:p.get(r.id)?p.get(r.id).y:160+Math.floor(i/5)*115,collapsed:false,style:{}})),edges=[];
   visible.forEach(r=>{const par=parentOf(r,visible);if(par&&!r.missing&&!par.excluded)edges.push({id:"h-"+par.id+"-"+r.id,from:"n-"+par.id,to:"n-"+r.id,kind:"hierarchy"})});
   const now=new Date().toISOString();return{format:"glom-view",version:FORMAT,id:"main-mindmap",type:"mindmap",name:"Carte principale",createdAt:now,updatedAt:now,pan:{x:40,y:40},zoom:.92,nodes:nodes,edges:edges,frames:[],objects:[]}
 }
 function mergeView(view,resources){
   if(!view||view.type!=="mindmap")return freshView(resources);
-  const visible=resources.filter(r=>!r.excluded),auto=freshView(resources),old=new Map((view.nodes||[]).map(n=>[n.resourceId,n])),fallback=new Map(auto.nodes.map(n=>[n.resourceId,n])),nodes=visible.map(r=>{
+  const visible=resources.filter(r=>!r.excluded),auto=freshView(resources),old=new Map((view.nodes||[]).map(n=>[n.resourceId,n])),fallback=new Map(auto.nodes.map(n=>[n.resourceId,n])),nodes=resources.map(r=>{
     const n=Object.assign({},old.get(r.id)||fallback.get(r.id));n.style=Object.assign({},n.style||{});return n
   });
   const ids=new Set(nodes.map(n=>n.id)),manual=(view.edges||[]).filter(e=>e.kind==="manual"&&ids.has(e.from)&&ids.has(e.to)),frames=(view.frames||[]).filter(f=>ids.has(f.rootNodeId)),objects=Array.isArray(view.objects)?view.objects:[];
@@ -404,7 +404,7 @@ function renderFrames(hidden){
 }
 function renderMap(){
   ui.nodes.replaceChildren();ui.edges.replaceChildren();ui.frames.replaceChildren();ui.visualObjects.replaceChildren();if(!state.view)return;
-  const hidden=hiddenNodes();renderFrames(hidden);renderVisualObjects();state.view.nodes.forEach(n=>{if(hidden.has(n.id))return;const r=resource(n.resourceId);if(r)ui.nodes.appendChild(makeNode(n,r))});renderEdges()
+  const hidden=hiddenNodes();renderFrames(hidden);renderVisualObjects();state.view.nodes.forEach(n=>{if(hidden.has(n.id))return;const r=resource(n.resourceId);if(r&&!r.excluded)ui.nodes.appendChild(makeNode(n,r))});renderEdges()
 }
 function renderVisualObjects(){
   if(!state.view)return;(state.view.objects||[]).forEach(o=>ui.visualObjects.appendChild(makeVisualObject(o)))
@@ -441,7 +441,7 @@ function makeNode(n,r){
   e.onclick=x=>{x.stopPropagation();if(state.linkSource&&state.linkSource!==n.id){manualEdge(state.linkSource,n.id);state.linkSource=null;ui.hint.textContent="Lien créé";render();return}select(n.id)};e.ondblclick=x=>{x.stopPropagation();openResource(r)};e.onpointerdown=x=>dragNode(x,n,e);return e
 }
 function renderEdges(){
-  if(!state.view)return;const hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)).map(n=>[n.id,n]));state.view.edges.forEach(ed=>{const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;const ar=resource(a.resourceId),br=resource(b.resourceId),sx=a.x+240,sy=a.y+37,tx=b.x,ty=b.y+37,dx=Math.max(70,Math.abs(tx-sx)*.45),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M "+sx+" "+sy+" C "+(sx+dx)+" "+sy+", "+(tx-dx)+" "+ty+", "+tx+" "+ty);p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));ui.edges.appendChild(p)})
+  if(!state.view)return;const hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)&&!resource(n.resourceId)?.excluded).map(n=>[n.id,n]));state.view.edges.forEach(ed=>{const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;const ar=resource(a.resourceId),br=resource(b.resourceId),sx=a.x+240,sy=a.y+37,tx=b.x,ty=b.y+37,dx=Math.max(70,Math.abs(tx-sx)*.45),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M "+sx+" "+sy+" C "+(sx+dx)+" "+sy+", "+(tx-dx)+" "+ty+", "+tx+" "+ty);p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));ui.edges.appendChild(p)})
 }
 function centralDropCandidate(clientX,clientY,sourceNodeId){
   const sourceNode=node(sourceNodeId),source=sourceNode&&resource(sourceNode.resourceId);if(!source)return null;
