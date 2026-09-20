@@ -653,11 +653,11 @@ function addShape(){
 }
 function addTextObject(){
   if(!state.view)return;const text=prompt("Texte de l’annotation :","Nouvelle annotation");if(text===null)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"text",text:text||"Annotation",x:p.x-110,y:p.y-35,w:220,h:70,fontSize:18,fontFamily:"system",fontWeight:"500",textAlign:"left",italic:false,textColor:"#172033"};
-  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;setDirty();render()
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
 }
 function centerWorld(){const r=ui.viewport.getBoundingClientRect();return{x:(r.width/2-state.view.pan.x)/state.view.zoom,y:(r.height/2-state.view.pan.y)/state.view.zoom}}
 function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedEdge=null;setDirty();render()}
-function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;setDirty();render()}
+function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedEdge=null;setDirty();render()}
 function previewUi(){return{dialog:ui.preview,title:ui.previewTitle,meta:ui.previewMeta,body:ui.previewBody}}
 async function basicPreview(r,f){
   ui.previewTitle.textContent=r.title;ui.previewMeta.textContent=(r.path||f.name)+" — "+formatSize(f.size);ui.previewBody.replaceChildren();
