@@ -269,7 +269,7 @@ async function addFolder(){
   const n={id:"n-"+r.id,resourceId:r.id,x:(parentNode?.x||120)+330,y:(parentNode?.y||130)+siblings*112,collapsed:false,style:{}};
   state.resources.push(r);state.view.nodes.push(n);
   if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
-  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;setDirty(true);render();setStatus("Dossier créé","ok")
+  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;state.selectedEdge=null;setDirty(true);render();setStatus("Dossier créé","ok")
 }
 function insertionParent(){
   const selected=selectedResource();
@@ -296,7 +296,7 @@ async function addLocalTextFile(ext){
   const r={id:"r-"+hash("file:"+path),type:"file",path,title:name,tags:[],notes:"",missing:false,excluded:false,size:file.size,lastModified:file.lastModified},parentNode=nodeForResource(parent.id);
   const siblings=physicalChildrenOf(parent).length,n={id:"n-"+r.id,resourceId:r.id,x:(parentNode?.x||120)+330,y:(parentNode?.y||130)+siblings*112,collapsed:false,style:{}};
   state.resources.push(r);state.view.nodes.push(n);if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
-  state.treeExpanded.add(parent.id);state.selected=n.id;applyFolderSizes(state.resources);setDirty(true);render();await save(true);setStatus("Fichier "+name+" créé","ok");await openResource(r)
+  state.treeExpanded.add(parent.id);state.selected=n.id;state.selectedEdge=null;applyFolderSizes(state.resources);setDirty(true);render();await save(true);setStatus("Fichier "+name+" créé","ok");await openResource(r)
 }
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
@@ -512,7 +512,7 @@ function makeVisualObject(o){
 }
 function dragVisualObject(ev,o,e){
   if(ev.button!==0)return;ev.stopPropagation();
-  if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
+  if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
   const s={x:ev.clientX,y:ev.clientY,ox:o.x,oy:o.y};let moved=false;
   function mv(x){const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;o.x=s.ox+dx;o.y=s.oy+dy;e.style.left=o.x+"px";e.style.top=o.y+"px"}
   function end(){window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);if(moved)setDirty()}
@@ -649,14 +649,14 @@ function deleteVisualObject(){
 }
 function addShape(){
   if(!state.view)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"shape",shape:"rectangle",x:p.x-90,y:p.y-45,w:180,h:90,fill:"#e0e7ff",stroke:"#6366f1"};
-  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;setDirty();render()
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
 }
 function addTextObject(){
   if(!state.view)return;const text=prompt("Texte de l’annotation :","Nouvelle annotation");if(text===null)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"text",text:text||"Annotation",x:p.x-110,y:p.y-35,w:220,h:70,fontSize:18,fontFamily:"system",fontWeight:"500",textAlign:"left",italic:false,textColor:"#172033"};
   state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;setDirty();render()
 }
 function centerWorld(){const r=ui.viewport.getBoundingClientRect();return{x:(r.width/2-state.view.pan.x)/state.view.zoom,y:(r.height/2-state.view.pan.y)/state.view.zoom}}
-function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;setDirty();render()}
+function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedEdge=null;setDirty();render()}
 function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;setDirty();render()}
 function previewUi(){return{dialog:ui.preview,title:ui.previewTitle,meta:ui.previewMeta,body:ui.previewBody}}
 async function basicPreview(r,f){
