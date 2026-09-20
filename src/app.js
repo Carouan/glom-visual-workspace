@@ -533,6 +533,13 @@ function makeNode(n,r){
 function renderEdges(){
   if(!state.view)return;
   const NS="http://www.w3.org/2000/svg",hidden=hiddenNodes(),map=new Map(state.view.nodes.filter(n=>!hidden.has(n.id)&&!resource(n.resourceId)?.excluded).map(n=>[n.id,n]));
+  const boxes=[...map.values()].map(n=>{const b=nodeBox(n);return{x:n.x,y:n.y,w:b.w,h:b.h}});
+  if(boxes.length){
+    const margin=180,minX=Math.min(...boxes.map(b=>b.x))-margin,minY=Math.min(...boxes.map(b=>b.y))-margin,maxX=Math.max(...boxes.map(b=>b.x+b.w))+margin,maxY=Math.max(...boxes.map(b=>b.y+b.h))+margin,w=Math.max(1,maxX-minX),h=Math.max(1,maxY-minY);
+    ui.edges.style.left=minX+"px";ui.edges.style.top=minY+"px";ui.edges.style.width=w+"px";ui.edges.style.height=h+"px";ui.edges.setAttribute("viewBox",minX+" "+minY+" "+w+" "+h)
+  }else{
+    ui.edges.style.left="0px";ui.edges.style.top="0px";ui.edges.style.width="1px";ui.edges.style.height="1px";ui.edges.setAttribute("viewBox","0 0 1 1")
+  }
   state.view.edges.forEach(ed=>{
     const a=map.get(ed.from),b=map.get(ed.to);if(!a||!b)return;
     const ar=resource(a.resourceId),br=resource(b.resourceId),s=effectiveEdgeStyle(ed),g=edgeGeometry(a,b,s.curvature),group=document.createElementNS(NS,"g");
