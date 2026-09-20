@@ -121,6 +121,17 @@ Les choix visuels appartiennent à la **vue** et non à la ressource : un même 
 
 Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est destiné à transporter la **structure + la carte + les métadonnées**. Un export de sauvegarde complète avec contenus sera traité séparément.
 
+### V0.3.3 — organisation de l'interface
+
+- barre supérieure compacte organisée en menus Workspace / Insertion / Vue / Exporter ;
+- bouton Ouvrir conservé comme action globale immédiatement visible ;
+- palette flottante dédiée à la création/manipulation visuelle sur la mindmap ;
+- outils de palette actifs : sélection, dossier, idée, relation et cadre de branche ;
+- emplacements réservés pour formes, texte/annotation et image libre, désactivés tant que non implémentés ;
+- actions contextuelles dans l'inspecteur pour la sélection courante ;
+- fermeture automatique des menus après une action, clic extérieur ou Échap ;
+- règle d'UX documentée dans `docs/UI-V0.3.3.md` pour éviter la prolifération future de boutons.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
