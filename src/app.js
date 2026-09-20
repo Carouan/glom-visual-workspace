@@ -553,7 +553,7 @@ function renderEdges(){
     }
 
     const hit=document.createElementNS(NS,"path");hit.setAttribute("d",g.d);hit.setAttribute("class","edge-hit"+(ed.id===state.selectedEdge?" selected":""));hit.dataset.edge=ed.id;hit.style.strokeWidth=Math.max(14,Number(s.width)+10)+"px";hit.onclick=ev=>{ev.stopPropagation();selectEdge(ed.id)};
-    const p=document.createElementNS(NS,"path");p.setAttribute("d",g.d);p.dataset.axis=g.axis;p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));p.setAttribute("fill","none");p.style.stroke=s.color;p.style.strokeWidth=String(s.width);p.style.strokeDasharray=s.lineStyle==="dashed"?"8 6":s.lineStyle==="dotted"?"2 6":"none";
+    const p=document.createElementNS(NS,"path");p.setAttribute("d",g.d);p.dataset.axis=g.axis;p.setAttribute("class","edge "+(ed.kind==="manual"?"manual ":"")+((match(ar)||match(br))?"":"dim"));p.setAttribute("fill","none");p.style.stroke=s.color;p.style.strokeWidth=String(s.width);p.style.strokeDasharray=s.lineStyle==="dashed"?"8 6":s.lineStyle==="dotted"?"2 6":"none";p.style.pointerEvents="stroke";p.style.cursor="pointer";p.onclick=ev=>{ev.stopPropagation();selectEdge(ed.id)};
     if(s.arrow==="end"||s.arrow==="both")p.setAttribute("marker-end","url(#"+markerId+")");if(s.arrow==="both")p.setAttribute("marker-start","url(#"+markerId+")");
     group.append(hit,p);
 
