@@ -132,10 +132,13 @@ try{
   // Relations are directly selectable, nameable and stylable.
   const manualReady=await page.evaluate(()=>{
     const visible=document.querySelector("#edges .edge.manual"),group=visible?.parentElement,hit=group?.querySelector(".edge-hit");
-    if(!hit)return false;hit.id="smokeManualRelation";return true
+    if(!hit||!visible)return null;
+    const hitPE=getComputedStyle(hit).pointerEvents,visiblePE=getComputedStyle(visible).pointerEvents;
+    hit.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true}));
+    return{hitPE,visiblePE};
   });
   if(!manualReady)throw new Error("No manual relation available for style test");
-  await page.click("#smokeManualRelation");
+  if(manualReady.hitPE!=="stroke"||manualReady.visiblePE!=="stroke")throw new Error("Relation paths are not pointer-selectable: "+JSON.stringify(manualReady));
   await page.waitForSelector("#edgeForm:not(.hidden)",{timeout:3000});
   await page.$eval("#edgeLabel",el=>{el.value="inspire";el.dispatchEvent(new Event("input",{bubbles:true}))});
   await page.$eval("#edgeColor",el=>{el.value="#dc2626";el.dispatchEvent(new Event("input",{bubbles:true}))});
@@ -145,9 +148,10 @@ try{
   await page.$eval("#edgeCurvature",el=>{el.value="0";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const relationStyle=await page.evaluate(()=>{
     const hit=document.querySelector("#edges .edge-hit.selected"),group=hit?.closest(".edge-group"),p=group?.querySelector(".edge"),label=group?.querySelector(".edge-label");
-    return p?{label:label?.textContent||"",stroke:p.style.stroke,width:p.style.strokeWidth,dash:p.style.strokeDasharray,marker:p.getAttribute("marker-end")||"",d:p.getAttribute("d")||""}:null
+    if(!p)return null;const cs=getComputedStyle(p);
+    return{label:label?.textContent||"",stroke:cs.stroke,width:cs.strokeWidth,dash:cs.strokeDasharray,marker:p.getAttribute("marker-end")||"",d:p.getAttribute("d")||""}
   });
-  if(!relationStyle||relationStyle.label!=="inspire"||relationStyle.stroke!=="rgb(220, 38, 38)"||relationStyle.width!=="4"||!relationStyle.dash.includes("2px")||!relationStyle.marker||!relationStyle.d.includes(" L "))throw new Error("Relation styling failed: "+JSON.stringify(relationStyle));
+  if(!relationStyle||relationStyle.label!=="inspire"||relationStyle.stroke!=="rgb(220, 38, 38)"||parseFloat(relationStyle.width)!==4||!relationStyle.dash.includes("2")||!relationStyle.marker||!relationStyle.d.includes(" L "))throw new Error("Relation styling failed: "+JSON.stringify(relationStyle));
 
   // Return to the root before testing inspector-driven styling.
   await page.$eval(".node.root",el=>el.click());
