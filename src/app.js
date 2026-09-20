@@ -18,11 +18,16 @@ const ui={
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map()
 };
-const FORMAT=1,APP="0.3.3",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.4",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
 function setStatus(t,c){ui.status.textContent=t;ui.status.style.color=c==="bad"?"#b42318":c==="ok"?"#027a48":""}
+function setButtonLabel(button,label){
+  if(!button)return;
+  const span=button.querySelector(".button-label");
+  if(span)span.textContent=label;else button.textContent=label
+}
 function supportsFS(){return typeof window.showDirectoryPicker==="function"}
 function setDirty(v=true){state.dirty=v;setStatus(v?"Modifications non enregistrées":"Enregistré",v?"":"ok");clearTimeout(state.saveTimer);if(v&&state.mode==="fs"&&state.canWrite)state.saveTimer=setTimeout(()=>save(true),800)}
 function resource(id){return state.resources.find(r=>r.id===id)||null}
@@ -233,8 +238,8 @@ function updateActionStates(){
   if(ui.contextActionsSection)ui.contextActionsSection.classList.toggle("hidden",!hasSelection);
   if(ui.contextFolderBtn)ui.contextFolderBtn.disabled=!folderSelected||state.mode==="fallback";
   if(ui.contextIdeaBtn)ui.contextIdeaBtn.disabled=!hasSelection;
-  if(ui.contextRelationBtn){ui.contextRelationBtn.disabled=!hasSelection;ui.contextRelationBtn.textContent=state.linkSource===n?.id?"✕ Annuler relation":"↗ Relation"}
-  if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);ui.contextFrameBtn.textContent=hasFrame?"▣ Retirer le cadre":"▣ Cadre de branche"}
+  if(ui.contextRelationBtn){ui.contextRelationBtn.disabled=!hasSelection;setButtonLabel(ui.contextRelationBtn,state.linkSource===n?.id?"Annuler relation":"Relation")}
+  if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}
 }
 function show(){
   const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";ui.count.textContent=state.resources.length+" élément"+(state.resources.length>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");ui.saveBtn.textContent=state.mode==="fs"&&state.canWrite?"💾 Enregistrer":"⬇️ Exporter les vues";
@@ -574,7 +579,7 @@ async function init(){
   document.documentElement.dataset.glomBoot="starting";
   try{
     wire();
-    if(!supportsFS()){ui.openBtn.textContent="📂 Importer un dossier";ui.welcomeOpen.textContent="📂 Importer un dossier";ui.recentBtn.disabled=true;ui.recentBtn.title="Non disponible avec ce navigateur"}
+    if(!supportsFS()){setButtonLabel(ui.openBtn,"Importer un dossier");ui.welcomeOpen.textContent="📂 Importer un dossier";ui.recentBtn.disabled=true;ui.recentBtn.title="Non disponible avec ce navigateur"}
     if("serviceWorker"in navigator){
       try{
         const reg=await navigator.serviceWorker.register("./sw.js?v="+APP,{scope:"./",updateViaCache:"none"});
