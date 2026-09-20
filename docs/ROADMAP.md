@@ -165,6 +165,18 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - création directe d'un fichier texte ou Markdown dans le dossier sélectionné ;
 - mise à jour immédiate de l'arborescence et de la mindmap sans rescan complet.
 
+### V0.3.7 — canvas libre et géométrie avancée
+
+- canvas de travail non borné par le format d'impression : les nœuds et objets peuvent utiliser des coordonnées négatives ;
+- l'A4 devient uniquement une **cible de rendu** : les limites du contenu sont calculées à l'export puis l'ensemble est ajusté à la page ;
+- correction du hit-testing afin de pouvoir sélectionner à nouveau les formes libres placées sous la couche des nœuds ;
+- largeur et hauteur des nœuds modifiables ;
+- liens, cadres de branche, recentrage et exports adaptés aux dimensions propres de chaque nœud ;
+- plages de taille étendues et curseurs corrigés pour exploiter toute leur largeur ;
+- titre de cadre cliquable et double-cliquable pour le renommer directement ;
+- contrôles typographiques cohérents pour titres de nœuds, annotations texte et titres de cadres ;
+- option **Déplacer cette branche comme un groupe** : le déplacement du nœud racine conserve les positions relatives de tous ses descendants.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
