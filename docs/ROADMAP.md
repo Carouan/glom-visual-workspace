@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.9 stable.**
+**État actuel : v0.3.10 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -203,12 +203,24 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 - styles des relations hiérarchiques conservés lors d'un rescan ;
 - export SVG/PNG/PDF fidèle aux libellés, styles et flèches.
 
+### V0.3.10 — images libres référencées ✅
+
+- outil **Image** actif dans la palette de la mindmap ;
+- sélection d'une image déjà présente dans le workspace ;
+- l'objet visuel conserve une référence `resourceId` + chemin relatif, sans dupliquer le fichier image dans `.glom` ;
+- déplacement et redimensionnement libres ;
+- modes d'ajustement **Contenir / Recadrer / Étirer** ;
+- réglage de l'opacité et de l'arrondi des coins ;
+- double-clic pour ouvrir la ressource image originale ;
+- les exports SVG/PNG/PDF incorporent temporairement les octets de l'image au moment du rendu, sans les persister dans la vue.
+
+Le cas d'une image ajoutée **uniquement à la vue** (donc absente de l'arborescence utilisateur) reste à traiter séparément, probablement via `.glom/attachments/`.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.9 :
+Ordre de travail proposé après v0.3.10 :
 
-1. **images/médias comme objets libres** ;
-2. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
+1. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
 3. **sélection multiple** et groupes/cadres arbitraires ;
 4. **auto-layout horizontal, vertical et radial** ;
 5. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
@@ -217,7 +229,6 @@ Ordre de travail proposé après v0.3.9 :
 
 - plusieurs cartes par workspace ;
 - ajouter plusieurs fois une même ressource dans une carte ;
-- images et médias comme objets libres, pas seulement dans un nœud de ressource ;
 - redimensionnement et verrouillage manuel des cadres/groupes ;
 - sélection multiple ;
 - styles/thèmes réutilisables ;
