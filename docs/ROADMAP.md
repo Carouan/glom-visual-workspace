@@ -132,6 +132,25 @@ Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est des
 - fermeture automatique des menus après une action, clic extérieur ou Échap ;
 - règle d'UX documentée dans `docs/UI-V0.3.3.md` pour éviter la prolifération future de boutons.
 
+### V0.3.5 — espace de travail et objets graphiques libres
+
+- panneaux **Ressources** et **Détails** rabattables indépendamment sur desktop ;
+- boutons latéraux pour rouvrir un panneau masqué ;
+- commandes équivalentes dans le menu **Vue** ;
+- état des panneaux conservé localement dans le navigateur ;
+- première couche d'objets graphiques indépendants des ressources :
+  - rectangle,
+  - ellipse,
+  - losange,
+  - annotation texte ;
+- déplacement libre de ces objets dans la carte ;
+- édition de leurs dimensions, couleurs, forme et texte dans l'inspecteur ;
+- suppression par l'inspecteur ou la touche Suppr ;
+- persistance des objets dans le JSON de la vue ;
+- export SVG/PNG/PDF incluant formes et annotations.
+
+L'outil **Image libre** reste réservé pour une étape suivante : sa persistance doit être conçue sans enfermer ou dupliquer silencieusement les fichiers utilisateur.
+
 ### V0.3.x — enrichissements suivants
 
 - plusieurs cartes par workspace ;
