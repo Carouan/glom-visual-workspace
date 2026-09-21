@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.10 stable.**
+**État actuel : v0.3.11 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -216,18 +216,30 @@ L'outil **Image libre** reste réservé pour une étape suivante : sa persistanc
 
 Le cas d'une image ajoutée **uniquement à la vue** (donc absente de l'arborescence utilisateur) reste à traiter séparément, probablement via `.glom/attachments/`.
 
+### V0.3.11 — plusieurs mindmaps par workspace ✅
+
+- un workspace peut contenir plusieurs fichiers de carte dans `.glom/views/` ;
+- sélecteur de carte active dans le menu **Vue** ;
+- création d'une nouvelle carte à partir des mêmes ressources ;
+- duplication d'une carte avec conservation de sa disposition, de ses styles, relations, cadres et objets ;
+- renommage d'une carte sans renommer ni dupliquer les fichiers utilisateur ;
+- `workspace.json/defaultView` suit la carte active ;
+- ouverture, rescan, sauvegarde, export JSON portable, template ZIP et matérialisation conservent toutes les cartes ;
+- compatibilité conservée avec les workspaces historiques contenant uniquement `main-mindmap.json`.
+
+Cette étape autorise une même ressource à avoir des représentations différentes **dans plusieurs cartes**. La présence de plusieurs occurrences visuelles d'une même ressource **dans une seule carte** est volontairement traitée séparément.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.10 :
+Ordre de travail proposé après v0.3.11 :
 
-1. **plusieurs cartes par workspace** et plusieurs occurrences visuelles d'une même ressource ;
+1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
 2. **sélection multiple** et groupes/cadres arbitraires ;
 3. **auto-layout horizontal, vertical et radial** ;
 4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
-- plusieurs cartes par workspace ;
 - ajouter plusieurs fois une même ressource dans une carte ;
 - redimensionnement et verrouillage manuel des cadres/groupes ;
 - sélection multiple ;

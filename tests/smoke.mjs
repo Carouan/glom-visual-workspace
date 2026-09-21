@@ -23,7 +23,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.10")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.11")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -47,6 +47,30 @@ try{
   if(!workspaceMenuOpen)throw new Error("Workspace command menu did not open");
   await page.mouse.click(5,5);
   await page.waitForFunction(()=>![...document.querySelectorAll("[data-menu]")].some(m=>m.open),{timeout:3000});
+
+  // A workspace can own several named mindmaps and switch between them.
+  const initialView=await page.$eval("#viewSelect",el=>({value:el.value,name:el.selectedOptions[0]?.textContent||"",count:el.options.length}));
+  if(initialView.count!==1||!initialView.name.includes("Carte principale"))throw new Error("Initial mindmap selector is invalid: "+JSON.stringify(initialView));
+  await page.evaluate(()=>{document.getElementById("viewSelect").closest("details").open=true});
+  page.once("dialog",dialog=>dialog.accept("Carte test"));
+  await page.click("#newViewBtn");
+  await page.waitForFunction(()=>document.getElementById("viewSelect")?.options.length===2,{timeout:3000});
+  let activeView=await page.$eval("#viewSelect",el=>el.selectedOptions[0]?.textContent||"");
+  if(activeView!=="Carte test")throw new Error("New mindmap was not activated: "+activeView);
+
+  await page.evaluate(()=>{document.getElementById("viewSelect").closest("details").open=true});
+  page.once("dialog",dialog=>dialog.accept("Carte test — copie"));
+  await page.click("#duplicateViewBtn");
+  await page.waitForFunction(()=>document.getElementById("viewSelect")?.options.length===3,{timeout:3000});
+  activeView=await page.$eval("#viewSelect",el=>el.selectedOptions[0]?.textContent||"");
+  if(activeView!=="Carte test — copie")throw new Error("Duplicated mindmap was not activated: "+activeView);
+
+  await page.evaluate(()=>{document.getElementById("viewSelect").closest("details").open=true});
+  page.once("dialog",dialog=>dialog.accept("Carte copie renommée"));
+  await page.click("#renameViewBtn");
+  await page.waitForFunction(()=>document.getElementById("viewSelect")?.selectedOptions[0]?.textContent==="Carte copie renommée",{timeout:3000});
+  await page.$eval("#viewSelect",(el,id)=>{el.value=id;el.dispatchEvent(new Event("change",{bubbles:true}))},initialView.value);
+  await page.waitForFunction(name=>document.getElementById("viewSelect")?.selectedOptions[0]?.textContent===name,{timeout:3000},initialView.name);
 
   // Both desktop side panels can be collapsed and restored independently.
   await page.click("#collapseResourcesBtn");

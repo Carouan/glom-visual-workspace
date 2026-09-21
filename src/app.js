@@ -7,7 +7,7 @@ function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.cle
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),
-  openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
+  openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),viewSelect:el("viewSelect"),newViewBtn:el("newViewBtn"),duplicateViewBtn:el("duplicateViewBtn"),renameViewBtn:el("renameViewBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),visualObjects:el("visualObjects"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
   noSelection:el("noSelection"),form:el("form"),visualForm:el("visualForm"),edgeForm:el("edgeForm"),selectionKind:el("selectionKind"),edgeKind:el("edgeKind"),edgeLabel:el("edgeLabel"),edgeColor:el("edgeColor"),edgeWidth:el("edgeWidth"),edgeWidthValue:el("edgeWidthValue"),edgeLineStyle:el("edgeLineStyle"),edgeArrow:el("edgeArrow"),edgeCurvature:el("edgeCurvature"),edgeCurvatureValue:el("edgeCurvatureValue"),deleteEdgeBtn:el("deleteEdgeBtn"),visualKind:el("visualKind"),visualTextLabel:el("visualTextLabel"),visualText:el("visualText"),visualShapeLabel:el("visualShapeLabel"),visualShape:el("visualShape"),visualWidth:el("visualWidth"),visualHeight:el("visualHeight"),visualFontSizeLabel:el("visualFontSizeLabel"),visualFontSize:el("visualFontSize"),visualFontFamilyLabel:el("visualFontFamilyLabel"),visualFontFamily:el("visualFontFamily"),visualFontWeightLabel:el("visualFontWeightLabel"),visualFontWeight:el("visualFontWeight"),visualTextAlignLabel:el("visualTextAlignLabel"),visualTextAlign:el("visualTextAlign"),visualItalicLabel:el("visualItalicLabel"),visualItalic:el("visualItalic"),visualTextColorLabel:el("visualTextColorLabel"),visualTextColor:el("visualTextColor"),visualFillLabel:el("visualFillLabel"),visualFill:el("visualFill"),visualStrokeLabel:el("visualStrokeLabel"),visualStroke:el("visualStroke"),visualImageSourceLabel:el("visualImageSourceLabel"),visualImageSource:el("visualImageSource"),visualImageFitLabel:el("visualImageFitLabel"),visualImageFit:el("visualImageFit"),visualImageOpacityLabel:el("visualImageOpacityLabel"),visualImageOpacity:el("visualImageOpacity"),visualImageOpacityValue:el("visualImageOpacityValue"),visualImageRadiusLabel:el("visualImageRadiusLabel"),visualImageRadius:el("visualImageRadius"),visualImageRadiusValue:el("visualImageRadiusValue"),deleteVisualBtn:el("deleteVisualBtn"),title:el("title"),kind:el("kind"),path:el("path"),size:el("size"),modified:el("modified"),tags:el("tags"),notes:el("notes"),nodeIcon:el("nodeIcon"),fontSize:el("fontSize"),fontSizeValue:el("fontSizeValue"),nodeWidth:el("nodeWidth"),nodeWidthValue:el("nodeWidthValue"),nodeHeight:el("nodeHeight"),nodeHeightValue:el("nodeHeightValue"),fontFamily:el("fontFamily"),fontWeight:el("fontWeight"),textAlign:el("textAlign"),fontItalic:el("fontItalic"),textColor:el("textColor"),backgroundColor:el("backgroundColor"),borderColor:el("borderColor"),borderWidth:el("borderWidth"),borderWidthValue:el("borderWidthValue"),nodeShape:el("nodeShape"),nodeLocked:el("nodeLocked"),moveBranch:el("moveBranch"),imageToggleLabel:el("imageToggleLabel"),showNodeImage:el("showNodeImage"),copyStyleBtn:el("copyStyleBtn"),pasteStyleBtn:el("pasteStyleBtn"),resetStyleBtn:el("resetStyleBtn"),branchFrameSection:el("branchFrameSection"),frameToggleBtn:el("frameToggleBtn"),frameFields:el("frameFields"),frameTitle:el("frameTitle"),frameFontSize:el("frameFontSize"),frameFontSizeValue:el("frameFontSizeValue"),frameFontFamily:el("frameFontFamily"),frameFontWeight:el("frameFontWeight"),frameItalic:el("frameItalic"),frameTextColor:el("frameTextColor"),frameBorderColor:el("frameBorderColor"),frameBackgroundColor:el("frameBackgroundColor"),frameOpacity:el("frameOpacity"),frameOpacityValue:el("frameOpacityValue"),frameBorderStyle:el("frameBorderStyle"),
@@ -16,9 +16,9 @@ const ui={
   folderFallback:el("folderFallback"),resourcesPanel:el("resourcesPanel"),inspectorPanel:el("inspectorPanel"),showResourcesBtn:el("showResourcesBtn"),showInspectorBtn:el("showInspectorBtn"),collapseResourcesBtn:el("collapseResourcesBtn"),collapseInspectorBtn:el("collapseInspectorBtn"),restoreResourcesBtn:el("restoreResourcesBtn"),restoreInspectorBtn:el("restoreInspectorBtn")
 };
 const state={
-  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],view:null,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
+  mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],views:[],view:null,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
 };
-const FORMAT=1,APP="0.3.10",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.11",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW_DIR=".glom/views",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 const SCAN_MAX_ENTRIES=20000,SCAN_MAX_DEPTH=48,SCAN_YIELD_EVERY=250;
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
@@ -146,10 +146,10 @@ function layout(resources){
   children.forEach(a=>a.sort((x,y)=>x.type!==y.type?(x.type==="folder"?-1:1):x.title.localeCompare(y.title,undefined,{numeric:true})));
   let leaf=0;function place(r,d){const c=children.get(r.id)||[];let y;if(!c.length)y=130+leaf++*112;else{const ys=c.map(x=>place(x,d+1));y=ys.reduce((a,b)=>a+b,0)/ys.length}pos.set(r.id,{x:120+d*330,y:y});return y}place(root,0);return pos
 }
-function freshView(resources){
+function freshView(resources,meta={}){
   const visible=resources.filter(r=>!r.excluded),p=layout(resources),nodes=resources.map((r,i)=>({id:"n-"+r.id,resourceId:r.id,x:p.get(r.id)?p.get(r.id).x:200+(i%5)*280,y:p.get(r.id)?p.get(r.id).y:160+Math.floor(i/5)*115,collapsed:false,style:{}})),edges=[];
   visible.forEach(r=>{const par=parentOf(r,visible);if(par&&!r.missing&&!par.excluded)edges.push({id:"h-"+par.id+"-"+r.id,from:"n-"+par.id,to:"n-"+r.id,kind:"hierarchy"})});
-  const now=new Date().toISOString();return{format:"glom-view",version:FORMAT,id:"main-mindmap",type:"mindmap",name:"Carte principale",createdAt:now,updatedAt:now,pan:{x:40,y:40},zoom:.92,nodes:nodes,edges:edges,frames:[],objects:[]}
+  const now=new Date().toISOString();return{format:"glom-view",version:FORMAT,id:meta.id||"main-mindmap",type:"mindmap",name:meta.name||"Carte principale",createdAt:now,updatedAt:now,pan:{x:40,y:40},zoom:.92,nodes:nodes,edges:edges,frames:[],objects:[]}
 }
 function mergeView(view,resources){
   if(!view||view.type!=="mindmap")return freshView(resources);
@@ -158,6 +158,42 @@ function mergeView(view,resources){
   });
   const ids=new Set(nodes.map(n=>n.id)),oldEdges=new Map((view.edges||[]).map(e=>[e.id,e])),hierarchy=auto.edges.map(e=>{const prev=oldEdges.get(e.id);return prev?Object.assign({},e,{label:prev.label||"",style:Object.assign({},prev.style||{})}):e}),manual=(view.edges||[]).filter(e=>e.kind==="manual"&&ids.has(e.from)&&ids.has(e.to)),frames=(view.frames||[]).filter(f=>ids.has(f.rootNodeId)),objects=Array.isArray(view.objects)?view.objects:[];
   return Object.assign({},view,{version:FORMAT,nodes,edges:hierarchy.concat(manual),frames,objects,updatedAt:new Date().toISOString()})
+}
+function workspaceViewRef(v){return"views/"+(v?.id||"main-mindmap")+".json"}
+function viewPath(v){return VIEW_DIR+"/"+(v?.id||"main-mindmap")+".json"}
+function viewIdFromRef(ref){const p=String(ref||"").replace(/\\/g,"/").split("/").pop()||"";return p.replace(/\.json$/i,"")}
+function allViews(){return state.views.length?state.views:(state.view?[state.view]:[])}
+function uniqueViewName(baseName){
+  const base=(baseName||"Nouvelle carte").trim()||"Nouvelle carte",names=new Set(allViews().map(v=>(v.name||"").toLowerCase()));if(!names.has(base.toLowerCase()))return base;
+  let i=2;while(names.has((base+" "+i).toLowerCase()))i++;return base+" "+i
+}
+function renderViewSelector(){
+  if(!ui.viewSelect)return;ui.viewSelect.replaceChildren();for(const v of allViews()){const o=document.createElement("option");o.value=v.id;o.textContent=v.name||v.id;o.selected=v===state.view||v.id===state.view?.id;ui.viewSelect.append(o)}
+  const ok=!!state.view;ui.viewSelect.disabled=!ok;ui.newViewBtn.disabled=!state.workspace;ui.duplicateViewBtn.disabled=!ok;ui.renameViewBtn.disabled=!ok
+}
+function activateView(id,{markDirty=true}={}){
+  const v=allViews().find(x=>x.id===id);if(!v||v===state.view){renderViewSelector();return}
+  state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";renderViewSelector();render();transform();if(markDirty)setDirty(true)
+}
+function createView(){
+  if(!state.workspace)return;const raw=prompt("Nom de la nouvelle carte :",uniqueViewName("Nouvelle carte"));if(raw===null)return;
+  const name=uniqueViewName(raw),v=freshView(state.resources,{id:"mindmap-"+uuid(),name});state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;renderViewSelector();render();fit();setDirty(true);setStatus("Carte « "+name+" » créée","ok")
+}
+function duplicateView(){
+  if(!state.view)return;const suggested=uniqueViewName((state.view.name||"Carte")+" — copie"),raw=prompt("Nom de la copie :",suggested);if(raw===null)return;
+  const now=new Date().toISOString(),name=uniqueViewName(raw),v=typeof structuredClone==="function"?structuredClone(state.view):JSON.parse(JSON.stringify(state.view));v.id="mindmap-"+uuid();v.name=name;v.createdAt=now;v.updatedAt=now;
+  state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;renderViewSelector();render();transform();setDirty(true);setStatus("Carte dupliquée","ok")
+}
+function renameView(){
+  if(!state.view)return;const raw=prompt("Nom de la carte :",state.view.name||"Carte");if(raw===null)return;const name=(raw||"").trim();if(!name)return;
+  state.view.name=name;state.view.updatedAt=new Date().toISOString();renderViewSelector();setDirty(true);setStatus("Carte renommée","ok")
+}
+async function readMindmapViews(root){
+  const out=[];try{const dir=await dirByParts(root,VIEW_DIR.split("/").filter(Boolean),false);for await(const [name,h] of dir.entries()){if(h.kind!=="file"||!name.toLowerCase().endsWith(".json"))continue;try{const f=await h.getFile(),v=JSON.parse(await f.text());if(v&&v.type==="mindmap"){if(!v.id)v.id=name.replace(/\.json$/i,"");out.push(v)}}catch(e){console.warn("Vue G.L.O.M. ignorée",name,e)}}}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e)}
+  return out.sort((a,b)=>a.id==="main-mindmap"?-1:b.id==="main-mindmap"?1:(a.name||a.id).localeCompare(b.name||b.id,undefined,{numeric:true}))
+}
+function prepareViews(workspace,rawViews,resources){
+  const src=(rawViews||[]).filter(v=>v&&v.type==="mindmap"),views=(src.length?src:[freshView(resources)]).map(v=>mergeView(v,resources));const wanted=viewIdFromRef(workspace.defaultView),active=views.find(v=>v.id===wanted)||views[0];workspace.defaultView=workspaceViewRef(active);return{views,active}
 }
 async function dirByParts(root,parts,create){let d=root;for(const part of parts){if(part)d=await d.getDirectoryHandle(part,{create:!!create})}return d}
 async function readJson(root,path){try{const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name),f=await h.getFile();return JSON.parse(await f.text())}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e);return null}}
@@ -210,7 +246,8 @@ function fallbackScan(files,workspace=null){
 }
 function normalizeFallback(raw){const p=raw.split("/").filter(Boolean);if(p.length>1)p.shift();return p.join("/")}
 async function fallbackMetadata(files){
-  const wanted=new Map([[WS,"workspace"],[RES,"resources"],[VIEW,"view"]]),o={};for(const f of Array.from(files||[])){const key=wanted.get(normalizeFallback(f.webkitRelativePath||f.name));if(key){try{o[key]=JSON.parse(await f.text())}catch(e){}}}return o
+  const o={views:[]};for(const f of Array.from(files||[])){const rel=normalizeFallback(f.webkitRelativePath||f.name);try{if(rel===WS)o.workspace=JSON.parse(await f.text());else if(rel===RES)o.resources=JSON.parse(await f.text());else if(rel.startsWith(VIEW_DIR+"/")&&rel.toLowerCase().endsWith(".json")){const v=JSON.parse(await f.text());if(v&&v.type==="mindmap"){if(!v.id)v.id=rel.split("/").pop().replace(/\.json$/i,"");o.views.push(v)}}}catch(e){}}
+  return o
 }
 async function fileFromPath(root,path){const parts=path.split("/").filter(Boolean),name=parts.pop(),d=await dirByParts(root,parts,false),h=await d.getFileHandle(name);return h.getFile()}
 function download(name,obj){const b=new Blob([JSON.stringify(obj,null,2)+"\n"],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
@@ -241,15 +278,15 @@ function safeFileName(s,ext){
 }
 function workspaceRoot(){return state.resources.find(r=>r.type==="root")||null}
 function workspaceMetadataSnapshot(){
-  const now=new Date().toISOString(),workspace={...state.workspace,updatedAt:now,appVersion:APP},view={...state.view,updatedAt:now};
+  const now=new Date().toISOString(),views=allViews().map(v=>({...v,updatedAt:now})),active=views.find(v=>v.id===state.view?.id)||views[0],workspace={...state.workspace,updatedAt:now,appVersion:APP,defaultView:workspaceViewRef(active)};
   const resources={format:"glom-resources",version:1,workspaceId:workspace.id,updatedAt:now,resources:state.resources};
-  return{workspace,resources,view}
+  return{workspace,resources,views,view:active}
 }
 function newDraftWorkspace(){
   const raw=prompt("Nom du nouveau workspace :","Nouveau workspace");if(raw===null)return;
   const name=(raw||"").trim()||"Nouveau workspace";clearNodeImageCache();
   const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
-  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
+  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
   initTreeExpansion();show();fit();setStatus("Workspace brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
 }
 async function addFolder(){
@@ -302,19 +339,19 @@ async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
 }
 async function loadHandle(h,user){
-  clearNodeImageCache();setStatus("Lecture du workspace…");const w0=await readJson(h,WS),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name);if(!Array.isArray(w.excludes))w.excludes=[];const s=await scan(h,w),r0=await readJson(h,RES),v0=await readJson(h,VIEW),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),v=mergeView(v0,r),can=await permission(h,user);
-  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!v0,scanTruncated:s.truncated});initTreeExpansion();
+  clearNodeImageCache();setStatus("Lecture du workspace…");const w0=await readJson(h,WS),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name);if(!Array.isArray(w.excludes))w.excludes=[];const s=await scan(h,w),r0=await readJson(h,RES),rawViews=await readMindmapViews(h),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),prepared=prepareViews(w,rawViews,r),can=await permission(h,user);
+  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!rawViews.length,scanTruncated:s.truncated});initTreeExpansion();
   try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();if(s.truncated){setDirty(false);setStatus("Scan partiel : limite "+(s.reason==="profondeur"?"de profondeur ("+s.maxDepth+")":"de volume ("+new Intl.NumberFormat("fr-BE").format(s.limit)+" éléments)")+" atteinte. Rien n’a été réécrit dans .glom ; utilisez les exclusions puis rescanner.","bad")}else if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false);
   rememberRecentWorkspace(h,w)
 }
 async function loadFallback(files){
-  if(!files||!files.length)return;clearNodeImageCache();setStatus("Import du dossier…");const m=await fallbackMetadata(files),provisional=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace("Workspace importé");if(!Array.isArray(provisional.excludes))provisional.excludes=[];const s=fallbackScan(files,provisional),w=m.workspace&&m.workspace.format==="glom-workspace"?provisional:Object.assign(provisional,{name:s.rootName}),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),v=mergeView(m.view,r);
-  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,view:v,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Mode compatibilité — export manuel")
+  if(!files||!files.length)return;clearNodeImageCache();setStatus("Import du dossier…");const m=await fallbackMetadata(files),provisional=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace("Workspace importé");if(!Array.isArray(provisional.excludes))provisional.excludes=[];const s=fallbackScan(files,provisional),w=m.workspace&&m.workspace.format==="glom-workspace"?provisional:Object.assign(provisional,{name:s.rootName}),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),prepared=prepareViews(w,m.views,r);
+  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Mode compatibilité — export manuel")
 }
 function demo(){
   clearNodeImageCache();const w=newWorkspace("Chef-d'œuvre — Les jeux vidéo");w.id="demo-marjolaine";const raw=[["folder","Histoire"],["folder","Histoire/Premiers jeux"],["file","Histoire/Premiers jeux/Tennis for Two.pdf"],["file","Histoire/Premiers jeux/Spacewar-notes.md"],["folder","Game design"],["file","Game design/Fiche de concept.md"],["folder","Level design"],["file","Level design/Plan niveau 1.png"],["folder","Mon jeu"],["folder","Mon jeu/Sprites"],["file","Mon jeu/Sprites/personnage.png"],["folder","Sources"],["file","Sources/Bibliographie.md"]].map(x=>({type:x[0],path:x[1],name:base(x[1])}));
   const r=reconcile(w,raw,[]),idea={id:"v-"+uuid(),type:"virtual",title:"💡 Pourquoi un jeu est-il amusant ?",tags:["question"],notes:"À relier au game design et aux playtests."},url={id:"u-"+uuid(),type:"url",title:"Brookhaven — Tennis for Two",url:"https://www.bnl.gov/about/history/firstvideo.php",tags:["source"],notes:""};r.push(idea,url);const v=freshView(r);const ni=nodeFrom(v,idea.id),nu=nodeFrom(v,url.id);if(ni){ni.x=1000;ni.y=680}if(nu){nu.x=1300;nu.y=220}const gd=r.find(x=>x.path==="Game design"),tf=r.find(x=>x.path&&x.path.includes("Tennis for Two"));if(gd&&ni)v.edges.push({id:"m-"+uuid(),from:"n-"+gd.id,to:ni.id,kind:"manual"});if(tf&&nu)v.edges.push({id:"m-"+uuid(),from:"n-"+tf.id,to:nu.id,kind:"manual"});
-  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,view:v,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Démo locale")
+  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Démo locale")
 }
 function nodeFrom(v,rid){return v.nodes.find(n=>n.resourceId===rid)}
 function applyCurrentExclusions(){
@@ -348,14 +385,14 @@ function excludeSelectedResource(){
 }
 async function rescan(){
   if(state.mode==="fallback"){ui.folderFallback.click();return}if(state.mode!=="fs"||!state.handle)return;
-  setStatus("Rescan…");const s=await scan(state.handle,state.workspace);state.resources=reconcile(state.workspace,s.entries,state.resources);state.view=mergeView(state.view,state.resources);state.scanTruncated=s.truncated;render();
+  setStatus("Rescan…");const activeId=state.view?.id,s=await scan(state.handle,state.workspace);state.resources=reconcile(state.workspace,s.entries,state.resources);state.views=allViews().map(v=>mergeView(v,state.resources));state.view=state.views.find(v=>v.id===activeId)||state.views[0];state.scanTruncated=s.truncated;renderViewSelector();render();
   if(s.truncated){setDirty(false);setStatus("Scan partiel : garde-fou atteint. Rien n’a été réécrit dans .glom ; ajoutez des exclusions puis rescanner.","bad")}
   else{setDirty(true);setStatus("Rescan terminé — "+new Intl.NumberFormat("fr-BE").format(s.entries.length)+" éléments","ok")}
 }
 async function save(quiet){
-  if(!state.workspace||!state.view)return;if(state.mode==="fs"&&state.scanTruncated){setStatus("Enregistrement .glom bloqué : le scan est partiel. Réduisez le workspace avec des exclusions puis rescanner.","bad");return}clearTimeout(state.saveTimer);const now=new Date().toISOString();state.workspace.updatedAt=now;state.view.updatedAt=now;const rp={format:"glom-resources",version:1,workspaceId:state.workspace.id,updatedAt:now,resources:state.resources};
-  if(state.mode==="fs"&&state.handle&&state.canWrite){try{if(!quiet)setStatus("Enregistrement…");await Promise.all([writeJson(state.handle,WS,state.workspace),writeJson(state.handle,RES,rp),writeJson(state.handle,VIEW,state.view)]);setDirty(false);return}catch(e){state.canWrite=false;setStatus("Écriture impossible — export manuel","bad");if(!quiet)alert("Impossible d'écrire dans .glom : "+(e.message||e))}}
-  const exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views:{"main-mindmap":state.view}};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
+  if(!state.workspace||!state.view)return;if(state.mode==="fs"&&state.scanTruncated){setStatus("Enregistrement .glom bloqué : le scan est partiel. Réduisez le workspace avec des exclusions puis rescanner.","bad");return}clearTimeout(state.saveTimer);const now=new Date().toISOString();state.workspace.updatedAt=now;state.workspace.defaultView=workspaceViewRef(state.view);for(const v of allViews())v.updatedAt=now;const rp={format:"glom-resources",version:1,workspaceId:state.workspace.id,updatedAt:now,resources:state.resources};
+  if(state.mode==="fs"&&state.handle&&state.canWrite){try{if(!quiet)setStatus("Enregistrement…");await Promise.all([writeJson(state.handle,WS,state.workspace),writeJson(state.handle,RES,rp),...allViews().map(v=>writeJson(state.handle,viewPath(v),v))]);setDirty(false);return}catch(e){state.canWrite=false;setStatus("Écriture impossible — export manuel","bad");if(!quiet)alert("Impossible d'écrire dans .glom : "+(e.message||e))}}
+  const views=Object.fromEntries(allViews().map(v=>[v.id,v])),exp={format:"glom-portable-export",version:1,appVersion:APP,exportedAt:new Date().toISOString(),workspace:state.workspace,resources:rp,views};download(safeName(state.workspace.name)+".glom.json",exp);if(!quiet)setStatus("Export JSON téléchargé","ok")
 }
 function updateActionStates(){
   const ok=!!(state.workspace&&state.view),r=selectedResource(),n=selectedNode(),folderSelected=!!(r&&["root","folder"].includes(r.type)),hasSelection=!!(r&&n),hasChildren=!!(n&&children(n.id).length),hasFrame=!!(n&&frameForNode(n.id)),canCreateLocalText=ok&&state.mode==="fs";
@@ -371,7 +408,7 @@ function updateActionStates(){
   if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}if(ui.contextExcludeBtn)ui.contextExcludeBtn.disabled=!hasSelection||!["file","folder"].includes(r?.type)
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");renderViewSelector();
   [ui.scanBtn,ui.exclusionsBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
   if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
   ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render();updateActionStates()
@@ -798,7 +835,7 @@ async function openExportDialog(){
   if(!ui.exportDialog.open)ui.exportDialog.showModal()
 }
 function exportOptions(){return{orientation:ui.exportOrientation.value,includeHidden:ui.exportHidden.checked}}
-function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-mindmap"}
+function exportBaseName(){return safeName((state.workspace&&state.workspace.name)||"mindmap")+"-"+safeName(state.view?.name||"mindmap")}
 function fileToDataUrl(file){
   return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=()=>reject(reader.error||new Error("Lecture image impossible"));reader.readAsDataURL(file)})
 }
@@ -829,7 +866,7 @@ async function runExport(kind){
 async function exportWorkspaceZip(){
   if(!state.workspace||!state.view)return;setStatus("Création du template ZIP…");
   const api=await getWorkspaceExporterApi();if(!api){alert("Le module ZIP n’a pas pu être chargé.");return}
-  try{const result=await api.exportWorkspaceTemplateZip(state.workspace,state.resources,state.view,APP);setStatus("Template ZIP créé — "+result.folders+" dossier(s), "+result.plannedFiles+" fichier(s) planifié(s)","ok")}
+  try{const result=await api.exportWorkspaceTemplateZip(state.workspace,state.resources,allViews(),APP);setStatus("Template ZIP créé — "+result.folders+" dossier(s), "+result.plannedFiles+" fichier(s) planifié(s), "+result.views+" carte(s)","ok")}
   catch(e){console.error(e);setStatus("Export ZIP impossible","bad");alert("Impossible de créer le ZIP : "+(e.message||e))}
 }
 async function materializeWorkspace(){
@@ -841,7 +878,7 @@ async function materializeWorkspace(){
     const folders=state.resources.filter(r=>r.type==="folder"&&!r.missing&&!r.excluded&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length);
     for(const r of folders)await dirByParts(root,r.path.split("/").filter(Boolean),true);
     const payload=workspaceMetadataSnapshot();
-    await Promise.all([writeJson(root,WS,payload.workspace),writeJson(root,RES,payload.resources),writeJson(root,VIEW,payload.view)]);
+    await Promise.all([writeJson(root,WS,payload.workspace),writeJson(root,RES,payload.resources),...payload.views.map(v=>writeJson(root,viewPath(v),v))]);
     const planned=state.resources.filter(r=>r.type==="file"&&!r.excluded&&r.path).length;ui.exportDialog.close();await loadHandle(root,false);
     setStatus("Workspace créé sur disque","ok");if(planned)alert(planned+" ressource(s) fichier sont conservées comme références planifiées. Elles apparaîtront « absentes » jusqu’à ce que les vrais fichiers correspondants soient ajoutés.")
   }catch(e){if(e&&e.name==="AbortError")return;console.error(e);setStatus("Création sur disque impossible","bad");alert("Impossible de créer le workspace : "+(e.message||e))}
@@ -849,7 +886,7 @@ async function materializeWorkspace(){
 function closePanels(){ui.resourcesPanel.classList.remove("open");ui.inspectorPanel.classList.remove("open")}
 function closeToolbarMenus(except=null){document.querySelectorAll("[data-menu][open]").forEach(m=>{if(m!==except)m.removeAttribute("open")})}
 function wire(){
-  ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.exclusionsBtn.onclick=openExclusionsDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.textFileBtn.onclick=()=>addLocalTextFile("txt");ui.markdownFileBtn.onclick=()=>addLocalTextFile("md");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
+  ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.exclusionsBtn.onclick=openExclusionsDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.viewSelect.onchange=()=>activateView(ui.viewSelect.value);ui.newViewBtn.onclick=createView;ui.duplicateViewBtn.onclick=duplicateView;ui.renameViewBtn.onclick=renameView;ui.welcomeOpen.onclick=openWorkspace;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveBtn.onclick=()=>save(false);ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.textFileBtn.onclick=()=>addLocalTextFile("txt");ui.markdownFileBtn.onclick=()=>addLocalTextFile("md");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.mapSelectBtn.onclick=()=>{state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";updateActionStates();renderInspector()};
   ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=toggleBranchFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;ui.mapImageBtn.onclick=openImageObjectDialog;
   ui.contextFolderBtn.onclick=addFolder;ui.contextIdeaBtn.onclick=addIdea;ui.contextRelationBtn.onclick=linkMode;ui.contextFrameBtn.onclick=toggleBranchFrame;ui.contextExcludeBtn.onclick=excludeSelectedResource;

@@ -49,15 +49,15 @@ function buildStoredZip(entries){
 function downloadBlob(name,blob){
   const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)
 }
-export function workspacePayloads(workspace,resources,view,appVersion){
-  const now=new Date().toISOString();
-  const w={...workspace,updatedAt:now,appVersion:appVersion||workspace.appVersion};
-  const v={...view,updatedAt:now};
+export function workspacePayloads(workspace,resources,views,appVersion){
+  const now=new Date().toISOString(),source=(Array.isArray(views)?views:[views]).filter(Boolean),vs=source.map(v=>({...v,updatedAt:now}));
+  const activeId=String(workspace.defaultView||"").split("/").pop()?.replace(/\.json$/i,""),active=vs.find(v=>v.id===activeId)||vs[0];
+  const w={...workspace,updatedAt:now,appVersion:appVersion||workspace.appVersion,defaultView:active?"views/"+active.id+".json":workspace.defaultView};
   const rp={format:"glom-resources",version:1,workspaceId:w.id,updatedAt:now,resources};
-  return{workspace:w,resources:rp,view:v}
+  return{workspace:w,resources:rp,views:vs,view:active}
 }
-export async function exportWorkspaceTemplateZip(workspace,resources,view,appVersion){
-  const payload=workspacePayloads(workspace,resources,view,appVersion),entries=[];
+export async function exportWorkspaceTemplateZip(workspace,resources,views,appVersion){
+  const payload=workspacePayloads(workspace,resources,views,appVersion),entries=[];
   const seenDirs=new Set(),addDir=path=>{const p=path.replace(/\/+$/,"")+"/";if(!seenDirs.has(p)){seenDirs.add(p);entries.push({name:p,data:new Uint8Array(0),directory:true})}};
   const folders=resources.filter(r=>r.type==="folder"&&!r.missing&&!r.excluded&&r.path).sort((a,b)=>a.path.split("/").length-b.path.split("/").length||a.path.localeCompare(b.path));
   for(const r of folders){
@@ -66,7 +66,7 @@ export async function exportWorkspaceTemplateZip(workspace,resources,view,appVer
   addDir(".glom");addDir(".glom/views");
   entries.push({name:".glom/workspace.json",data:enc.encode(jsonText(payload.workspace))});
   entries.push({name:".glom/resources.json",data:enc.encode(jsonText(payload.resources))});
-  entries.push({name:".glom/views/main-mindmap.json",data:enc.encode(jsonText(payload.view))});
+  for(const view of payload.views)entries.push({name:".glom/views/"+view.id+".json",data:enc.encode(jsonText(view))});
   const planned=resources.filter(r=>r.type==="file"&&!r.excluded&&r.path).map(r=>r.path);
   const readme=[
     "G.L.O.M. Visual Workspace — template de workspace",
@@ -82,5 +82,5 @@ export async function exportWorkspaceTemplateZip(workspace,resources,view,appVer
   entries.push({name:"README-GLOM.txt",data:enc.encode(readme)});
   const bytes=buildStoredZip(entries);
   downloadBlob(safeArchiveName(workspace.name)+"-workspace.zip",new Blob([bytes],{type:"application/zip"}));
-  return{folders:folders.length,plannedFiles:planned.length,bytes:bytes.length}
+  return{folders:folders.length,plannedFiles:planned.length,views:payload.views.length,bytes:bytes.length}
 }

@@ -1,4 +1,4 @@
-# Architecture — V0.1
+# Architecture — format 1 / application v0.3.11
 
 ## 1. Objectif
 
@@ -69,7 +69,7 @@ Exemple :
 
 Une ressource virtual n'a aucun fichier physique.
 
-## 4. views/main-mindmap.json
+## 4. views/*.json
 
 La vue ne duplique pas la ressource. Elle ne stocke que sa représentation :
 
@@ -89,7 +89,9 @@ La vue ne duplique pas la ressource. Elle ne stocke que sa représentation :
 }
 ~~~
 
-Une même resourceId pourra donc être représentée dans plusieurs vues sans dupliquer le fichier physique.
+Depuis v0.3.11, un workspace peut contenir plusieurs mindmaps dans `views/*.json`. `workspace.json/defaultView` désigne la carte active par défaut. Une même `resourceId` peut donc être représentée et stylée différemment dans plusieurs vues sans dupliquer le fichier physique.
+
+Dans une vue donnée, v0.3.11 conserve encore une occurrence principale par ressource ; les occurrences multiples dans une même carte sont une évolution distincte.
 
 ## 5. Données locales au navigateur
 
