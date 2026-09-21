@@ -159,6 +159,7 @@ dialog{width:min(920px,94vw);height:min(780px,90vh);border:1px solid var(--borde
 }
 .toolbar-menu-panel button:hover:not(:disabled){background:var(--surface2)}
 .menu-divider{height:1px;background:var(--border);margin:.25rem .2rem}
+.view-switcher{display:grid;gap:.3rem;padding:.45rem .62rem .55rem}.view-switcher label{font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.view-switcher select{width:100%;min-height:38px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);padding:.42rem .5rem}
 
 .map-palette{
   position:absolute;
