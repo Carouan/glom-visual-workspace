@@ -1,8 +1,10 @@
-# Architecture — format 1 / application v0.3.11
+# Architecture — format 1 / application v0.3.12
 
 ## 1. Objectif
 
-G.L.O.M. Visual Workspace ne remplace pas le système de fichiers. Il lui ajoute une **couche de sens et de représentation**.
+MindSpark ne remplace pas le système de fichiers. Il lui ajoute une **couche de sens et de représentation**.
+
+Le répertoire technique `.glom/` et les identifiants de format `glom-*` sont conservés pour compatibilité avec les données existantes ; la marque de l’application est désormais **MindSpark**.
 
 Trois couches sont séparées :
 
@@ -112,7 +114,7 @@ Le dossier racine est choisi explicitement par l'utilisateur. La V0.1 :
 
 Test architectural :
 
-> Si .glom/ est supprimé, les fichiers utilisateur restent lisibles, organisés et indépendants de G.L.O.M.
+> Si .glom/ est supprimé, les fichiers utilisateur restent lisibles, organisés et indépendants de MindSpark.
 
 La perte concerne uniquement la couche ajoutée : positions, liens visuels, tags et annotations.
 
