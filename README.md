@@ -6,7 +6,7 @@
 
 MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.12.**
+**Version stable actuelle : v0.3.13.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -34,6 +34,9 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
 - plusieurs mindmaps nommées par workspace, avec création, duplication, renommage et bascule ;
 - navigation progressive : **Insertion**, **Vue** et **Enregistrer** apparaissent après initialisation d’un espace de travail ;
+- commande **Enregistrer** compacte et expansible : sauvegarde directe quand le navigateur possède un accès en écriture, sinon orientation claire vers l’export ;
+- fenêtre **Imprimer ou exporter** organisée en deux sections repliables : vue active (SVG, PNG, impression/PDF) et espace de travail (template ZIP ou création sur disque) ;
+- écran d’accueil réorganisé autour de **Nouveau**, **Récents** et **Démo** ; les récents n’apparaissent que s’ils existent et la démo quitte l’accueil après le premier usage réel tout en restant disponible dans le menu principal ;
 - mindmap générée depuis l'arborescence ;
 - canvas libre, non borné par le format A4 ;
 - déplacement, zoom, pan, recentrage et repli de branches ;
@@ -136,7 +139,7 @@ La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'u
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.12 :
+Priorités après v0.3.13 :
 
 - terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, cadres/groupes avancés, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
