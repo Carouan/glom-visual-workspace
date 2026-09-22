@@ -300,7 +300,7 @@ try{
   await page.click("#exportClose");
   await page.$eval("#recentBtn",el=>el.click());
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
-  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
+  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun espace de travail récent"),{timeout:5000});
   await page.click("#recentClose");
 
   // Markdown viewer must default to rendered content and expose an editor when saving is available.
