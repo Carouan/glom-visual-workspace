@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.12 stable.**
+**État actuel : v0.3.13 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -243,9 +243,28 @@ Cette étape autorise une même ressource à avoir des représentations différe
 
 Chantiers UX associés : #54 (Enregistrer/Exporter + accueil), #55 (tutoriel guidé) et #56 (logo + identité visuelle).
 
+### V0.3.13 — Enregistrer / exporter et accueil ✅
+
+- commande principale **Enregistrer** réduite à une icône au repos, puis développée à l’ouverture du menu ;
+- menu **Enregistrer / Exporter** : l’enregistrement direct est réservé aux espaces locaux disposant d’un droit d’écriture ;
+- dans les modes brouillon, démo ou lecture seule, l’export reste disponible sans laisser croire qu’une écriture locale a eu lieu ;
+- `Ctrl+S` enregistre directement lorsqu’il le peut, sinon ouvre le flux d’export ;
+- fenêtre renommée **Imprimer ou exporter**, avec deux volets fermés à chaque ouverture :
+  - **Imprimer** : orientation, branches repliées, SVG, PNG, impression/PDF ;
+  - **Espace de travail** : template ZIP et création sur disque ;
+- nouvel accueil :
+  - **Nouveau → Vierge** ;
+  - **Nouveau → Créer à partir d’un dossier** ;
+  - **Récents** uniquement lorsqu’un historique existe ;
+  - **Démo** tant que l’utilisateur n’a pas encore créé/ouvert un véritable espace de travail ;
+- après adoption, la Démo disparaît uniquement de l’accueil et reste disponible dans **Espace de travail → Charger la démo** ;
+- couverture smoke dédiée à ces flux.
+
+Le tutoriel guidé reste prévu en #55 et l’identité graphique finale en #56.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.12 :
+Ordre de travail proposé après v0.3.13 :
 
 1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
 2. **sélection multiple** et groupes/cadres arbitraires ;
