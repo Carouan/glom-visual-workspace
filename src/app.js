@@ -6,7 +6,7 @@ async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)
 function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.clearPreview()}catch(e){console.warn(e)}}
 const el=id=>document.getElementById(id);
 const ui={
-  workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),workspaceMenu:el("workspaceMenu"),insertionMenu:el("insertionMenu"),viewMenu:el("viewMenu"),
+  workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),stageTools:el("stageTools"),workspaceMenu:el("workspaceMenu"),insertionMenu:el("insertionMenu"),viewMenu:el("viewMenu"),
   openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),saveMenu:el("saveMenu"),saveMenuSummary:el("saveMenuSummary"),saveNowBtn:el("saveNowBtn"),saveExportBtn:el("saveExportBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),viewSelect:el("viewSelect"),newViewBtn:el("newViewBtn"),duplicateViewBtn:el("duplicateViewBtn"),renameViewBtn:el("renameViewBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
   welcome:el("welcome"),welcomeNew:el("welcomeNew"),welcomeOpen:el("welcomeOpen"),welcomeRecent:el("welcomeRecent"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),visualObjects:el("visualObjects"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
@@ -18,7 +18,7 @@ const ui={
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],views:[],view:null,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
 };
-const FORMAT=1,APP="0.3.13",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW_DIR=".glom/views",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.14",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW_DIR=".glom/views",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 const SCAN_MAX_ENTRIES=20000,SCAN_MAX_DEPTH=48,SCAN_YIELD_EVERY=250;
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
@@ -28,6 +28,34 @@ function setButtonLabel(button,label){
   if(!button)return;
   const span=button.querySelector(".button-label");
   if(span)span.textContent=label;else button.textContent=label
+}
+
+function enhanceRangeInputs(){
+  document.querySelectorAll(".range-row").forEach(row=>{
+    const range=row.querySelector('input[type="range"]'),output=row.querySelector("output");
+    if(!range||row.querySelector(".range-number"))return;
+    const number=document.createElement("input");
+    number.type="number";number.className="range-number";number.id=(range.id||"range")+"Direct";
+    if(range.min!=="")number.min=range.min;if(range.max!=="")number.max=range.max;if(range.step!=="")number.step=range.step;
+    number.value=range.value;number.setAttribute("aria-label","Valeur exacte");
+    const unit=document.createElement("span");unit.className="range-unit";
+    const raw=(output?.textContent||"").trim(),match=raw.match(/[a-zA-Z%]+$/);unit.textContent=match?match[0]:"";
+    if(output)output.classList.add("range-output-native");
+    row.append(number,unit);
+    const syncFromRange=()=>{number.value=range.value};
+    range.addEventListener("input",syncFromRange);range.addEventListener("change",syncFromRange);
+    const commit=finalize=>{
+      if(number.value==="")return;
+      let value=Number(number.value);if(!Number.isFinite(value))return;
+      const min=range.min===""?-Infinity:Number(range.min),max=range.max===""?Infinity:Number(range.max);
+      value=Math.min(max,Math.max(min,value));range.value=String(value);
+      range.dispatchEvent(new Event("input",{bubbles:true}));
+      if(finalize)range.dispatchEvent(new Event("change",{bubbles:true}));
+      number.value=range.value
+    };
+    number.addEventListener("input",()=>commit(false));
+    number.addEventListener("change",()=>commit(true));
+  })
 }
 function supportsFS(){return typeof window.showDirectoryPicker==="function"}
 const WELCOME_ADOPTED_KEY="mindspark-welcome-adopted-v1";
@@ -432,7 +460,7 @@ function updateActionStates(){
   if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}if(ui.contextExcludeBtn)ui.contextExcludeBtn.disabled=!hasSelection||!["file","folder"].includes(r?.type)
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun espace de travail ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setWorkspaceNavigation(ok);renderViewSelector();const canSaveDirect=ok&&state.mode==="fs"&&state.canWrite&&!state.scanTruncated;ui.saveNowBtn.disabled=!canSaveDirect;ui.saveNowBtn.title=canSaveDirect?"Enregistrer les métadonnées dans .glom":"Enregistrement direct indisponible — utilisez Exporter";ui.saveExportBtn.disabled=!ok;
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.stageTools.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun espace de travail ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setWorkspaceNavigation(ok);renderViewSelector();const canSaveDirect=ok&&state.mode==="fs"&&state.canWrite&&!state.scanTruncated;ui.saveNowBtn.disabled=!canSaveDirect;ui.saveNowBtn.title=canSaveDirect?"Enregistrer les métadonnées dans .glom":"Enregistrement direct indisponible — utilisez Exporter";ui.saveExportBtn.disabled=!ok;
   [ui.scanBtn,ui.exclusionsBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
   if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
   ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render();updateActionStates()
@@ -931,7 +959,7 @@ function wire(){
 async function init(){
   document.documentElement.dataset.glomBoot="starting";
   try{
-    loadPanelPrefs();applyPanelState();wire();
+    loadPanelPrefs();applyPanelState();enhanceRangeInputs();wire();
     if(!supportsFS()){setButtonLabel(ui.openBtn,"Importer un dossier");ui.welcomeOpen.textContent="📂 Importer un dossier";ui.recentBtn.disabled=true;ui.recentBtn.title="Non disponible avec ce navigateur"}await refreshWelcomeActions();
     if("serviceWorker"in navigator){
       try{
