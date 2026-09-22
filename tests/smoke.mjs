@@ -21,7 +21,7 @@ try{
     visibleMenus:[...document.querySelectorAll(".toolbar-menu")].filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id)
   }));
   if(!initialMenus.insertionHidden||!initialMenus.viewHidden||!initialMenus.saveHidden||JSON.stringify(initialMenus.visibleMenus)!==JSON.stringify(["workspaceMenu"]))throw new Error("Workspace-only navigation is visible too early: "+JSON.stringify(initialMenus));
-  const workspaceOrder=await page.$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
+  const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
   const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Charger la démo"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
   await page.$eval("#workspaceMenu > summary",el=>el.click());
