@@ -60,7 +60,7 @@ try{
   if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
   const topIconCount=await page.$$eval(".toolbar .ui-icon",els=>els.length);
   if(topIconCount<9)throw new Error("Expected representative SVG icons in toolbar, got "+topIconCount);
-  const visibleToolbarMenus=await page.$eval(".toolbar > details.toolbar-menu",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
+  const visibleToolbarMenus=await page.$$eval(".toolbar > details.toolbar-menu",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
   if(JSON.stringify(visibleToolbarMenus)!==JSON.stringify(["workspaceMenu","insertionMenu","viewMenu","saveMenu"]))throw new Error("Unexpected toolbar menus after initialization: "+JSON.stringify(visibleToolbarMenus));
   const saveIcon=await page.$eval("#saveMenuSummary use",el=>el.getAttribute("href"));
   if(saveIcon!=="#i-save-export")throw new Error("Enriched save icon is missing: "+saveIcon);
