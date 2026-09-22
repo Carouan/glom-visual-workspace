@@ -1,7 +1,7 @@
 {
-  "name": "G.L.O.M. Visual Workspace",
-  "short_name": "GLOM Workspace",
-  "description": "Explorateur visuel local-first de fichiers, ressources et idées.",
+  "name": "MindSpark — Atelier visuel",
+  "short_name": "MindSpark",
+  "description": "Atelier visuel local-first pour organiser, relier et créer avec vos fichiers, ressources et idées.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
