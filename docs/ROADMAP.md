@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.13 stable.**
+**État actuel : v0.3.14 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -260,11 +260,23 @@ Chantiers UX associés : #54 (Enregistrer/Exporter + accueil), #55 (tutoriel gui
 - après adoption, la Démo disparaît uniquement de l’accueil et reste disponible dans **Espace de travail → Charger la démo** ;
 - couverture smoke dédiée à ces flux.
 
-Le tutoriel guidé reste prévu en #55 et l’identité graphique finale en #56.
+Le tutoriel guidé #55 est désormais volontairement reporté **après stabilisation complète de l’interface**. L’identité graphique finale reste suivie en #56.
+
+### V0.3.14 — finition d’interface avant onboarding ✅
+
+- barre centrale masquée tant qu’aucun espace de travail n’est initialisé ;
+- palette d’outils de la carte intégrée à la barre centrale de zoom au lieu d’une palette séparée à gauche ;
+- accueil disposé en colonnes adaptatives : **Nouveau / Récents / Démo** sont côte à côte lorsque les trois sont disponibles ;
+- cartes d’accueil plus compactes et dimensionnées sur leur contenu ;
+- chaque slider numérique reçoit automatiquement un champ de saisie exacte synchronisé avec min/max/step ;
+- petits dialogues, dont **Imprimer ou exporter**, utilisent une hauteur basée sur le contenu avec scroll uniquement si nécessaire ;
+- smoke tests dédiés à la visibilité de la barre, au regroupement outils/zoom, à l’alignement de l’accueil, aux champs numériques et à la compacité des dialogues.
+
+Le tutoriel #55 reste sans numéro de version figé tant que les derniers éléments structurels de l’interface ne sont pas considérés comme stables.
 
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.13 :
+Ordre de travail proposé après v0.3.14 :
 
 1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
 2. **sélection multiple** et groupes/cadres arbitraires ;
