@@ -6,7 +6,7 @@ async function getViewerApi(){if(viewerApi)return viewerApi;if(viewerLoadFailed)
 function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.clearPreview()}catch(e){console.warn(e)}}
 const el=id=>document.getElementById(id);
 const ui={
-  workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),
+  workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),workspaceMenu:el("workspaceMenu"),insertionMenu:el("insertionMenu"),viewMenu:el("viewMenu"),
   openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),saveBtn:el("saveBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),viewSelect:el("viewSelect"),newViewBtn:el("newViewBtn"),duplicateViewBtn:el("duplicateViewBtn"),renameViewBtn:el("renameViewBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
   welcome:el("welcome"),welcomeOpen:el("welcomeOpen"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),visualObjects:el("visualObjects"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
@@ -18,11 +18,11 @@ const ui={
 const state={
   mode:"none",handle:null,fallbackFiles:new Map(),workspace:null,resources:[],views:[],view:null,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,dirty:false,canWrite:false,search:"",saveTimer:null,treeExpanded:new Set(),draggedResource:null,styleClipboard:null,imageUrls:new Map(),panels:{left:false,right:false},scanTruncated:false
 };
-const FORMAT=1,APP="0.3.11",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW_DIR=".glom/views",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
+const FORMAT=1,APP="0.3.12",WS=".glom/workspace.json",RES=".glom/resources.json",VIEW_DIR=".glom/views",VIEW=".glom/views/main-mindmap.json",IGNORED=new Set([".glom",".git","node_modules"]);
 const SCAN_MAX_ENTRIES=20000,SCAN_MAX_DEPTH=48,SCAN_YIELD_EVERY=250;
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
-function base(path){const p=(path||"").split("/");return p[p.length-1]||"Workspace"}
+function base(path){const p=(path||"").split("/");return p[p.length-1]||"Espace de travail"}
 function setStatus(t,c){ui.status.textContent=t;ui.status.style.color=c==="bad"?"#b42318":c==="ok"?"#027a48":""}
 function setButtonLabel(button,label){
   if(!button)return;
@@ -30,6 +30,18 @@ function setButtonLabel(button,label){
   if(span)span.textContent=label;else button.textContent=label
 }
 function supportsFS(){return typeof window.showDirectoryPicker==="function"}
+let workspaceUiReady=false,workspaceRevealTimer=null;
+function setWorkspaceNavigation(ok){
+  [ui.insertionMenu,ui.viewMenu,ui.saveBtn].forEach(control=>control?.classList.toggle("hidden",!ok));
+  if(!ok){workspaceUiReady=false;return}
+  if(workspaceUiReady)return;
+  workspaceUiReady=true;
+  const revealed=[ui.insertionMenu,ui.viewMenu].filter(Boolean);
+  revealed.forEach(control=>control.classList.add("newly-available"));
+  clearTimeout(workspaceRevealTimer);
+  workspaceRevealTimer=setTimeout(()=>revealed.forEach(control=>control.classList.remove("newly-available")),1800)
+}
+
 function setDirty(v=true){state.dirty=v;setStatus(v?"Modifications non enregistrées":"Enregistré",v?"":"ok");clearTimeout(state.saveTimer);if(v&&state.mode==="fs"&&state.canWrite)state.saveTimer=setTimeout(()=>save(true),800)}
 function resource(id){return state.resources.find(r=>r.id===id)||null}
 function node(id){return state.view&&state.view.nodes.find(n=>n.id===id)||null}
@@ -60,7 +72,7 @@ function applyPanelState(){
 function setPanelCollapsed(side,value){
   state.panels[side]=!!value;savePanelPrefs();applyPanelState()
 }
-function typeLabel(r){return({root:"Workspace",folder:"Dossier",file:"Fichier",virtual:"Idée",url:"Lien web"})[r&&r.type]||"Ressource"}
+function typeLabel(r){return({root:"Espace de travail",folder:"Dossier",file:"Fichier",virtual:"Idée",url:"Lien web"})[r&&r.type]||"Ressource"}
 function icon(r){
   if(!r)return"❓";if(r.type==="root")return"🗺️";if(r.type==="folder")return"📁";if(r.type==="virtual")return"💡";if(r.type==="url")return"🔗";
   const e=(r.path||"").split(".").pop().toLowerCase();
@@ -94,7 +106,7 @@ async function imageUrlFor(r){
     if(!f)return null;const u=URL.createObjectURL(f);state.imageUrls.set(r.id,u);return u
   }catch(e){console.warn("Node image unavailable",e);return null}
 }
-function newWorkspace(name){const now=new Date().toISOString();return{format:"glom-workspace",version:FORMAT,appVersion:APP,id:uuid(),name:name||"Nouveau workspace",createdAt:now,updatedAt:now,defaultView:"views/main-mindmap.json",excludes:[]}}
+function newWorkspace(name){const now=new Date().toISOString();return{format:"glom-workspace",version:FORMAT,appVersion:APP,id:uuid(),name:name||"Nouvel espace de travail",createdAt:now,updatedAt:now,defaultView:"views/main-mindmap.json",excludes:[]}}
 function parentPath(path){if(!path||!path.includes("/"))return"";return path.slice(0,path.lastIndexOf("/"))}
 function normalizeExcludePattern(raw){return String(raw||"").trim().replace(/\\/g,"/").replace(/^\.\//,"").replace(/^\/+|\/+$/g,"")}
 function globRegex(pattern){
@@ -189,7 +201,7 @@ function renameView(){
   state.view.name=name;state.view.updatedAt=new Date().toISOString();renderViewSelector();setDirty(true);setStatus("Carte renommée","ok")
 }
 async function readMindmapViews(root){
-  const out=[];try{const dir=await dirByParts(root,VIEW_DIR.split("/").filter(Boolean),false);for await(const [name,h] of dir.entries()){if(h.kind!=="file"||!name.toLowerCase().endsWith(".json"))continue;try{const f=await h.getFile(),v=JSON.parse(await f.text());if(v&&v.type==="mindmap"){if(!v.id)v.id=name.replace(/\.json$/i,"");out.push(v)}}catch(e){console.warn("Vue G.L.O.M. ignorée",name,e)}}}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e)}
+  const out=[];try{const dir=await dirByParts(root,VIEW_DIR.split("/").filter(Boolean),false);for await(const [name,h] of dir.entries()){if(h.kind!=="file"||!name.toLowerCase().endsWith(".json"))continue;try{const f=await h.getFile(),v=JSON.parse(await f.text());if(v&&v.type==="mindmap"){if(!v.id)v.id=name.replace(/\.json$/i,"");out.push(v)}}catch(e){console.warn("Vue MindSpark ignorée",name,e)}}}catch(e){if(e&&e.name!=="NotFoundError")console.warn(e)}
   return out.sort((a,b)=>a.id==="main-mindmap"?-1:b.id==="main-mindmap"?1:(a.name||a.id).localeCompare(b.name||b.id,undefined,{numeric:true}))
 }
 function prepareViews(workspace,rawViews,resources){
@@ -283,11 +295,11 @@ function workspaceMetadataSnapshot(){
   return{workspace,resources,views,view:active}
 }
 function newDraftWorkspace(){
-  const raw=prompt("Nom du nouveau workspace :","Nouveau workspace");if(raw===null)return;
-  const name=(raw||"").trim()||"Nouveau workspace";clearNodeImageCache();
+  const raw=prompt("Nom du nouvel espace de travail :","Nouvel espace de travail");if(raw===null)return;
+  const name=(raw||"").trim()||"Nouvel espace de travail";clearNodeImageCache();
   const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
   Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
-  initTreeExpansion();show();fit();setStatus("Workspace brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
+  initTreeExpansion();show();fit();setStatus("Espace de travail brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
 }
 async function addFolder(){
   if(!state.workspace||!state.view)return;
@@ -408,7 +420,7 @@ function updateActionStates(){
   if(ui.contextFrameBtn){ui.contextFrameBtn.disabled=!hasSelection||(!hasChildren&&!hasFrame);setButtonLabel(ui.contextFrameBtn,hasFrame?"Retirer le cadre":"Cadre de branche")}if(ui.contextExcludeBtn)ui.contextExcludeBtn.disabled=!hasSelection||!["file","folder"].includes(r?.type)
 }
 function show(){
-  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun workspace ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");renderViewSelector();
+  const ok=!!(state.workspace&&state.view);ui.welcome.classList.toggle("hidden",ok);ui.viewport.classList.toggle("hidden",!ok);ui.workspaceName.textContent=ok?state.workspace.name:"Aucun espace de travail ouvert";const visibleCount=state.resources.filter(r=>!r.excluded).length;ui.count.textContent=visibleCount+" élément"+(visibleCount>1?"s":"");ui.compat.classList.toggle("hidden",state.mode!=="fallback");setButtonLabel(ui.saveBtn,state.mode==="fs"&&state.canWrite?"Enregistrer":"Exporter les vues");setWorkspaceNavigation(ok);renderViewSelector();
   [ui.scanBtn,ui.exclusionsBtn,ui.saveBtn,ui.exportBtn,ui.folderBtn,ui.ideaBtn,ui.urlBtn,ui.fitBtn,ui.autoLayoutBtn].forEach(b=>b.disabled=!ok);
   if(["demo","draft"].includes(state.mode))ui.scanBtn.disabled=true;if(state.mode==="fallback")ui.folderBtn.disabled=true;
   ui.materializeBtn.disabled=!ok||!supportsFS();ui.zipWorkspaceBtn.disabled=!ok;render();updateActionStates()
@@ -919,7 +931,7 @@ async function init(){
   }catch(e){
     document.documentElement.dataset.glomBoot="error";
     setStatus("Erreur de démarrage : "+(e&&e.message?e.message:e),"bad");
-    console.error("G.L.O.M. init failed",e)
+    console.error("MindSpark init failed",e)
   }
 }
 init();
