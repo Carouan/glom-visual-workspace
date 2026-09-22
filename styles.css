@@ -526,6 +526,7 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 }
 .welcome-card-actions button{min-height:38px;padding:.42rem .55rem}
 .welcome-choice{min-height:0;padding:.7rem}
+#welcomeRecent.hidden + #welcomeDemo{grid-column:auto}
 
 .range-row{
   grid-template-columns:minmax(0,1fr) 78px auto;
