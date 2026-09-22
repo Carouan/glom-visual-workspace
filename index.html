@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1d4ed8">
-  <meta name="description" content="G.L.O.M. Visual Workspace — explorateur visuel local-first de fichiers, ressources et idées.">
+  <meta name="description" content="MindSpark — Atelier visuel local-first pour organiser, relier et créer avec vos fichiers, ressources et idées.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
-  <title>G.L.O.M. Visual Workspace</title>
+  <title>MindSpark — Atelier visuel</title>
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true">
@@ -46,26 +46,25 @@
   </svg>
   <header class="topbar">
     <div class="brand">
-      <span class="brand-mark">G</span>
-      <div><strong>G.L.O.M. Visual Workspace</strong><small id="workspaceName">Aucun workspace ouvert</small></div>
+      <span class="brand-mark">M</span>
+      <div><strong>MindSpark — Atelier visuel</strong><small id="workspaceName">Aucun espace de travail ouvert</small></div>
     </div>
     <nav class="toolbar" aria-label="Commandes principales">
-      <button id="openBtn" class="primary"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg><span class="button-label">Ouvrir</span></button>
-
-      <details class="toolbar-menu" data-menu>
-        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-workspace"></use></svg><span>Workspace</span><span class="chevron" aria-hidden="true">⌄</span></summary>
+      <details id="workspaceMenu" class="toolbar-menu" data-menu>
+        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-workspace"></use></svg><span>Espace de travail</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
-          <button id="newWorkspaceBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-plus"></use></svg><span class="button-label">Nouveau workspace</span></button>
-          <button id="recentBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-clock"></use></svg><span class="button-label">Workspaces récents</span></button>
-          <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
+          <button id="newWorkspaceBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-file-plus"></use></svg><span class="button-label">Nouveau</span></button>
+          <button id="recentBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-clock"></use></svg><span class="button-label">Récents</span></button>
+          <button id="openBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-open"></use></svg><span class="button-label">Ouvrir</span></button>
           <span class="menu-divider"></span>
           <button id="scanBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-refresh"></use></svg><span class="button-label">Rescanner le dossier</span></button>
           <button id="exclusionsBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-filter"></use></svg><span class="button-label">Exclusions…</span></button>
-          <button id="saveBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-save"></use></svg><span class="button-label">Enregistrer</span></button>
+          <span class="menu-divider"></span>
+          <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
         </div>
       </details>
 
-      <details class="toolbar-menu" data-menu>
+      <details id="insertionMenu" class="toolbar-menu workspace-command hidden" data-menu>
         <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-plus-circle"></use></svg><span>Insertion</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
           <button id="folderBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg><span class="button-label">Nouveau dossier</span></button>
@@ -76,7 +75,7 @@
         </div>
       </details>
 
-      <details class="toolbar-menu" data-menu>
+      <details id="viewMenu" class="toolbar-menu workspace-command hidden" data-menu>
         <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-eye"></use></svg><span>Vue</span><span class="chevron" aria-hidden="true">⌄</span></summary>
         <div class="toolbar-menu-panel">
           <div class="view-switcher">
@@ -92,20 +91,17 @@
           <span class="menu-divider"></span>
           <button id="toggleResourcesBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg><span class="button-label">Afficher/masquer Ressources</span></button>
           <button id="toggleInspectorBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg><span class="button-label">Afficher/masquer Détails</span></button>
+          <span class="menu-divider"></span>
+          <button id="exportBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-export"></use></svg><span class="button-label">Exporter la vue…</span></button>
         </div>
       </details>
 
-      <details class="toolbar-menu" data-menu>
-        <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-export"></use></svg><span>Exporter</span><span class="chevron" aria-hidden="true">⌄</span></summary>
-        <div class="toolbar-menu-panel">
-          <button id="exportBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-export"></use></svg><span class="button-label">Exports et impression…</span></button>
-        </div>
-      </details>
+      <button id="saveBtn" class="workspace-command hidden" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-save"></use></svg><span class="button-label">Enregistrer</span></button>
 
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.11</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.12</span></div>
   </header>
 
   <main class="shell">
@@ -119,8 +115,8 @@
     </aside>
 
     <section class="stage">
-      <button id="restoreResourcesBtn" class="panel-restore left hidden desktop-only" type="button" title="Afficher Ressources" aria-label="Afficher Ressources"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg></button>
-      <button id="restoreInspectorBtn" class="panel-restore right hidden desktop-only" type="button" title="Afficher Détails" aria-label="Afficher Détails"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg></button>
+      <button id="restoreResourcesBtn" class="panel-restore left hidden desktop-only" type="button" title="Afficher Ressources" aria-label="Afficher Ressources"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-right"></use></svg></button>
+      <button id="restoreInspectorBtn" class="panel-restore right hidden desktop-only" type="button" title="Afficher Détails" aria-label="Afficher Détails"><svg class="ui-icon" aria-hidden="true"><use href="#i-panel-left"></use></svg></button>
       <div class="stage-tools">
         <button id="zoomOut">−</button><span id="zoomValue">100%</span><button id="zoomIn">＋</button>
         <span class="sep"></span><span id="hint">Glisser le fond pour déplacer la vue</span>
@@ -129,9 +125,9 @@
       <div id="welcome" class="welcome">
         <div class="welcome-icon">🗺️</div>
         <h1>Vos fichiers, mais vus autrement.</h1>
-        <p>Choisissez un dossier : G.L.O.M. construit une carte visuelle de ses ressources sans déplacer ni enfermer vos fichiers.</p>
+        <p>Choisissez un dossier : MindSpark construit une carte visuelle de ses ressources sans déplacer ni enfermer vos fichiers.</p>
         <div><button id="welcomeOpen" class="primary">📂 Choisir un dossier</button> <button id="welcomeDemo">🧪 Charger la démo</button></div>
-        <small>Local-first : le contenu du workspace n'est pas envoyé par l'application.</small>
+        <small>Local-first : le contenu de l’espace de travail n'est pas envoyé par l'application.</small>
       </div>
 
       <div id="viewport" class="viewport hidden">
@@ -379,7 +375,7 @@
         <select id="exportOrientation"><option value="landscape">Paysage</option><option value="portrait">Portrait</option></select>
       </label>
       <label class="check-row"><input id="exportHidden" type="checkbox"> Inclure les branches repliées</label>
-      <p>Le canvas de travail est libre et non limité au format A4. Au moment de l’export, G.L.O.M. calcule les limites réelles du contenu puis redimensionne l’ensemble pour tenir sur l’A4 choisi. « Imprimer / PDF » ouvre le dialogue d’impression du navigateur.</p>
+      <p>Le canvas de travail est libre et non limité au format A4. Au moment de l’export, MindSpark calcule les limites réelles du contenu puis redimensionne l’ensemble pour tenir sur l’A4 choisi. « Imprimer / PDF » ouvre le dialogue d’impression du navigateur.</p>
       <div class="export-actions">
         <button id="exportSvgBtn" type="button">⬇️ SVG A4</button>
         <button id="exportPngBtn" type="button">🖼️ PNG A4</button>
@@ -424,9 +420,9 @@
   <script>
     window.addEventListener("error",function(e){
       var s=document.getElementById("status");if(s){s.textContent="Erreur de démarrage — rechargez la page";s.style.color="#b42318"}
-      console.error("G.L.O.M. bootstrap error",e.error||e.message||e);
+      console.error("MindSpark bootstrap error",e.error||e.message||e);
     });
-    window.addEventListener("unhandledrejection",function(e){console.error("G.L.O.M. unhandled rejection",e.reason||e)});
+    window.addEventListener("unhandledrejection",function(e){console.error("MindSpark unhandled rejection",e.reason||e)});
   </script>
   <script type="module" src="./src/app.js"></script>
 </body>
