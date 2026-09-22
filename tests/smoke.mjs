@@ -17,10 +17,18 @@ try{
   const initialMenus=await page.evaluate(()=>({
     insertionHidden:document.getElementById("insertionMenu")?.classList.contains("hidden"),
     viewHidden:document.getElementById("viewMenu")?.classList.contains("hidden"),
-    saveHidden:document.getElementById("saveBtn")?.classList.contains("hidden"),
+    saveHidden:document.getElementById("saveMenu")?.classList.contains("hidden"),
     visibleMenus:[...document.querySelectorAll(".toolbar-menu")].filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id)
   }));
   if(!initialMenus.insertionHidden||!initialMenus.viewHidden||!initialMenus.saveHidden||JSON.stringify(initialMenus.visibleMenus)!==JSON.stringify(["workspaceMenu"]))throw new Error("Workspace-only navigation is visible too early: "+JSON.stringify(initialMenus));
+  const welcomeState=await page.evaluate(()=>({
+    newBlank:!!document.getElementById("welcomeNew"),
+    fromFolder:!!document.getElementById("welcomeOpen"),
+    recentHidden:document.getElementById("welcomeRecent")?.classList.contains("hidden"),
+    demoVisible:!document.getElementById("welcomeDemo")?.classList.contains("hidden"),
+    tagline:document.querySelector("#welcome h1")?.textContent||""
+  }));
+  if(!welcomeState.newBlank||!welcomeState.fromFolder||!welcomeState.recentHidden||!welcomeState.demoVisible||!welcomeState.tagline.includes("étincelle"))throw new Error("Welcome screen is not in its expected initial state: "+JSON.stringify(welcomeState));
   const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
   const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Charger la démo"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
@@ -30,9 +38,10 @@ try{
   const revealedMenus=await page.evaluate(()=>({
     insertionVisible:!document.getElementById("insertionMenu")?.classList.contains("hidden"),
     viewVisible:!document.getElementById("viewMenu")?.classList.contains("hidden"),
+    saveVisible:!document.getElementById("saveMenu")?.classList.contains("hidden"),
     highlighted:document.getElementById("insertionMenu")?.classList.contains("newly-available")&&document.getElementById("viewMenu")?.classList.contains("newly-available")
   }));
-  if(!revealedMenus.insertionVisible||!revealedMenus.viewVisible||!revealedMenus.highlighted)throw new Error("Progressive navigation did not reveal/highlight workspace tools: "+JSON.stringify(revealedMenus));
+  if(!revealedMenus.insertionVisible||!revealedMenus.viewVisible||!revealedMenus.saveVisible||!revealedMenus.highlighted)throw new Error("Progressive navigation did not reveal/highlight workspace tools: "+JSON.stringify(revealedMenus));
   const snapshot=await page.evaluate(()=>({
     boot:document.documentElement.dataset.glomBoot,
     workspace:document.getElementById("workspaceName")?.textContent||"",
@@ -44,15 +53,37 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.12")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.13")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
-  if(menuCount!==3)throw new Error("Expected 3 compact toolbar menus, got "+menuCount);
+  if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
   const topIconCount=await page.$$eval(".toolbar .ui-icon",els=>els.length);
   if(topIconCount<9)throw new Error("Expected representative SVG icons in toolbar, got "+topIconCount);
-  const visibleTopCommands=await page.$$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
-  if(JSON.stringify(visibleTopCommands)!==JSON.stringify(["saveBtn"]))throw new Error("Unexpected permanent topbar commands after initialization: "+JSON.stringify(visibleTopCommands));
+  const visibleToolbarMenus=await page.$$eval(".toolbar > details.toolbar-menu",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
+  if(JSON.stringify(visibleToolbarMenus)!==JSON.stringify(["workspaceMenu","insertionMenu","viewMenu","saveMenu"]))throw new Error("Unexpected toolbar menus after initialization: "+JSON.stringify(visibleToolbarMenus));
+  const saveIcon=await page.$eval("#saveMenuSummary use",el=>el.getAttribute("href"));
+  if(saveIcon!=="#i-save-export")throw new Error("Enriched save icon is missing: "+saveIcon);
+  await page.$eval("#saveMenu > summary",el=>el.click());
+  await page.waitForSelector("#saveMenu[open]",{timeout:3000});
+  const saveMenuState=await page.evaluate(()=>({
+    saveDisabled:document.getElementById("saveNowBtn")?.disabled,
+    exportDisabled:document.getElementById("saveExportBtn")?.disabled,
+    label:document.querySelector("#saveMenuSummary .save-menu-label")?.textContent||""
+  }));
+  if(!saveMenuState.saveDisabled||saveMenuState.exportDisabled||saveMenuState.label!=="Enregistrer")throw new Error("Save/export menu state is invalid in demo mode: "+JSON.stringify(saveMenuState));
+  await page.click("#saveExportBtn");
+  await page.waitForSelector("#exportDialog[open]",{timeout:5000});
+  const exportDialogInitial=await page.evaluate(()=>({
+    title:document.querySelector("#exportDialog header strong")?.textContent||"",
+    printOpen:document.getElementById("exportPrintSection")?.open,
+    workspaceOpen:document.getElementById("exportWorkspaceSection")?.open
+  }));
+  if(exportDialogInitial.title!=="Imprimer ou exporter"||exportDialogInitial.printOpen||exportDialogInitial.workspaceOpen)throw new Error("Export dialog must open compact with both sections collapsed: "+JSON.stringify(exportDialogInitial));
+  await page.click("#exportPrintSection > summary");
+  const printSectionOpen=await page.$eval("#exportPrintSection",el=>el.open);
+  if(!printSectionOpen)throw new Error("Print export section did not expand");
+  await page.click("#exportClose");
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
   await page.click("#mapImageBtn");
@@ -261,12 +292,15 @@ try{
 
   await page.$eval("#exportBtn",el=>el.click());
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
+  const exportSectionsClosed=await page.evaluate(()=>!document.getElementById("exportPrintSection").open&&!document.getElementById("exportWorkspaceSection").open);
+  if(!exportSectionsClosed)throw new Error("Export sections were not reset to collapsed");
+  await page.click("#exportPrintSection > summary");
   const exportReady=await page.$eval("#exportSvgBtn",el=>!el.disabled);
   if(!exportReady)throw new Error("Export dialog did not initialize");
   await page.click("#exportClose");
   await page.$eval("#recentBtn",el=>el.click());
   await page.waitForSelector("#recentDialog[open]",{timeout:5000});
-  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun workspace récent"),{timeout:5000});
+  await page.waitForFunction(()=>document.getElementById("recentList")?.textContent?.includes("Aucun espace de travail récent"),{timeout:5000});
   await page.click("#recentClose");
 
   // Markdown viewer must default to rendered content and expose an editor when saving is available.
@@ -295,6 +329,13 @@ try{
   page.once("dialog",d=>d.accept("Workspace vierge test"));
   await page.$eval("#newWorkspaceBtn",el=>el.click());
   await page.waitForFunction(()=>document.getElementById("workspaceName")?.textContent==="Workspace vierge test",{timeout:5000});
+  const adoptionState=await page.evaluate(()=>({
+    adopted:localStorage.getItem("mindspark-welcome-adopted-v1"),
+    demoHidden:document.getElementById("welcomeDemo")?.classList.contains("hidden"),
+    saveDirectDisabled:document.getElementById("saveNowBtn")?.disabled,
+    exportDisabled:document.getElementById("saveExportBtn")?.disabled
+  }));
+  if(adoptionState.adopted!=="1"||!adoptionState.demoHidden||!adoptionState.saveDirectDisabled||adoptionState.exportDisabled)throw new Error("Draft adoption/save state is invalid: "+JSON.stringify(adoptionState));
   page.once("dialog",d=>d.accept("Recherche"));
   await page.click("#mapFolderBtn");
   await page.waitForFunction(()=>[...document.querySelectorAll(".tree-label")].some(el=>el.textContent==="Recherche"),{timeout:5000});
@@ -327,8 +368,11 @@ try{
   const objectCount=await page.evaluate(()=>document.querySelectorAll(".visual-object").length);
   if(objectCount<2)throw new Error("Free visual objects were not created");
 
-  await page.$eval("#exportBtn",el=>el.click());
+  await page.$eval("#saveMenu > summary",el=>el.click());
+  await page.waitForSelector("#saveMenu[open]",{timeout:3000});
+  await page.click("#saveExportBtn");
   await page.waitForSelector("#exportDialog[open]",{timeout:5000});
+  await page.click("#exportWorkspaceSection > summary");
   const zipReady=await page.$eval("#zipWorkspaceBtn",el=>!el.disabled);
   if(!zipReady)throw new Error("Workspace ZIP export is not available for a draft workspace");
   await page.click("#zipWorkspaceBtn");
