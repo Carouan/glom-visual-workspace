@@ -1,10 +1,10 @@
-# Roadmap — G.L.O.M. Visual Workspace
+# Roadmap — MindSpark — Atelier visuel
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.11 stable.**
+**État actuel : v0.3.12 stable.**
 
-Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; G.L.O.M. ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
+Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
 ## V0.2 — Universal Resource Viewer ✅ livré
 
@@ -84,7 +84,7 @@ Pistes à étudier séparément :
 - passerelle locale ou serveur léger exposant un workspace distant via HTTPS/WebSocket ;
 - éventuellement SFTP derrière cette passerelle.
 
-L'objectif est de conserver la même abstraction « workspace » sans coupler le cœur de G.L.O.M. à SSH.
+L'objectif est de conserver la même abstraction « workspace » sans coupler le cœur de MindSpark à SSH.
 
 ## V0.3 — Mindmap avancée 🚧 en cours
 
@@ -125,7 +125,7 @@ Le template ZIP ne copie pas encore les contenus des vrais fichiers : il est des
 
 ### V0.3.3 — organisation de l'interface ✅
 
-- barre supérieure compacte organisée en menus Workspace / Insertion / Vue / Exporter ;
+- barre supérieure compacte, désormais organisée en **Espace de travail / Insertion / Vue + Enregistrer** depuis v0.3.12 ;
 - bouton Ouvrir conservé comme action globale immédiatement visible ;
 - palette flottante dédiée à la création/manipulation visuelle sur la mindmap ;
 - outils de palette actifs : sélection, dossier, idée, relation et cadre de branche ;
@@ -229,9 +229,23 @@ Le cas d'une image ajoutée **uniquement à la vue** (donc absente de l'arboresc
 
 Cette étape autorise une même ressource à avoir des représentations différentes **dans plusieurs cartes**. La présence de plusieurs occurrences visuelles d'une même ressource **dans une seule carte** est volontairement traitée séparément.
 
+### V0.3.12 — identité MindSpark et navigation progressive ✅
+
+- nouveau nom produit : **MindSpark — Atelier visuel** / **MindSpark — Visual Workshop** ;
+- signature : **« Une idée commence par une étincelle. Puis elle se connecte. »** ;
+- le répertoire technique `.glom/` reste inchangé pour préserver la compatibilité ;
+- menu principal renommé **Espace de travail**, avec ordre Nouveau → Récents → Ouvrir → Rescanner → Exclusions → Démo ;
+- **Insertion** et **Vue** restent masqués tant qu'aucun espace de travail n'est initialisé, puis apparaissent avec une mise en évidence temporaire ;
+- **Exporter la vue** rejoint le menu **Vue** ;
+- **Enregistrer** devient une commande principale provisoire, avant sa refonte complète en v0.3.13 ;
+- icônes de restauration des panneaux latéraux inversées pour indiquer correctement le sens de réouverture ;
+- manifeste PWA, template ZIP, documentation, cache et tests smoke mis à jour.
+
+Chantiers UX associés : #54 (Enregistrer/Exporter + accueil), #55 (tutoriel guidé) et #56 (logo + identité visuelle).
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.11 :
+Ordre de travail proposé après v0.3.12 :
 
 1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
 2. **sélection multiple** et groupes/cadres arbitraires ;

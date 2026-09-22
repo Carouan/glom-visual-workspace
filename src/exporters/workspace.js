@@ -69,9 +69,9 @@ export async function exportWorkspaceTemplateZip(workspace,resources,views,appVe
   for(const view of payload.views)entries.push({name:".glom/views/"+view.id+".json",data:enc.encode(jsonText(view))});
   const planned=resources.filter(r=>r.type==="file"&&!r.excluded&&r.path).map(r=>r.path);
   const readme=[
-    "G.L.O.M. Visual Workspace — template de workspace",
+    "MindSpark — Atelier visuel — template d’espace de travail",
     "",
-    "Cette archive contient l'arborescence de dossiers et les métadonnées ouvertes du workspace (.glom/).",
+    "Cette archive contient l'arborescence de dossiers et les métadonnées ouvertes de l’espace de travail (.glom/).",
     "Elle ne copie pas les fichiers de contenu dans cette version de l'export template.",
     planned.length?"Les ressources fichier ci-dessous sont donc conservées comme références planifiées et apparaîtront absentes jusqu'à ce qu'un vrai fichier correspondant soit ajouté :":"Aucune ressource fichier planifiée.",
     ...planned.map(p=>" - "+p),
@@ -79,7 +79,7 @@ export async function exportWorkspaceTemplateZip(workspace,resources,views,appVe
     "Supprimer .glom/ n'endommage jamais l'arborescence de dossiers.",
     "Export : "+new Date().toISOString()
   ].join("\n");
-  entries.push({name:"README-GLOM.txt",data:enc.encode(readme)});
+  entries.push({name:"README-MINDSPARK.txt",data:enc.encode(readme)});
   const bytes=buildStoredZip(entries);
   downloadBlob(safeArchiveName(workspace.name)+"-workspace.zip",new Blob([bytes],{type:"application/zip"}));
   return{folders:folders.length,plannedFiles:planned.length,views:payload.views.length,bytes:bytes.length}

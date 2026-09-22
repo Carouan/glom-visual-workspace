@@ -10,8 +10,29 @@ try{
   const errors=[];
   page.on("pageerror",e=>errors.push("pageerror: "+e.message));
   page.on("console",msg=>{if(msg.type()==="error")errors.push("console: "+msg.text())});
-  await page.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await page.goto("http://127.0.0.1:4173/",{waitUntil:"networkidle0",timeout:30000});
   await page.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok",{timeout:10000});
+  const initialBrand=await page.$eval(".brand strong",el=>el.textContent||"");
+  if(!initialBrand.includes("MindSpark")||!initialBrand.includes("Atelier visuel"))throw new Error("MindSpark branding is missing: "+initialBrand);
+  const initialMenus=await page.evaluate(()=>({
+    insertionHidden:document.getElementById("insertionMenu")?.classList.contains("hidden"),
+    viewHidden:document.getElementById("viewMenu")?.classList.contains("hidden"),
+    saveHidden:document.getElementById("saveBtn")?.classList.contains("hidden"),
+    visibleMenus:[...document.querySelectorAll(".toolbar-menu")].filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id)
+  }));
+  if(!initialMenus.insertionHidden||!initialMenus.viewHidden||!initialMenus.saveHidden||JSON.stringify(initialMenus.visibleMenus)!==JSON.stringify(["workspaceMenu"]))throw new Error("Workspace-only navigation is visible too early: "+JSON.stringify(initialMenus));
+  const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
+  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Charger la démo"];
+  if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
+  await page.$eval("#workspaceMenu > summary",el=>el.click());
+  await page.click("#demoBtn");
+  await page.waitForFunction(()=>document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:5000});
+  const revealedMenus=await page.evaluate(()=>({
+    insertionVisible:!document.getElementById("insertionMenu")?.classList.contains("hidden"),
+    viewVisible:!document.getElementById("viewMenu")?.classList.contains("hidden"),
+    highlighted:document.getElementById("insertionMenu")?.classList.contains("newly-available")&&document.getElementById("viewMenu")?.classList.contains("newly-available")
+  }));
+  if(!revealedMenus.insertionVisible||!revealedMenus.viewVisible||!revealedMenus.highlighted)throw new Error("Progressive navigation did not reveal/highlight workspace tools: "+JSON.stringify(revealedMenus));
   const snapshot=await page.evaluate(()=>({
     boot:document.documentElement.dataset.glomBoot,
     workspace:document.getElementById("workspaceName")?.textContent||"",
@@ -23,15 +44,15 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.11")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.12")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
-  if(menuCount!==4)throw new Error("Expected 4 compact toolbar menus, got "+menuCount);
+  if(menuCount!==3)throw new Error("Expected 3 compact toolbar menus, got "+menuCount);
   const topIconCount=await page.$$eval(".toolbar .ui-icon",els=>els.length);
   if(topIconCount<9)throw new Error("Expected representative SVG icons in toolbar, got "+topIconCount);
   const visibleTopCommands=await page.$$eval(".toolbar > button:not(.mobile-only)",els=>els.filter(el=>getComputedStyle(el).display!=="none").map(el=>el.id));
-  if(!visibleTopCommands.includes("openBtn")||visibleTopCommands.length>2)throw new Error("Topbar still exposes too many permanent commands: "+JSON.stringify(visibleTopCommands));
+  if(JSON.stringify(visibleTopCommands)!==JSON.stringify(["saveBtn"]))throw new Error("Unexpected permanent topbar commands after initialization: "+JSON.stringify(visibleTopCommands));
   const paletteVisible=await page.$eval("#mapPalette",el=>getComputedStyle(el).display!=="none");
   if(!paletteVisible)throw new Error("Mindmap tool palette is not visible");
   await page.click("#mapImageBtn");
@@ -77,6 +98,8 @@ try{
   await page.waitForFunction(()=>document.querySelector(".shell")?.classList.contains("left-collapsed"),{timeout:3000});
   const leftRestoreVisible=await page.$eval("#restoreResourcesBtn",el=>!el.classList.contains("hidden"));
   if(!leftRestoreVisible)throw new Error("Left restore tab is not visible after collapsing Resources");
+  const leftRestoreIcon=await page.$eval("#restoreResourcesBtn use",el=>el.getAttribute("href"));
+  if(leftRestoreIcon!=="#i-panel-right")throw new Error("Left restore icon does not point back toward the panel: "+leftRestoreIcon);
   await page.click("#restoreResourcesBtn");
   await page.waitForFunction(()=>!document.querySelector(".shell")?.classList.contains("left-collapsed"),{timeout:3000});
 
@@ -84,6 +107,8 @@ try{
   await page.waitForFunction(()=>document.querySelector(".shell")?.classList.contains("right-collapsed"),{timeout:3000});
   const rightRestoreVisible=await page.$eval("#restoreInspectorBtn",el=>!el.classList.contains("hidden"));
   if(!rightRestoreVisible)throw new Error("Right restore tab is not visible after collapsing Details");
+  const rightRestoreIcon=await page.$eval("#restoreInspectorBtn use",el=>el.getAttribute("href"));
+  if(rightRestoreIcon!=="#i-panel-left")throw new Error("Right restore icon does not point back toward the panel: "+rightRestoreIcon);
   await page.click("#restoreInspectorBtn");
   await page.waitForFunction(()=>!document.querySelector(".shell")?.classList.contains("right-collapsed"),{timeout:3000});
   const panelPrefs=await page.evaluate(()=>JSON.parse(localStorage.getItem("glom-ui-panels-v1")||"{}"));

@@ -1,14 +1,16 @@
-# G.L.O.M. Visual Workspace
+# MindSpark — Atelier visuel
 
-> Gratuit · Libre · Open-source · Multi-plateforme
+**MindSpark — Visual Workshop**
 
-G.L.O.M. Visual Workspace est un **workspace visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
+> **Une idée commence par une étincelle. Puis elle se connecte.**
 
-**Version stable actuelle : v0.3.11.**
+MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
+
+**Version stable actuelle : v0.3.12.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
-## Ce que fait déjà G.L.O.M.
+## Ce que fait déjà MindSpark
 
 ### Workspace et fichiers
 
@@ -20,7 +22,7 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - explorateur de fichiers repliable ;
 - déplacement physique de fichiers/dossiers par glisser-déposer après permission d'écriture ;
 - déplacement hiérarchique depuis la mindmap avec mise à jour de l'arborescence ;
-- création de dossiers depuis G.L.O.M. ;
+- création de dossiers depuis MindSpark ;
 - création locale de fichiers `.txt` et `.md` ;
 - édition directe des fichiers texte et Markdown ;
 - exclusions persistantes par chemin ou motif (`*.bak`, `nppBackup/**`, etc.) sans supprimer les fichiers ;
@@ -31,6 +33,7 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 ### Mindmap et whiteboard
 
 - plusieurs mindmaps nommées par workspace, avec création, duplication, renommage et bascule ;
+- navigation progressive : **Insertion**, **Vue** et **Enregistrer** apparaissent après initialisation d’un espace de travail ;
 - mindmap générée depuis l'arborescence ;
 - canvas libre, non borné par le format A4 ;
 - déplacement, zoom, pan, recentrage et repli de branches ;
@@ -77,11 +80,11 @@ Mon-workspace/
         └── mindmap-….json
 ~~~
 
-Les documents restent des fichiers ordinaires. `.glom/` contient uniquement la couche G.L.O.M. : métadonnées et vues.
+Les documents restent des fichiers ordinaires. `.glom/` contient uniquement la couche MindSpark : métadonnées et vues. Le nom technique `.glom` est conservé pour compatibilité avec les espaces de travail existants ; il ne constitue plus le nom du produit.
 
 **Invariant principal : supprimer `.glom/` ne doit jamais supprimer ni rendre inutilisables les fichiers utilisateur.**
 
-Les chemins stockés dans G.L.O.M. sont relatifs au workspace. Les permissions propres au navigateur restent locales au navigateur et ne sont pas écrites dans `.glom/`.
+Les chemins stockés dans MindSpark sont relatifs à l’espace de travail. Les permissions propres au navigateur restent locales au navigateur et ne sont pas écrites dans `.glom/`.
 
 Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour le modèle de données et [docs/ROADMAP.md](docs/ROADMAP.md) pour la suite.
 
@@ -115,14 +118,14 @@ Dans **Settings → Pages**, la source doit être **GitHub Actions**.
 
 Deux modes existent :
 
-1. **Accès direct** : si `showDirectoryPicker()` est disponible, G.L.O.M. lit le dossier et peut écrire les fichiers locaux et `.glom/` après permission explicite.
+1. **Accès direct** : si `showDirectoryPicker()` est disponible, MindSpark lit le dossier et peut écrire les fichiers locaux et `.glom/` après permission explicite.
 2. **Mode compatibilité** : sinon, l'utilisateur importe un dossier via le sélecteur du navigateur. Les opérations nécessitant une écriture locale sont alors désactivées ou remplacées par un export.
 
-La compatibilité est détectée à l'exécution : G.L.O.M. ne suppose pas qu'une plateforme expose toujours les mêmes API.
+La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'une plateforme expose toujours les mêmes API.
 
 ## Limites connues
 
-- un fichier renommé ou déplacé **hors de G.L.O.M.** peut perdre son association avec ses métadonnées ;
+- un fichier renommé ou déplacé **hors de MindSpark.** peut perdre son association avec ses métadonnées ;
 - une même ressource ne peut pas encore avoir plusieurs occurrences visuelles distinctes **dans une même carte** ;
 - pas encore de sélection multiple ;
 - les images libres peuvent référencer une image existante du workspace ; l’import d’une image propre à la vue (`.glom/attachments/`) n’est pas encore implémenté ;
@@ -133,7 +136,7 @@ La compatibilité est détectée à l'exécution : G.L.O.M. ne suppose pas qu'un
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.11 :
+Priorités après v0.3.12 :
 
 - terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, cadres/groupes avancés, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
