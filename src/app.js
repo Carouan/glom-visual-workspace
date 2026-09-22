@@ -828,14 +828,14 @@ async function openRecentWorkspace(entry){
     if(entry.handle.queryPermission){const q=await entry.handle.queryPermission({mode:"readwrite"});granted=q==="granted";if(!granted&&entry.handle.requestPermission)granted=(await entry.handle.requestPermission({mode:"readwrite"}))==="granted"}
     if(!granted){alert("L’accès à ce dossier n’a pas été autorisé.");return}
     ui.recentDialog.close();await loadHandle(entry.handle,false)
-  }catch(e){console.error(e);alert("Impossible de rouvrir ce workspace : "+(e.message||e))}
+  }catch(e){console.error(e);alert("Impossible de rouvrir cet espace de travail : "+(e.message||e))}
 }
 async function renderRecentWorkspaces(){
   ui.recentList.replaceChildren();
   const api=await getRecentApi();
-  if(!api){const p=document.createElement("p");p.className="recent-empty";p.textContent="Le stockage local des workspaces récents n’est pas disponible.";ui.recentList.append(p);return}
+  if(!api){const p=document.createElement("p");p.className="recent-empty";p.textContent="Le stockage local des espaces de travail récents n’est pas disponible.";ui.recentList.append(p);return}
   let rows=[];try{rows=await api.listRecentWorkspaces()}catch(e){console.warn(e)}
-  if(!rows.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucun workspace récent. Ouvrez d’abord un dossier local.";ui.recentList.append(p);return}
+  if(!rows.length){const p=document.createElement("p");p.className="recent-empty";p.textContent="Aucun espace de travail récent. Ouvrez d’abord un dossier local.";ui.recentList.append(p);return}
   rows.forEach(entry=>{
     const row=document.createElement("div");row.className="recent-item";
     const text=document.createElement("div"),name=document.createElement("strong"),date=document.createElement("small");
@@ -848,7 +848,7 @@ async function renderRecentWorkspaces(){
   })
 }
 async function openRecentDialog(){
-  if(!supportsFS()){alert("Les workspaces récents nécessitent l’accès direct aux dossiers de ce navigateur.");return}
+  if(!supportsFS()){alert("Les espaces de travail récents nécessitent l’accès direct aux dossiers de ce navigateur.");return}
   if(!ui.recentDialog.open)ui.recentDialog.showModal();
   await renderRecentWorkspaces()
 }
