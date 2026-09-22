@@ -465,3 +465,124 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
   .welcome-card-actions{grid-column:1}
   .welcome-card-icon{width:34px;height:34px}
 }
+
+
+/* V0.3.14 — interface polish before onboarding */
+.stage-tools{
+  max-width:calc(100% - 1.2rem);
+  width:max-content;
+  min-width:0;
+  padding:.3rem .4rem;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:none;
+}
+.stage-tools::-webkit-scrollbar{display:none}
+.stage-tools .map-palette{
+  position:static;
+  inset:auto;
+  z-index:auto;
+  display:flex;
+  align-items:center;
+  gap:.18rem;
+  padding:0;
+  background:transparent;
+  backdrop-filter:none;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.stage-tools .map-palette button{
+  width:32px;
+  height:32px;
+  min-width:32px;
+  border-radius:8px;
+}
+.stage-tools .palette-divider{
+  width:1px;
+  height:22px;
+  margin:0 .12rem;
+  flex:0 0 1px;
+}
+.stage-tools>.sep{flex:0 0 1px}
+
+.welcome{max-width:900px;width:min(100%,900px)}
+.welcome-actions{
+  width:min(840px,100%);
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  align-items:start;
+  gap:.6rem;
+}
+.welcome-card{align-self:start;min-height:0}
+.welcome-new{
+  grid-column:auto;
+  padding:.7rem;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:.55rem .65rem;
+}
+.welcome-card-actions{
+  grid-column:1/-1;
+  gap:.35rem;
+}
+.welcome-card-actions button{min-height:38px;padding:.42rem .55rem}
+.welcome-choice{min-height:0;padding:.7rem}
+#welcomeRecent.hidden + #welcomeDemo{grid-column:auto}
+
+.range-row{
+  grid-template-columns:minmax(0,1fr) 78px auto;
+  gap:.42rem;
+}
+.range-row .range-number{
+  width:78px;
+  min-width:0;
+  height:34px;
+  padding:.28rem .38rem;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--bg);
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+}
+.range-row .range-unit{
+  min-width:1.6rem;
+  color:var(--muted);
+  font-size:.74rem;
+  white-space:nowrap;
+}
+.range-row .range-output-native{display:none}
+
+.small-dialog,.export-dialog{
+  height:fit-content;
+  min-height:0;
+  max-height:90vh;
+  overflow:hidden;
+}
+.small-dialog>.recent-panel,
+.small-dialog>.export-panel,
+.small-dialog>.image-picker-panel,
+.small-dialog>.exclusions-panel{
+  max-height:calc(90vh - 58px);
+  overflow:auto;
+}
+.export-panel{padding:.75rem;gap:.55rem}
+.export-section-body{padding:.7rem;gap:.7rem}
+.export-section>summary{padding:.65rem .72rem}
+
+@media(max-width:900px){
+  .stage-tools{
+    left:.45rem;
+    right:.45rem;
+    width:auto;
+    max-width:none;
+    justify-content:flex-start;
+  }
+  .stage-tools .map-palette{flex:0 0 auto}
+}
+@media(max-width:650px){
+  .welcome-actions{grid-template-columns:1fr}
+  .welcome-new{grid-template-columns:auto minmax(0,1fr)}
+  .welcome-card-actions{grid-column:1/-1}
+  .range-row{grid-template-columns:minmax(0,1fr) 72px auto}
+  .range-row .range-number{width:72px}
+}

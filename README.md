@@ -6,7 +6,7 @@
 
 MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.13.**
+**Version stable actuelle : v0.3.14.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -37,6 +37,9 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - commande **Enregistrer** compacte et expansible : sauvegarde directe quand le navigateur possède un accès en écriture, sinon orientation claire vers l’export ;
 - fenêtre **Imprimer ou exporter** organisée en deux sections repliables : vue active (SVG, PNG, impression/PDF) et espace de travail (template ZIP ou création sur disque) ;
 - écran d’accueil réorganisé autour de **Nouveau**, **Récents** et **Démo** ; les récents n’apparaissent que s’ils existent et la démo quitte l’accueil après le premier usage réel tout en restant disponible dans le menu principal ;
+- barre centrale contextuelle réunissant **outils de carte + zoom**, invisible tant qu’aucun espace de travail n’est ouvert ;
+- saisie numérique directe ajoutée automatiquement à tous les réglages disposant d’un slider ;
+- accueil et petits dialogues resserrés pour adapter davantage leur hauteur au contenu ;
 - mindmap générée depuis l'arborescence ;
 - canvas libre, non borné par le format A4 ;
 - déplacement, zoom, pan, recentrage et repli de branches ;
@@ -139,7 +142,7 @@ La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'u
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.13 :
+Priorités après v0.3.14 :
 
 - terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, cadres/groupes avancés, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;

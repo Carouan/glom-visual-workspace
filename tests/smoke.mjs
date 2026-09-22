@@ -26,9 +26,26 @@ try{
     fromFolder:!!document.getElementById("welcomeOpen"),
     recentHidden:document.getElementById("welcomeRecent")?.classList.contains("hidden"),
     demoVisible:!document.getElementById("welcomeDemo")?.classList.contains("hidden"),
-    tagline:document.querySelector("#welcome h1")?.textContent||""
+    tagline:document.querySelector("#welcome h1")?.textContent||"",
+    stageToolsHidden:document.getElementById("stageTools")?.classList.contains("hidden")
   }));
-  if(!welcomeState.newBlank||!welcomeState.fromFolder||!welcomeState.recentHidden||!welcomeState.demoVisible||!welcomeState.tagline.includes("étincelle"))throw new Error("Welcome screen is not in its expected initial state: "+JSON.stringify(welcomeState));
+  if(!welcomeState.newBlank||!welcomeState.fromFolder||!welcomeState.recentHidden||!welcomeState.demoVisible||!welcomeState.tagline.includes("étincelle")||!welcomeState.stageToolsHidden)throw new Error("Welcome screen is not in its expected initial state: "+JSON.stringify(welcomeState));
+  const welcomeAlignment=await page.evaluate(()=>{
+    const recent=document.getElementById("welcomeRecent");recent.classList.remove("hidden");
+    const cards=[document.querySelector(".welcome-new"),recent,document.getElementById("welcomeDemo")],rects=cards.map(el=>el.getBoundingClientRect());
+    const result={tops:rects.map(r=>Math.round(r.top)),lefts:rects.map(r=>Math.round(r.left)),widths:rects.map(r=>Math.round(r.width))};
+    recent.classList.add("hidden");return result
+  });
+  if(Math.max(...welcomeAlignment.tops)-Math.min(...welcomeAlignment.tops)>2||!(welcomeAlignment.lefts[0]<welcomeAlignment.lefts[1]&&welcomeAlignment.lefts[1]<welcomeAlignment.lefts[2]))throw new Error("Welcome choices are not aligned side by side: "+JSON.stringify(welcomeAlignment));
+  const rangeEnhancement=await page.evaluate(()=>({
+    ranges:document.querySelectorAll(".range-row input[type=range]").length,
+    numbers:document.querySelectorAll(".range-row .range-number").length,
+    direct:!!document.getElementById("fontSizeDirect")
+  }));
+  if(!rangeEnhancement.ranges||rangeEnhancement.ranges!==rangeEnhancement.numbers||!rangeEnhancement.direct)throw new Error("Numeric slider enhancement is incomplete: "+JSON.stringify(rangeEnhancement));
+  await page.$eval("#fontSizeDirect",el=>{el.value="31";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  const directRangeValue=await page.$eval("#fontSize",el=>el.value);
+  if(directRangeValue!=="31")throw new Error("Direct numeric slider input did not update range: "+directRangeValue);
   const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
   const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Charger la démo"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
@@ -39,9 +56,11 @@ try{
     insertionVisible:!document.getElementById("insertionMenu")?.classList.contains("hidden"),
     viewVisible:!document.getElementById("viewMenu")?.classList.contains("hidden"),
     saveVisible:!document.getElementById("saveMenu")?.classList.contains("hidden"),
+    stageToolsVisible:!document.getElementById("stageTools")?.classList.contains("hidden"),
+    paletteInsideStage:document.getElementById("mapPalette")?.parentElement?.id==="stageTools",
     highlighted:document.getElementById("insertionMenu")?.classList.contains("newly-available")&&document.getElementById("viewMenu")?.classList.contains("newly-available")
   }));
-  if(!revealedMenus.insertionVisible||!revealedMenus.viewVisible||!revealedMenus.saveVisible||!revealedMenus.highlighted)throw new Error("Progressive navigation did not reveal/highlight workspace tools: "+JSON.stringify(revealedMenus));
+  if(!revealedMenus.insertionVisible||!revealedMenus.viewVisible||!revealedMenus.saveVisible||!revealedMenus.stageToolsVisible||!revealedMenus.paletteInsideStage||!revealedMenus.highlighted)throw new Error("Progressive navigation/tool bar did not reveal correctly: "+JSON.stringify(revealedMenus));
   const snapshot=await page.evaluate(()=>({
     boot:document.documentElement.dataset.glomBoot,
     workspace:document.getElementById("workspaceName")?.textContent||"",
@@ -53,7 +72,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.13")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.14")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -77,9 +96,10 @@ try{
   const exportDialogInitial=await page.evaluate(()=>({
     title:document.querySelector("#exportDialog header strong")?.textContent||"",
     printOpen:document.getElementById("exportPrintSection")?.open,
-    workspaceOpen:document.getElementById("exportWorkspaceSection")?.open
+    workspaceOpen:document.getElementById("exportWorkspaceSection")?.open,
+    height:Math.round(document.getElementById("exportDialog").getBoundingClientRect().height)
   }));
-  if(exportDialogInitial.title!=="Imprimer ou exporter"||exportDialogInitial.printOpen||exportDialogInitial.workspaceOpen)throw new Error("Export dialog must open compact with both sections collapsed: "+JSON.stringify(exportDialogInitial));
+  if(exportDialogInitial.title!=="Imprimer ou exporter"||exportDialogInitial.printOpen||exportDialogInitial.workspaceOpen||exportDialogInitial.height>360)throw new Error("Export dialog must open compact with both sections collapsed: "+JSON.stringify(exportDialogInitial));
   await page.click("#exportPrintSection > summary");
   const printSectionOpen=await page.$eval("#exportPrintSection",el=>el.open);
   if(!printSectionOpen)throw new Error("Print export section did not expand");
