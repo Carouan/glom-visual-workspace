@@ -203,12 +203,22 @@ function freshView(resources,meta={}){
   visible.forEach(r=>{const par=parentOf(r,visible);if(par&&!r.missing&&!par.excluded)edges.push({id:"h-"+par.id+"-"+r.id,from:"n-"+par.id,to:"n-"+r.id,kind:"hierarchy"})});
   const now=new Date().toISOString();return{format:"glom-view",version:FORMAT,id:meta.id||"main-mindmap",type:"mindmap",name:meta.name||"Carte principale",createdAt:now,updatedAt:now,pan:{x:40,y:40},zoom:.92,nodes:nodes,edges:edges,frames:[],objects:[]}
 }
+function descendantIdsFromEdges(rootId,edges){
+  const byParent=new Map();(edges||[]).filter(e=>e.kind==="hierarchy").forEach(e=>{if(!byParent.has(e.from))byParent.set(e.from,[]);byParent.get(e.from).push(e.to)});
+  const out=[rootId],seen=new Set(out),stack=[rootId];while(stack.length){const id=stack.pop();for(const ch of byParent.get(id)||[]){if(!seen.has(ch)){seen.add(ch);out.push(ch);stack.push(ch)}}}return out
+}
+function normalizeFrame(frame,ids,edges){
+  if(!frame||!ids.has(frame.rootNodeId))return null;
+  const raw=Array.isArray(frame.memberNodeIds)?frame.memberNodeIds:descendantIdsFromEdges(frame.rootNodeId,edges),members=[...new Set(raw.filter(id=>ids.has(id)))];
+  if(!members.includes(frame.rootNodeId))members.unshift(frame.rootNodeId);
+  return Object.assign({},frame,{memberNodeIds:members,locked:!!frame.locked})
+}
 function mergeView(view,resources){
   if(!view||view.type!=="mindmap")return freshView(resources);
   const visible=resources.filter(r=>!r.excluded),auto=freshView(resources),old=new Map((view.nodes||[]).map(n=>[n.resourceId,n])),fallback=new Map(auto.nodes.map(n=>[n.resourceId,n])),nodes=resources.map(r=>{
     const n=Object.assign({},old.get(r.id)||fallback.get(r.id));n.style=Object.assign({},n.style||{});return n
   });
-  const ids=new Set(nodes.map(n=>n.id)),oldEdges=new Map((view.edges||[]).map(e=>[e.id,e])),hierarchy=auto.edges.map(e=>{const prev=oldEdges.get(e.id);return prev?Object.assign({},e,{label:prev.label||"",style:Object.assign({},prev.style||{})}):e}),manual=(view.edges||[]).filter(e=>e.kind==="manual"&&ids.has(e.from)&&ids.has(e.to)),frames=(view.frames||[]).filter(f=>ids.has(f.rootNodeId)),objects=Array.isArray(view.objects)?view.objects:[];
+  const ids=new Set(nodes.map(n=>n.id)),oldEdges=new Map((view.edges||[]).map(e=>[e.id,e])),hierarchy=auto.edges.map(e=>{const prev=oldEdges.get(e.id);return prev?Object.assign({},e,{label:prev.label||"",style:Object.assign({},prev.style||{})}):e}),manual=(view.edges||[]).filter(e=>e.kind==="manual"&&ids.has(e.from)&&ids.has(e.to)),frames=(view.frames||[]).map(f=>normalizeFrame(f,ids,view.edges||[])).filter(Boolean),objects=Array.isArray(view.objects)?view.objects:[];
   return Object.assign({},view,{version:FORMAT,nodes,edges:hierarchy.concat(manual),frames,objects,updatedAt:new Date().toISOString()})
 }
 function workspaceViewRef(v){return"views/"+(v?.id||"main-mindmap")+".json"}
