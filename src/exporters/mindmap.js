@@ -46,10 +46,17 @@ function descendants(view,rootId){
   while(stack.length){const id=stack.pop();(byParent.get(id)||[]).forEach(c=>{if(!seen.has(c)){seen.add(c);out.push(c);stack.push(c)}})}
   return out
 }
-function bounds(nodes,resMap,objects=[]){
+function frameGeometry(view,frame,nodeMap,resMap,hide){
+  const ids=Array.isArray(frame.memberNodeIds)?frame.memberNodeIds:descendants(view,frame.rootNodeId),ns=ids.filter(id=>!hide.has(id)).map(id=>nodeMap.get(id)).filter(Boolean);
+  if([frame.x,frame.y,frame.w,frame.h].every(Number.isFinite))return{x:frame.x,y:frame.y,w:Math.max(120,frame.w),h:Math.max(80,frame.h),nodes:ns};
+  if(!ns.length)return null;const p=Number(frame.padding)||28,minX=Math.min(...ns.map(n=>n.x))-p,minY=Math.min(...ns.map(n=>n.y))-p-28,maxX=Math.max(...ns.map(n=>n.x+nodeDims(n,resMap.get(n.resourceId)).w))+p,maxY=Math.max(...ns.map(n=>n.y+nodeDims(n,resMap.get(n.resourceId)).h))+p;
+  return{x:minX,y:minY,w:Math.max(120,maxX-minX),h:Math.max(80,maxY-minY),nodes:ns}
+}
+function bounds(nodes,resMap,objects=[],frameBoxes=[]){
   const boxes=[
     ...nodes.map(n=>{const d=nodeDims(n,resMap.get(n.resourceId));return{x:n.x,y:n.y,w:d.w,h:d.h}}),
-    ...objects.map(o=>({x:Number(o.x)||0,y:Number(o.y)||0,w:Number(o.w)||120,h:Number(o.h)||60}))
+    ...objects.map(o=>({x:Number(o.x)||0,y:Number(o.y)||0,w:Number(o.w)||120,h:Number(o.h)||60})),
+    ...frameBoxes
   ];
   if(!boxes.length)return{x:0,y:0,w:100,h:100};
   const minX=Math.min(...boxes.map(b=>b.x)),minY=Math.min(...boxes.map(b=>b.y));
@@ -71,13 +78,12 @@ function rgbaFromHex(hex,alpha){
 export function buildMindmapSvg(view,resources,{orientation="landscape",includeHidden=false,background="#ffffff"}={}){
   const resMap=new Map(resources.map(r=>[r.id,r])),hide=includeHidden?new Set():hiddenNodes(view);
   const nodes=(view.nodes||[]).filter(n=>!hide.has(n.id)&&resMap.has(n.resourceId)&&!resMap.get(n.resourceId).excluded),nodeMap=new Map(nodes.map(n=>[n.id,n])),objects=Array.isArray(view.objects)?view.objects:[];
-  const b=bounds(nodes,resMap,objects),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
+  const frameData=(view.frames||[]).map(frame=>({frame,geom:frameGeometry(view,frame,nodeMap,resMap,hide)})).filter(x=>x.geom);
+  const b=bounds(nodes,resMap,objects,frameData.map(x=>x.geom)),pad=90,area={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2},a4=a4Pixels(orientation);
 
-  const frames=(view.frames||[]).map(frame=>{
-    const ns=descendants(view,frame.rootNodeId).filter(id=>!hide.has(id)).map(id=>nodeMap.get(id)).filter(Boolean);if(!ns.length)return"";
-    const p=Number(frame.padding)||28,minX=Math.min(...ns.map(n=>n.x))-p,minY=Math.min(...ns.map(n=>n.y))-p-28,maxX=Math.max(...ns.map(n=>n.x+nodeDims(n,resMap.get(n.resourceId)).w))+p,maxY=Math.max(...ns.map(n=>n.y+nodeDims(n,resMap.get(n.resourceId)).h))+p;
-    const dash=frame.borderStyle==="dashed"?' stroke-dasharray="8 6"':"",fs=Math.max(8,Number(frame.fontSize)||12),family=FONT_STACKS[frame.fontFamily]||FONT_STACKS.system;
-    return `<g><rect x="${minX}" y="${minY}" width="${maxX-minX}" height="${maxY-minY}" rx="18" fill="${rgbaFromHex(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)))}" stroke="${xml(frame.borderColor||"#6366f1")}" stroke-width="2"${dash}/><text x="${minX+14}" y="${minY-7}" font-family="${xml(family)}" font-size="${fs}" font-weight="${xml(frame.fontWeight||"800")}" font-style="${frame.italic?"italic":"normal"}" fill="${xml(frame.textColor||frame.borderColor||"#6366f1")}">${xml(frame.title||"Branche")}</text></g>`
+  const frames=frameData.map(({frame,geom})=>{
+    const {x:minX,y:minY,w,h}=geom,dash=frame.borderStyle==="dashed"?' stroke-dasharray="8 6"':"",fs=Math.max(8,Number(frame.fontSize)||12),family=FONT_STACKS[frame.fontFamily]||FONT_STACKS.system;
+    return `<g><rect x="${minX}" y="${minY}" width="${w}" height="${h}" rx="18" fill="${rgbaFromHex(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)))}" stroke="${xml(frame.borderColor||"#6366f1")}" stroke-width="2"${dash}/><text x="${minX+14}" y="${minY-7}" font-family="${xml(family)}" font-size="${fs}" font-weight="${xml(frame.fontWeight||"800")}" font-style="${frame.italic?"italic":"normal"}" fill="${xml(frame.textColor||frame.borderColor||"#6366f1")}">${xml(frame.title||"Groupe")}</text></g>`
   }).join("");
 
   const edges=(view.edges||[]).filter(e=>nodeMap.has(e.from)&&nodeMap.has(e.to)).map(e=>{
