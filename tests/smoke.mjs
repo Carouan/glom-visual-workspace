@@ -305,14 +305,14 @@ try{
   const frameTitle=await page.$eval(".branch-frame-title",el=>({text:el.textContent||"",size:getComputedStyle(el).fontSize,pointer:getComputedStyle(el).pointerEvents}));
   if(frameTitle.text!=="Groupe édité"||frameTitle.size!=="24px"||frameTitle.pointer==="none")throw new Error("Group title editing/typography failed: "+JSON.stringify(frameTitle));
 
-  const groupMoveBefore=await page.$eval(".node",els=>els.slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
+  const groupMoveBefore=await page.evaluate(()=>[...document.querySelectorAll(".node")].slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
   await page.evaluate(()=>{
     const box=document.querySelector(".branch-frame.selected"),r=box.getBoundingClientRect(),opts={bubbles:true,button:0,pointerId:141,pointerType:"mouse",isPrimary:true},x=r.left+20,y=r.top+20;
     box.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
     window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+60,clientY:y+35}));
     window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+60,clientY:y+35}))
   });
-  const groupMoveAfter=await page.$eval(".node",els=>els.slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
+  const groupMoveAfter=await page.evaluate(()=>[...document.querySelectorAll(".node")].slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
   const moveDeltas=groupMoveAfter.map((n,i)=>({dx:n.x-groupMoveBefore[i].x,dy:n.y-groupMoveBefore[i].y}));
   if(moveDeltas.some(d=>Math.abs(d.dx-moveDeltas[0].dx)>1||Math.abs(d.dy-moveDeltas[0].dy)>1)||Math.abs(moveDeltas[0].dx)<5)throw new Error("Visual group members did not move rigidly: "+JSON.stringify(moveDeltas));
 
