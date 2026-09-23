@@ -6,7 +6,7 @@
 
 MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.14.**
+**Version stable actuelle : v0.3.15.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -49,7 +49,10 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - verrouillage de position ;
 - copier / coller / réinitialiser un style ;
 - déplacement d'une branche comme groupe en conservant les positions relatives ;
-- cadres de branche avec titre, fond, opacité, bordure et typographie ;
+- groupes visuels persistants avec membres explicites, indépendants de la hiérarchie après création ;
+- sélection, déplacement solidaire, redimensionnement et verrouillage des groupes ;
+- ajustement d’un groupe à son contenu et adoption des nœuds contenus par sa zone ;
+- titre, fond, opacité, bordure et typographie des groupes ;
 - objets graphiques libres : rectangle, ellipse, losange, annotation texte et image référencée depuis le workspace ;
 - nœuds conceptuels indépendants des fichiers ;
 - liens web et relations visuelles manuelles ;
@@ -142,9 +145,9 @@ La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'u
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.14 :
+Priorités après v0.3.15 :
 
-- terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, cadres/groupes avancés, images propres à la vue et layouts supplémentaires ;
+- terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
 - améliorer la robustesse et retrouver les fichiers déplacés/renommés en V0.5 ;
 - préparer synchronisation et résolution de conflits en V0.6.
