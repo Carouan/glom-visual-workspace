@@ -546,7 +546,7 @@ function applyReparentModel(source,target,plan){
     state.view.edges=state.view.edges.filter(e=>!(e.kind==="hierarchy"&&e.to===movedNode.id));
     state.view.edges.push({id:"h-"+target.id+"-"+source.id,from:targetNode.id,to:movedNode.id,kind:"hierarchy"})
   }
-  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderFrames(hiddenNodes());renderInspector();return true
+  state.treeExpanded.add(target.id);setDirty(true);renderTree();renderEdges();renderFrames();renderInspector();return true
 }
 async function moveResource(source,target){
   if(state.mode!=="fs"||!source||source.missing||!["file","folder"].includes(source.type)||!target||!["root","folder"].includes(target.type))return false;
@@ -578,22 +578,55 @@ function hierarchyDescendants(rootId){
   return out
 }
 function frameForNode(nodeId){return(state.view?.frames||[]).find(f=>f.rootNodeId===nodeId)||null}
-function renderFrames(hidden){
+function frameById(id){return(state.view?.frames||[]).find(f=>f.id===id)||null}
+function selectedFrameObject(){return frameById(state.selectedFrame)}
+function frameMemberIds(frame){
+  if(!frame)return[];const valid=new Set((state.view?.nodes||[]).map(n=>n.id)),raw=Array.isArray(frame.memberNodeIds)?frame.memberNodeIds:hierarchyDescendants(frame.rootNodeId),ids=[...new Set(raw.filter(id=>valid.has(id)))];
+  if(valid.has(frame.rootNodeId)&&!ids.includes(frame.rootNodeId))ids.unshift(frame.rootNodeId);return ids
+}
+function frameContentBounds(frame){
+  const nodes=frameMemberIds(frame).map(id=>node(id)).filter(n=>n&&!resource(n.resourceId)?.excluded);if(!nodes.length)return null;
+  const pad=Math.max(8,Number(frame.padding)||28),minX=Math.min(...nodes.map(n=>n.x))-pad,minY=Math.min(...nodes.map(n=>n.y))-pad-28,maxX=Math.max(...nodes.map(n=>n.x+nodeBox(n).w))+pad,maxY=Math.max(...nodes.map(n=>n.y+nodeBox(n).h))+pad;
+  return{x:minX,y:minY,w:Math.max(120,maxX-minX),h:Math.max(80,maxY-minY)}
+}
+function ensureFrameGeometry(frame){
+  if(!frame)return null;if([frame.x,frame.y,frame.w,frame.h].every(Number.isFinite))return{x:frame.x,y:frame.y,w:frame.w,h:frame.h};
+  const b=frameContentBounds(frame);if(!b)return null;Object.assign(frame,b);return b
+}
+function markFrameSelected(frame,box=null){
+  if(!frame)return;state.selectedFrame=frame.id;state.selected=frame.rootNodeId;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;
+  ui.nodes.querySelectorAll(".node.selected").forEach(x=>x.classList.remove("selected"));ui.nodes.querySelector('[data-node="'+frame.rootNodeId+'"]')?.classList.add("selected");
+  ui.frames.querySelectorAll(".branch-frame.selected").forEach(x=>x.classList.remove("selected"));box?.classList.add("selected");renderTree();renderInspector();updateActionStates()
+}
+function selectFrame(id){const frame=frameById(id);if(!frame)return;markFrameSelected(frame);renderMap();renderInspector()}
+function dragFrame(ev,frame,box){
+  if(ev.button!==0||ev.target.closest(".branch-frame-resize"))return;ev.preventDefault();ev.stopPropagation();markFrameSelected(frame,box);if(frame.locked)return;
+  const geom=ensureFrameGeometry(frame);if(!geom)return;const ids=frameMemberIds(frame),starts=new Map(ids.map(id=>{const n=node(id);return[id,n?{x:n.x,y:n.y}:null]}).filter(([,v])=>v)),start={x:ev.clientX,y:ev.clientY,fx:geom.x,fy:geom.y};let moved=false;
+  function mv(x){const dx=(x.clientX-start.x)/state.view.zoom,dy=(x.clientY-start.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;frame.x=start.fx+dx;frame.y=start.fy+dy;box.style.left=frame.x+"px";box.style.top=frame.y+"px";starts.forEach((st,id)=>{const n=node(id);if(!n)return;n.x=st.x+dx;n.y=st.y+dy;const card=ui.nodes.querySelector('[data-node="'+id+'"]');if(card){card.style.left=n.x+"px";card.style.top=n.y+"px"}});renderEdges()}
+  function end(){window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);if(moved){setDirty();renderInspector()}}
+  window.addEventListener("pointermove",mv);window.addEventListener("pointerup",end);window.addEventListener("pointercancel",end)
+}
+function resizeFrame(ev,frame,box){
+  if(ev.button!==0)return;ev.preventDefault();ev.stopPropagation();markFrameSelected(frame,box);if(frame.locked)return;const geom=ensureFrameGeometry(frame);if(!geom)return;
+  const start={x:ev.clientX,y:ev.clientY,w:geom.w,h:geom.h};let moved=false;
+  function mv(x){const dx=(x.clientX-start.x)/state.view.zoom,dy=(x.clientY-start.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;frame.w=Math.max(120,start.w+dx);frame.h=Math.max(80,start.h+dy);box.style.width=frame.w+"px";box.style.height=frame.h+"px"}
+  function end(){window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);if(moved){setDirty();renderInspector()}}
+  window.addEventListener("pointermove",mv);window.addEventListener("pointerup",end);window.addEventListener("pointercancel",end)
+}
+function renderFrames(){
   ui.frames.replaceChildren();if(!state.view)return;
   (state.view.frames||[]).forEach(frame=>{
-    const ids=hierarchyDescendants(frame.rootNodeId).filter(id=>!hidden.has(id)),nodes=ids.map(id=>node(id)).filter(n=>n&&!resource(n.resourceId)?.excluded);
-    if(!nodes.length)return;
-    const pad=Number(frame.padding)||28,minX=Math.min(...nodes.map(n=>n.x))-pad,minY=Math.min(...nodes.map(n=>n.y))-pad-28,maxX=Math.max(...nodes.map(n=>n.x+nodeBox(n).w))+pad,maxY=Math.max(...nodes.map(n=>n.y+nodeBox(n).h))+pad;
-    const box=document.createElement("div");box.className="branch-frame";box.dataset.frame=frame.id;box.style.left=minX+"px";box.style.top=minY+"px";box.style.width=(maxX-minX)+"px";box.style.height=(maxY-minY)+"px";box.style.borderColor=frame.borderColor||"#6366f1";box.style.borderStyle=frame.borderStyle||"solid";box.style.backgroundColor=hexToRgba(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)));
-    const title=document.createElement("span");title.className="branch-frame-title";title.textContent=frame.title||"Branche";title.style.color=frame.textColor||frame.borderColor||"#6366f1";title.style.fontSize=(Number(frame.fontSize)||12)+"px";title.style.top=-(Math.max(12,Number(frame.fontSize)||12)+12)+"px";title.style.fontFamily=FONT_STACKS[frame.fontFamily]||FONT_STACKS.system;title.style.fontWeight=frame.fontWeight||"800";title.style.fontStyle=frame.italic?"italic":"normal";title.title="Cliquer pour sélectionner la branche · double-cliquer pour renommer";
-    title.onclick=ev=>{ev.stopPropagation();state.selected=frame.rootNodeId;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;ui.nodes.querySelectorAll(".node.selected").forEach(x=>x.classList.remove("selected"));ui.nodes.querySelector('[data-node="'+frame.rootNodeId+'"]')?.classList.add("selected");renderTree();renderInspector()};
-    title.ondblclick=ev=>{ev.stopPropagation();const v=prompt("Titre du cadre :",frame.title||"Branche");if(v!==null){frame.title=v.trim()||"Branche";setDirty();renderFrames(hiddenNodes());renderInspector()}};
-    box.append(title);ui.frames.append(box)
+    const geom=ensureFrameGeometry(frame);if(!geom||!frameMemberIds(frame).length)return;
+    const box=document.createElement("div");box.className="branch-frame"+(frame.id===state.selectedFrame?" selected":"")+(frame.locked?" locked":"");box.dataset.frame=frame.id;box.style.left=geom.x+"px";box.style.top=geom.y+"px";box.style.width=geom.w+"px";box.style.height=geom.h+"px";box.style.borderColor=frame.borderColor||"#6366f1";box.style.borderStyle=frame.borderStyle||"solid";box.style.backgroundColor=hexToRgba(frame.backgroundColor||"#eef2ff",Math.max(0,Math.min(.4,(Number(frame.opacity)||10)/100)));box.title=frame.locked?"Groupe verrouillé":"Glisser pour déplacer le groupe";
+    const title=document.createElement("span");title.className="branch-frame-title";title.textContent=frame.title||"Groupe";title.style.color=frame.textColor||frame.borderColor||"#6366f1";title.style.fontSize=(Number(frame.fontSize)||12)+"px";title.style.top=-(Math.max(12,Number(frame.fontSize)||12)+12)+"px";title.style.fontFamily=FONT_STACKS[frame.fontFamily]||FONT_STACKS.system;title.style.fontWeight=frame.fontWeight||"800";title.style.fontStyle=frame.italic?"italic":"normal";title.title="Groupe visuel · double-cliquer pour renommer";
+    const handle=document.createElement("button");handle.type="button";handle.className="branch-frame-resize";handle.title=frame.locked?"Groupe verrouillé":"Redimensionner le groupe";handle.setAttribute("aria-label","Redimensionner le groupe");handle.textContent="↘";
+    box.onpointerdown=ev=>dragFrame(ev,frame,box);title.onpointerdown=ev=>dragFrame(ev,frame,box);title.onclick=ev=>{ev.stopPropagation();markFrameSelected(frame,box)};title.ondblclick=ev=>{ev.stopPropagation();const v=prompt("Titre du groupe :",frame.title||"Groupe");if(v!==null){frame.title=v.trim()||"Groupe";setDirty();renderFrames();renderInspector()}};handle.onpointerdown=ev=>resizeFrame(ev,frame,box);
+    box.append(title,handle);ui.frames.append(box)
   })
 }
 function renderMap(){
   ui.nodes.replaceChildren();ui.edges.replaceChildren();ui.frames.replaceChildren();ui.visualObjects.replaceChildren();if(!state.view)return;
-  const hidden=hiddenNodes();renderFrames(hidden);renderVisualObjects();state.view.nodes.forEach(n=>{if(hidden.has(n.id))return;const r=resource(n.resourceId);if(r&&!r.excluded)ui.nodes.appendChild(makeNode(n,r))});renderEdges()
+  const hidden=hiddenNodes();renderFrames();renderVisualObjects();state.view.nodes.forEach(n=>{if(hidden.has(n.id))return;const r=resource(n.resourceId);if(r&&!r.excluded)ui.nodes.appendChild(makeNode(n,r))});renderEdges()
 }
 function renderVisualObjects(){
   if(!state.view)return;(state.view.objects||[]).forEach(o=>ui.visualObjects.appendChild(makeVisualObject(o)))
@@ -691,7 +724,7 @@ function dragNode(ev,n,e){
   function mv(x){
     const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;
     groupIds.forEach(id=>{const nn=node(id),st=starts.get(id);if(!nn||!st)return;nn.x=st.x+dx;nn.y=st.y+dy;const card=ui.nodes.querySelector('[data-node="'+id+'"]');if(card){card.style.left=nn.x+"px";card.style.top=nn.y+"px"}});
-    renderEdges();renderFrames(hiddenNodes());clearCentralDropHighlight();drop=moved?centralDropCandidate(x.clientX,x.clientY,n.id):null;if(drop&&!groupIds.includes(nodeForResource(drop.resource.id)?.id))drop.element.classList.add("drop-target");else if(drop&&groupIds.includes(nodeForResource(drop.resource.id)?.id))drop=null
+    renderEdges();renderFrames();clearCentralDropHighlight();drop=moved?centralDropCandidate(x.clientX,x.clientY,n.id):null;if(drop&&!groupIds.includes(nodeForResource(drop.resource.id)?.id))drop.element.classList.add("drop-target");else if(drop&&groupIds.includes(nodeForResource(drop.resource.id)?.id))drop=null
   }
   async function end(x){
     window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);clearCentralDropHighlight();
@@ -746,7 +779,7 @@ function toggleBranchFrame(){
   setDirty();renderMap();renderInspector()
 }
 function updateBranchFrame(){
-  const n=selectedNode(),fr=n&&frameForNode(n.id);if(!fr)return;fr.title=ui.frameTitle.value;fr.fontSize=Math.max(8,Number(ui.frameFontSize.value)||12);fr.fontFamily=ui.frameFontFamily.value;fr.fontWeight=ui.frameFontWeight.value;fr.italic=ui.frameItalic.checked;fr.textColor=ui.frameTextColor.value;fr.borderColor=ui.frameBorderColor.value;fr.backgroundColor=ui.frameBackgroundColor.value;fr.opacity=Number(ui.frameOpacity.value)||0;fr.borderStyle=ui.frameBorderStyle.value;ui.frameFontSizeValue.value=fr.fontSize+" px";ui.frameOpacityValue.value=fr.opacity+" %";setDirty();renderFrames(hiddenNodes())
+  const n=selectedNode(),fr=n&&frameForNode(n.id);if(!fr)return;fr.title=ui.frameTitle.value;fr.fontSize=Math.max(8,Number(ui.frameFontSize.value)||12);fr.fontFamily=ui.frameFontFamily.value;fr.fontWeight=ui.frameFontWeight.value;fr.italic=ui.frameItalic.checked;fr.textColor=ui.frameTextColor.value;fr.borderColor=ui.frameBorderColor.value;fr.backgroundColor=ui.frameBackgroundColor.value;fr.opacity=Number(ui.frameOpacity.value)||0;fr.borderStyle=ui.frameBorderStyle.value;ui.frameFontSizeValue.value=fr.fontSize+" px";ui.frameOpacityValue.value=fr.opacity+" %";setDirty();renderFrames()
 }
 function toggleCollapse(){const n=selectedNode();if(!n)return;n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}
 function deleteSelected(){const r=selectedResource(),n=selectedNode();if(!r||!n||!["virtual","url"].includes(r.type))return;if(!confirm("Supprimer le nœud « "+r.title+" » ?"))return;state.resources=state.resources.filter(x=>x.id!==r.id);state.view.nodes=state.view.nodes.filter(x=>x.id!==n.id);state.view.edges=state.view.edges.filter(x=>x.from!==n.id&&x.to!==n.id);state.view.frames=(state.view.frames||[]).filter(x=>x.rootNodeId!==n.id);state.selected=null;state.linkSource=null;setDirty();render()}
