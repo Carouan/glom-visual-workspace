@@ -72,7 +72,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.14")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.15")throw new Error("Unexpected UI version: "+version);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -289,14 +289,81 @@ try{
   const sliderCheck=await page.evaluate(()=>({fontMax:document.getElementById("fontSize").max,borderMax:document.getElementById("borderWidth").max,padding:getComputedStyle(document.getElementById("fontSize")).paddingLeft}));
   if(Number(sliderCheck.fontMax)<72||Number(sliderCheck.borderMax)<12||sliderCheck.padding!=="0px")throw new Error("Range controls are still artificially constrained: "+JSON.stringify(sliderCheck));
 
+  // Visual groups are explicit objects: selectable, movable, resizable, lockable and independent of hierarchy.
+  await page.$eval(".node.root",el=>el.click());
+  const nodesBeforeGroup=await page.evaluate(()=>document.querySelectorAll(".node").length);
   await page.$eval("#frameToggleBtn",el=>el.click());
-  await page.waitForSelector(".branch-frame",{timeout:5000});
-  const frameCount=await page.evaluate(()=>document.querySelectorAll(".branch-frame").length);
-  if(frameCount<1)throw new Error("Branch frame was not rendered");
-  await page.$eval("#frameTitle",el=>{el.value="Cadre édité";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await page.waitForSelector(".branch-frame.selected",{timeout:5000});
+  const frameInitial=await page.evaluate(()=>({
+    count:document.querySelectorAll(".branch-frame").length,
+    members:Number(document.getElementById("frameMemberCount")?.textContent||0),
+    resizeVisible:getComputedStyle(document.querySelector(".branch-frame-resize")).display!=="none"
+  }));
+  if(frameInitial.count<1||frameInitial.members<2||!frameInitial.resizeVisible)throw new Error("Visual group was not created with explicit branch members: "+JSON.stringify(frameInitial));
+  await page.$eval("#frameTitle",el=>{el.value="Groupe édité";el.dispatchEvent(new Event("input",{bubbles:true}))});
   await page.$eval("#frameFontSize",el=>{el.value="24";el.dispatchEvent(new Event("input",{bubbles:true}))});
   const frameTitle=await page.$eval(".branch-frame-title",el=>({text:el.textContent||"",size:getComputedStyle(el).fontSize,pointer:getComputedStyle(el).pointerEvents}));
-  if(frameTitle.text!=="Cadre édité"||frameTitle.size!=="24px"||frameTitle.pointer==="none")throw new Error("Frame title editing/typography failed: "+JSON.stringify(frameTitle));
+  if(frameTitle.text!=="Groupe édité"||frameTitle.size!=="24px"||frameTitle.pointer==="none")throw new Error("Group title editing/typography failed: "+JSON.stringify(frameTitle));
+
+  const groupMoveBefore=await page.evaluate(()=>[...document.querySelectorAll(".node")].slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
+  await page.evaluate(()=>{
+    const box=document.querySelector(".branch-frame.selected"),r=box.getBoundingClientRect(),opts={bubbles:true,button:0,pointerId:141,pointerType:"mouse",isPrimary:true},x=r.left+20,y=r.top+20;
+    box.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+60,clientY:y+35}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+60,clientY:y+35}))
+  });
+  const groupMoveAfter=await page.evaluate(()=>[...document.querySelectorAll(".node")].slice(0,3).map(el=>({id:el.dataset.node,x:parseFloat(el.style.left),y:parseFloat(el.style.top)})));
+  const moveDeltas=groupMoveAfter.map((n,i)=>({dx:n.x-groupMoveBefore[i].x,dy:n.y-groupMoveBefore[i].y}));
+  if(moveDeltas.some(d=>Math.abs(d.dx-moveDeltas[0].dx)>1||Math.abs(d.dy-moveDeltas[0].dy)>1)||Math.abs(moveDeltas[0].dx)<5)throw new Error("Visual group members did not move rigidly: "+JSON.stringify(moveDeltas));
+
+  const resizeBefore=await page.$eval(".branch-frame.selected",el=>({w:parseFloat(el.style.width),h:parseFloat(el.style.height)}));
+  await page.evaluate(()=>{
+    const handle=document.querySelector(".branch-frame.selected .branch-frame-resize"),r=handle.getBoundingClientRect(),opts={bubbles:true,button:0,pointerId:142,pointerType:"mouse",isPrimary:true},x=r.left+r.width/2,y=r.top+r.height/2;
+    handle.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+45,clientY:y+30}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+45,clientY:y+30}))
+  });
+  const resizeAfter=await page.$eval(".branch-frame.selected",el=>({w:parseFloat(el.style.width),h:parseFloat(el.style.height)}));
+  if(resizeAfter.w<=resizeBefore.w+5||resizeAfter.h<=resizeBefore.h+5)throw new Error("Visual group resize handle did not update geometry: "+JSON.stringify({resizeBefore,resizeAfter}));
+
+  await page.$eval("#frameWidth",el=>{el.value="640";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#frameHeight",el=>{el.value="360";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  const directGroupSize=await page.$eval(".branch-frame.selected",el=>({w:parseFloat(el.style.width),h:parseFloat(el.style.height)}));
+  if(directGroupSize.w!==640||directGroupSize.h!==360)throw new Error("Direct group size controls failed: "+JSON.stringify(directGroupSize));
+
+  await page.$eval("#frameLocked",el=>{el.checked=true;el.dispatchEvent(new Event("change",{bubbles:true}))});
+  const lockedBefore=await page.$eval(".node.root",el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
+  await page.evaluate(()=>{
+    const box=document.querySelector(".branch-frame.selected"),r=box.getBoundingClientRect(),opts={bubbles:true,button:0,pointerId:143,pointerType:"mouse",isPrimary:true},x=r.left+18,y=r.top+18;
+    box.dispatchEvent(new PointerEvent("pointerdown",{...opts,clientX:x,clientY:y}));
+    window.dispatchEvent(new PointerEvent("pointermove",{...opts,clientX:x+80,clientY:y+50}));
+    window.dispatchEvent(new PointerEvent("pointerup",{...opts,clientX:x+80,clientY:y+50}))
+  });
+  const lockedAfter=await page.$eval(".node.root",el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
+  if(lockedAfter.x!==lockedBefore.x||lockedAfter.y!==lockedBefore.y)throw new Error("Locked group still moved: "+JSON.stringify({lockedBefore,lockedAfter}));
+  await page.$eval("#frameLocked",el=>{el.checked=false;el.dispatchEvent(new Event("change",{bubbles:true}))});
+
+  await page.$eval("#frameWidth",el=>{el.value="120";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#frameHeight",el=>{el.value="80";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await page.$eval("#frameCaptureBtn",el=>el.click());
+  const capturedMembers=Number(await page.$eval("#frameMemberCount",el=>el.textContent||"0"));
+  if(capturedMembers<1||capturedMembers>=frameInitial.members)throw new Error("Adopting nodes contained by a resized group did not change membership: "+capturedMembers+" / "+frameInitial.members);
+  await page.$eval("#frameFitBtn",el=>el.click());
+  const fittedSize=await page.$eval(".branch-frame.selected",el=>({w:parseFloat(el.style.width),h:parseFloat(el.style.height)}));
+  if(fittedSize.w<=120||fittedSize.h<=80)throw new Error("Fit group to content did not restore useful geometry: "+JSON.stringify(fittedSize));
+
+  await page.$eval("#frameToggleBtn",el=>el.click());
+  const dissolved=await page.evaluate(()=>({frames:document.querySelectorAll(".branch-frame").length,nodes:document.querySelectorAll(".node").length}));
+  if(dissolved.frames!==0||dissolved.nodes!==nodesBeforeGroup)throw new Error("Dissolving a group altered its nodes: "+JSON.stringify(dissolved));
+
+  const leafReady=await page.$eval(".node.file",el=>{el.click();return true});
+  if(!leafReady)throw new Error("No leaf node available for arbitrary group test");
+  const leafFrameEnabled=await page.$eval("#frameToggleBtn",el=>!el.disabled);
+  if(!leafFrameEnabled)throw new Error("A leaf node cannot create an independent visual group");
+  await page.$eval("#frameToggleBtn",el=>el.click());
+  const leafMembers=Number(await page.$eval("#frameMemberCount",el=>el.textContent||"0"));
+  if(leafMembers!==1)throw new Error("Leaf-created visual group should start with one explicit member: "+leafMembers);
+  await page.$eval("#frameToggleBtn",el=>el.click());
 
   // Exclusion rules hide matching resources without deleting them from the model.
   await page.$eval("#exclusionsBtn",el=>el.click());

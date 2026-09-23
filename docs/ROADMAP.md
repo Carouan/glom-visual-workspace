@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.14 stable.**
+**État actuel : v0.3.15 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -274,19 +274,34 @@ Le tutoriel guidé #55 est désormais volontairement reporté **après stabilisa
 
 Le tutoriel #55 reste sans numéro de version figé tant que les derniers éléments structurels de l’interface ne sont pas considérés comme stables.
 
+### V0.3.15 — cadres et groupes visuels ✅
+
+- les anciens cadres de branche sont migrés vers une liste de membres explicites ;
+- la branche sert uniquement à constituer le groupe initial : le groupe devient ensuite indépendant de la hiérarchie ;
+- un groupe peut être sélectionné directement depuis son cadre ou son titre ;
+- déplacer le cadre déplace solidairement tous ses membres ;
+- redimensionnement manuel au pointeur/tactile et dimensions numériques dans l’inspecteur ;
+- verrouillage du groupe ;
+- **Ajuster au contenu** recalcule le cadre à partir de ses membres ;
+- **Adopter les nœuds contenus** permet de recomposer arbitrairement le groupe à partir de la zone du cadre ;
+- un groupe peut être créé depuis n’importe quel nœud, y compris une feuille ;
+- dissoudre un groupe ne supprime aucun nœud ni aucune ressource ;
+- l’export SVG/PNG/PDF tient compte de la géométrie persistée des groupes.
+
+Issue #6 terminée par cette version.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.14 :
+Ordre de travail proposé après v0.3.15 :
 
 1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
-2. **sélection multiple** et groupes/cadres arbitraires ;
+2. **sélection multiple** ;
 3. **auto-layout horizontal, vertical et radial** ;
 4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
 - ajouter plusieurs fois une même ressource dans une carte ;
-- redimensionnement et verrouillage manuel des cadres/groupes ;
 - sélection multiple ;
 - styles/thèmes réutilisables ;
 - auto-layout horizontal, vertical et radial ;
