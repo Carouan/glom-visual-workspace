@@ -235,16 +235,16 @@ function renderViewSelector(){
 }
 function activateView(id,{markDirty=true}={}){
   const v=allViews().find(x=>x.id===id);if(!v||v===state.view){renderViewSelector();return}
-  state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";renderViewSelector();render();transform();if(markDirty)setDirty(true)
+  state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";renderViewSelector();render();transform();if(markDirty)setDirty(true)
 }
 function createView(){
   if(!state.workspace)return;const raw=prompt("Nom de la nouvelle carte :",uniqueViewName("Nouvelle carte"));if(raw===null)return;
-  const name=uniqueViewName(raw),v=freshView(state.resources,{id:"mindmap-"+uuid(),name});state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;renderViewSelector();render();fit();setDirty(true);setStatus("Carte « "+name+" » créée","ok")
+  const name=uniqueViewName(raw),v=freshView(state.resources,{id:"mindmap-"+uuid(),name});state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;state.linkSource=null;renderViewSelector();render();fit();setDirty(true);setStatus("Carte « "+name+" » créée","ok")
 }
 function duplicateView(){
   if(!state.view)return;const suggested=uniqueViewName((state.view.name||"Carte")+" — copie"),raw=prompt("Nom de la copie :",suggested);if(raw===null)return;
   const now=new Date().toISOString(),name=uniqueViewName(raw),v=typeof structuredClone==="function"?structuredClone(state.view):JSON.parse(JSON.stringify(state.view));v.id="mindmap-"+uuid();v.name=name;v.createdAt=now;v.updatedAt=now;
-  state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;renderViewSelector();render();transform();setDirty(true);setStatus("Carte dupliquée","ok")
+  state.views.push(v);state.view=v;state.workspace.defaultView=workspaceViewRef(v);state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;state.linkSource=null;renderViewSelector();render();transform();setDirty(true);setStatus("Carte dupliquée","ok")
 }
 function renameView(){
   if(!state.view)return;const raw=prompt("Nom de la carte :",state.view.name||"Carte");if(raw===null)return;const name=(raw||"").trim();if(!name)return;
@@ -368,7 +368,7 @@ async function addFolder(){
   const n={id:"n-"+r.id,resourceId:r.id,x:(parentNode?.x||120)+330,y:(parentNode?.y||130)+siblings*112,collapsed:false,style:{}};
   state.resources.push(r);state.view.nodes.push(n);
   if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
-  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;state.selectedEdge=null;setDirty(true);render();setStatus("Dossier créé","ok")
+  state.treeExpanded.add(parent.id);state.treeExpanded.add(r.id);state.selected=n.id;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;setDirty(true);render();setStatus("Dossier créé","ok")
 }
 function insertionParent(){
   const selected=selectedResource();
@@ -395,25 +395,25 @@ async function addLocalTextFile(ext){
   const r={id:"r-"+hash("file:"+path),type:"file",path,title:name,tags:[],notes:"",missing:false,excluded:false,size:file.size,lastModified:file.lastModified},parentNode=nodeForResource(parent.id);
   const siblings=physicalChildrenOf(parent).length,n={id:"n-"+r.id,resourceId:r.id,x:(parentNode?.x||120)+330,y:(parentNode?.y||130)+siblings*112,collapsed:false,style:{}};
   state.resources.push(r);state.view.nodes.push(n);if(parentNode)state.view.edges.push({id:"h-"+parent.id+"-"+r.id,from:parentNode.id,to:n.id,kind:"hierarchy"});
-  state.treeExpanded.add(parent.id);state.selected=n.id;state.selectedEdge=null;applyFolderSizes(state.resources);setDirty(true);render();await save(true);setStatus("Fichier "+name+" créé","ok");await openResource(r)
+  state.treeExpanded.add(parent.id);state.selected=n.id;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;applyFolderSizes(state.resources);setDirty(true);render();await save(true);setStatus("Fichier "+name+" créé","ok");await openResource(r)
 }
 async function openWorkspace(){
   try{if(!supportsFS()){ui.folderFallback.click();return}const h=await window.showDirectoryPicker({mode:"readwrite"});await loadHandle(h,true)}catch(e){if(e&&e.name==="AbortError")return;alert("Impossible d'ouvrir ce dossier : "+(e.message||e))}
 }
 async function loadHandle(h,user){
   clearNodeImageCache();setStatus("Lecture du workspace…");const w0=await readJson(h,WS),w=w0&&w0.format==="glom-workspace"?w0:newWorkspace(h.name);if(!Array.isArray(w.excludes))w.excludes=[];const s=await scan(h,w),r0=await readJson(h,RES),rawViews=await readMindmapViews(h),r=reconcile(w,s.entries,r0&&Array.isArray(r0.resources)?r0.resources:[]),prepared=prepareViews(w,rawViews,r),can=await permission(h,user);
-  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!rawViews.length,scanTruncated:s.truncated});initTreeExpansion();
+  Object.assign(state,{mode:"fs",handle:h,fallbackFiles:new Map(),workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,selectedFrame:null,linkSource:null,canWrite:can,dirty:!w0||!r0||!rawViews.length,scanTruncated:s.truncated});initTreeExpansion();
   try{localStorage.setItem("glom-last-name",h.name)}catch(e){}show();fit();markProductAdopted();if(s.truncated){setDirty(false);setStatus("Scan partiel : limite "+(s.reason==="profondeur"?"de profondeur ("+s.maxDepth+")":"de volume ("+new Intl.NumberFormat("fr-BE").format(s.limit)+" éléments)")+" atteinte. Rien n’a été réécrit dans .glom ; utilisez les exclusions puis rescanner.","bad")}else if(state.dirty&&can)await save(true);else if(state.dirty)setStatus("Lecture seule — export disponible");else setDirty(false);
   rememberRecentWorkspace(h,w)
 }
 async function loadFallback(files){
   if(!files||!files.length)return;clearNodeImageCache();setStatus("Import du dossier…");const m=await fallbackMetadata(files),provisional=m.workspace&&m.workspace.format==="glom-workspace"?m.workspace:newWorkspace("Workspace importé");if(!Array.isArray(provisional.excludes))provisional.excludes=[];const s=fallbackScan(files,provisional),w=m.workspace&&m.workspace.format==="glom-workspace"?provisional:Object.assign(provisional,{name:s.rootName}),r=reconcile(w,s.entries,m.resources&&Array.isArray(m.resources.resources)?m.resources.resources:[]),prepared=prepareViews(w,m.views,r);
-  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();markProductAdopted();setStatus("Mode compatibilité — export manuel")
+  Object.assign(state,{mode:"fallback",handle:null,fallbackFiles:s.files,workspace:w,resources:r,views:prepared.views,view:prepared.active,selected:null,selectedVisual:null,selectedEdge:null,selectedFrame:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();markProductAdopted();setStatus("Mode compatibilité — export manuel")
 }
 function demo(){
   clearNodeImageCache();const w=newWorkspace("Chef-d'œuvre — Les jeux vidéo");w.id="demo-marjolaine";const raw=[["folder","Histoire"],["folder","Histoire/Premiers jeux"],["file","Histoire/Premiers jeux/Tennis for Two.pdf"],["file","Histoire/Premiers jeux/Spacewar-notes.md"],["folder","Game design"],["file","Game design/Fiche de concept.md"],["folder","Level design"],["file","Level design/Plan niveau 1.png"],["folder","Mon jeu"],["folder","Mon jeu/Sprites"],["file","Mon jeu/Sprites/personnage.png"],["folder","Sources"],["file","Sources/Bibliographie.md"]].map(x=>({type:x[0],path:x[1],name:base(x[1])}));
   const r=reconcile(w,raw,[]),idea={id:"v-"+uuid(),type:"virtual",title:"💡 Pourquoi un jeu est-il amusant ?",tags:["question"],notes:"À relier au game design et aux playtests."},url={id:"u-"+uuid(),type:"url",title:"Brookhaven — Tennis for Two",url:"https://www.bnl.gov/about/history/firstvideo.php",tags:["source"],notes:""};r.push(idea,url);const v=freshView(r);const ni=nodeFrom(v,idea.id),nu=nodeFrom(v,url.id);if(ni){ni.x=1000;ni.y=680}if(nu){nu.x=1300;nu.y=220}const gd=r.find(x=>x.path==="Game design"),tf=r.find(x=>x.path&&x.path.includes("Tennis for Two"));if(gd&&ni)v.edges.push({id:"m-"+uuid(),from:"n-"+gd.id,to:ni.id,kind:"manual"});if(tf&&nu)v.edges.push({id:"m-"+uuid(),from:"n-"+tf.id,to:nu.id,kind:"manual"});
-  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Démo locale")
+  Object.assign(state,{mode:"demo",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:null,selectedVisual:null,selectedEdge:null,selectedFrame:null,linkSource:null,canWrite:false,dirty:false,scanTruncated:false});initTreeExpansion();show();fit();setStatus("Démo locale")
 }
 function nodeFrom(v,rid){return v.nodes.find(n=>n.resourceId===rid)}
 function applyCurrentExclusions(){
@@ -443,7 +443,7 @@ function excludeSelectedResource(){
   const r=selectedResource();if(!r||!["file","folder"].includes(r.type)||!r.path)return;
   const kind=r.type==="folder"?"dossier":"fichier";
   if(!confirm("Exclure ce "+kind+" du workspace ?\n\n"+r.path+"\n\nLe contenu reste intact sur le disque."))return;
-  if(addExclusionRule(r.path)){state.selected=null;render();setStatus("Ressource exclue du workspace","ok")}
+  if(addExclusionRule(r.path)){state.selected=null;state.selectedFrame=null;render();setStatus("Ressource exclue du workspace","ok")}
 }
 async function rescan(){
   if(state.mode==="fallback"){ui.folderFallback.click();return}if(state.mode!=="fs"||!state.handle)return;
@@ -655,7 +655,7 @@ function makeVisualObject(o){
 }
 function dragVisualObject(ev,o,e){
   if(ev.button!==0)return;ev.stopPropagation();
-  if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
+  if(state.selectedVisual!==o.id){state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.selectedFrame=null;state.linkSource=null;ui.visualObjects.querySelectorAll(".visual-object.selected").forEach(x=>x.classList.remove("selected"));e.classList.add("selected");renderTree();renderInspector()}
   const s={x:ev.clientX,y:ev.clientY,ox:o.x,oy:o.y};let moved=false;
   function mv(x){const dx=(x.clientX-s.x)/state.view.zoom,dy=(x.clientY-s.y)/state.view.zoom;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;o.x=s.ox+dx;o.y=s.oy+dy;e.style.left=o.x+"px";e.style.top=o.y+"px"}
   function end(){window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",end);window.removeEventListener("pointercancel",end);if(moved)setDirty()}
@@ -792,7 +792,7 @@ function updateBranchFrame(){
   const n=selectedNode(),fr=selectedFrameObject()||(n&&frameForNode(n.id));if(!fr)return;fr.title=ui.frameTitle.value;fr.fontSize=Math.max(8,Number(ui.frameFontSize.value)||12);fr.fontFamily=ui.frameFontFamily.value;fr.fontWeight=ui.frameFontWeight.value;fr.italic=ui.frameItalic.checked;fr.textColor=ui.frameTextColor.value;fr.borderColor=ui.frameBorderColor.value;fr.backgroundColor=ui.frameBackgroundColor.value;fr.opacity=Number(ui.frameOpacity.value)||0;fr.borderStyle=ui.frameBorderStyle.value;fr.locked=ui.frameLocked.checked;fr.w=Math.max(120,Number(ui.frameWidth.value)||fr.w||320);fr.h=Math.max(80,Number(ui.frameHeight.value)||fr.h||180);ui.frameFontSizeValue.value=fr.fontSize+" px";ui.frameOpacityValue.value=fr.opacity+" %";setDirty();renderFrames()
 }
 function toggleCollapse(){const n=selectedNode();if(!n)return;n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}
-function deleteSelected(){const r=selectedResource(),n=selectedNode();if(!r||!n||!["virtual","url"].includes(r.type))return;if(!confirm("Supprimer le nœud « "+r.title+" » ?"))return;state.resources=state.resources.filter(x=>x.id!==r.id);state.view.nodes=state.view.nodes.filter(x=>x.id!==n.id);state.view.edges=state.view.edges.filter(x=>x.from!==n.id&&x.to!==n.id);state.view.frames=(state.view.frames||[]).filter(x=>x.rootNodeId!==n.id);state.selected=null;state.linkSource=null;setDirty();render()}
+function deleteSelected(){const r=selectedResource(),n=selectedNode();if(!r||!n||!["virtual","url"].includes(r.type))return;if(!confirm("Supprimer le nœud « "+r.title+" » ?"))return;state.resources=state.resources.filter(x=>x.id!==r.id);state.view.nodes=state.view.nodes.filter(x=>x.id!==n.id);state.view.edges=state.view.edges.filter(x=>x.from!==n.id&&x.to!==n.id);state.view.frames=(state.view.frames||[]).filter(x=>x.rootNodeId!==n.id).map(fr=>Object.assign({},fr,{memberNodeIds:frameMemberIds(fr).filter(id=>id!==n.id)}));state.selected=null;state.selectedFrame=null;state.linkSource=null;setDirty();render()}
 function linkMode(){const n=selectedNode();if(!n)return;if(state.linkSource===n.id){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue"}else{state.linkSource=n.id;ui.hint.textContent="Cliquez sur le nœud à relier"}renderInspector();updateActionStates()}
 function updateEdgeStyle(){
   const edgeId=ui.edgeForm.dataset.edgeId||state.selectedEdge,ed=edge(edgeId);if(!ed)return;
@@ -822,7 +822,7 @@ function deleteVisualObject(){
 }
 function addShape(){
   if(!state.view)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"shape",shape:"rectangle",x:p.x-90,y:p.y-45,w:180,h:90,fill:"#e0e7ff",stroke:"#6366f1"};
-  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.selectedFrame=null;setDirty();render()
 }
 function availableImageResources(){
   return state.resources.filter(r=>isImageResource(r)&&!r.missing&&!r.excluded&&(state.mode==="fs"||(state.mode==="fallback"&&state.fallbackFiles.has(r.path))))
@@ -840,15 +840,15 @@ function openImageObjectDialog(){
 }
 function addImageObject(r){
   if(!r||!isImageResource(r)||r.missing)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"image",resourceId:r.id,path:r.path,x:p.x-160,y:p.y-110,w:320,h:220,fit:"contain",opacity:100,radius:8};
-  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();ui.imageObjectDialog.close();render()
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.selectedFrame=null;setDirty();ui.imageObjectDialog.close();render()
 }
 function addTextObject(){
   if(!state.view)return;const text=prompt("Texte de l’annotation :","Nouvelle annotation");if(text===null)return;const p=centerWorld(),o={id:"o-"+uuid(),type:"text",text:text||"Annotation",x:p.x-110,y:p.y-35,w:220,h:70,fontSize:18,fontFamily:"system",fontWeight:"500",textAlign:"left",italic:false,textColor:"#172033"};
-  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;setDirty();render()
+  state.view.objects=state.view.objects||[];state.view.objects.push(o);state.selectedVisual=o.id;state.selected=null;state.selectedEdge=null;state.selectedFrame=null;setDirty();render()
 }
 function centerWorld(){const r=ui.viewport.getBoundingClientRect();return{x:(r.width/2-state.view.pan.x)/state.view.zoom,y:(r.height/2-state.view.pan.y)/state.view.zoom}}
-function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedEdge=null;setDirty();render()}
-function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedEdge=null;setDirty();render()}
+function addIdea(){const title=prompt("Nom de la nouvelle idée :","Nouvelle idée");if(!title||!title.trim())return;const r={id:"v-"+uuid(),type:"virtual",title:title.trim(),tags:[],notes:""},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;setDirty();render()}
+function addUrl(){const raw=prompt("Adresse web :","https://");if(!raw)return;let u;try{u=new URL(raw).href}catch(e){alert("URL invalide");return}const title=prompt("Titre du lien :",new URL(u).hostname)||new URL(u).hostname,r={id:"u-"+uuid(),type:"url",title:title,tags:[],notes:"",url:u},c=centerWorld(),n={id:"n-"+r.id,resourceId:r.id,x:c.x-120,y:c.y-37,collapsed:false,style:{}};state.resources.push(r);state.view.nodes.push(n);if(state.selected)manualEdge(state.selected,n.id);state.selected=n.id;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;setDirty();render()}
 function previewUi(){return{dialog:ui.preview,title:ui.previewTitle,meta:ui.previewMeta,body:ui.previewBody}}
 async function basicPreview(r,f){
   ui.previewTitle.textContent=r.title;ui.previewMeta.textContent=(r.path||f.name)+" — "+formatSize(f.size);ui.previewBody.replaceChildren();
@@ -894,7 +894,7 @@ function autoLayout(){
   state.view.nodes.forEach(n=>{if(effectiveNodeStyle(n,resource(n.resourceId)).locked)return;const p=byResource.get(n.resourceId);if(p){n.x=p.x;n.y=p.y}});
   setDirty();renderMap();fit();setStatus("Disposition réorganisée","ok")
 }
-function panStart(ev){if(!state.view||ev.button!==0||ev.target.closest(".node,.visual-object,.branch-frame-title,.edge-hit,.edge-label,.map-palette,button,summary"))return;const s={x:ev.clientX,y:ev.clientY,px:state.view.pan.x,py:state.view.pan.y};ui.viewport.classList.add("panning");function mv(x){state.view.pan.x=s.px+x.clientX-s.x;state.view.pan.y=s.py+x.clientY-s.y;transform()}function end(){ui.viewport.classList.remove("panning");ui.viewport.removeEventListener("pointermove",mv);ui.viewport.removeEventListener("pointerup",end);ui.viewport.removeEventListener("pointercancel",end);setDirty()}ui.viewport.addEventListener("pointermove",mv);ui.viewport.addEventListener("pointerup",end);ui.viewport.addEventListener("pointercancel",end)}
+function panStart(ev){if(!state.view||ev.button!==0||ev.target.closest(".node,.visual-object,.branch-frame,.branch-frame-title,.branch-frame-resize,.edge-hit,.edge-label,.map-palette,button,summary"))return;const s={x:ev.clientX,y:ev.clientY,px:state.view.pan.x,py:state.view.pan.y};ui.viewport.classList.add("panning");function mv(x){state.view.pan.x=s.px+x.clientX-s.x;state.view.pan.y=s.py+x.clientY-s.y;transform()}function end(){ui.viewport.classList.remove("panning");ui.viewport.removeEventListener("pointermove",mv);ui.viewport.removeEventListener("pointerup",end);ui.viewport.removeEventListener("pointercancel",end);setDirty()}ui.viewport.addEventListener("pointermove",mv);ui.viewport.addEventListener("pointerup",end);ui.viewport.addEventListener("pointercancel",end)}
 async function rememberRecentWorkspace(handle,workspace){
   try{const api=await getRecentApi();if(api){await api.rememberWorkspace(handle,workspace);await refreshWelcomeActions()}}catch(e){console.warn("Unable to remember workspace",e)}
 }
@@ -994,15 +994,15 @@ function closeToolbarMenus(except=null){document.querySelectorAll("[data-menu][o
 function wire(){
   ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.exclusionsBtn.onclick=openExclusionsDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.viewSelect.onchange=()=>activateView(ui.viewSelect.value);ui.newViewBtn.onclick=createView;ui.duplicateViewBtn.onclick=duplicateView;ui.renameViewBtn.onclick=renameView;ui.welcomeNew.onclick=newDraftWorkspace;ui.welcomeOpen.onclick=openWorkspace;ui.welcomeRecent.onclick=openRecentDialog;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveNowBtn.onclick=()=>save(false);ui.saveExportBtn.onclick=openExportDialog;ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.textFileBtn.onclick=()=>addLocalTextFile("txt");ui.markdownFileBtn.onclick=()=>addLocalTextFile("md");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=fit;ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.mapSelectBtn.onclick=()=>{state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";updateActionStates();renderInspector()};
-  ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=toggleBranchFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;ui.mapImageBtn.onclick=openImageObjectDialog;
-  ui.contextFolderBtn.onclick=addFolder;ui.contextIdeaBtn.onclick=addIdea;ui.contextRelationBtn.onclick=linkMode;ui.contextFrameBtn.onclick=toggleBranchFrame;ui.contextExcludeBtn.onclick=excludeSelectedResource;
+  ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=selectOrCreateFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;ui.mapImageBtn.onclick=openImageObjectDialog;
+  ui.contextFolderBtn.onclick=addFolder;ui.contextIdeaBtn.onclick=addIdea;ui.contextRelationBtn.onclick=linkMode;ui.contextFrameBtn.onclick=selectOrCreateFrame;ui.contextExcludeBtn.onclick=excludeSelectedResource;
   document.querySelectorAll("[data-menu]").forEach(menu=>menu.addEventListener("toggle",()=>{if(menu.open)closeToolbarMenus(menu)}));
   document.querySelectorAll("[data-menu] .toolbar-menu-panel button").forEach(b=>b.addEventListener("click",()=>b.closest("[data-menu]")?.removeAttribute("open")));
   document.addEventListener("click",e=>{if(!e.target.closest("[data-menu]"))closeToolbarMenus()});
-  ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node,.visual-object,.branch-frame-title,.edge-group,.edge-label,.map-palette")){state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
+  ui.viewport.onpointerdown=panStart;ui.viewport.onclick=e=>{if(!e.target.closest(".node,.visual-object,.branch-frame,.branch-frame-title,.branch-frame-resize,.edge-group,.edge-label,.map-palette")){state.selected=null;state.selectedVisual=null;state.selectedEdge=null;state.selectedFrame=null;state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";render()}};ui.viewport.addEventListener("wheel",e=>{if(!state.view)return;e.preventDefault();zoom(state.view.zoom*(e.deltaY<0?1.08:1/1.08),{x:e.clientX,y:e.clientY})},{passive:false});
   ui.search.oninput=()=>{state.search=ui.search.value.trim();renderTree();renderMap()};[ui.title,ui.tags,ui.notes].forEach(x=>x.addEventListener("input",updateForm));
   [ui.nodeIcon,ui.fontSize,ui.nodeWidth,ui.nodeHeight,ui.fontFamily,ui.fontWeight,ui.textAlign,ui.fontItalic,ui.textColor,ui.backgroundColor,ui.borderColor,ui.borderWidth,ui.nodeShape,ui.nodeLocked,ui.moveBranch,ui.showNodeImage].forEach(x=>x.addEventListener("input",updateNodeStyle));
-  ui.copyStyleBtn.onclick=copyNodeStyle;ui.pasteStyleBtn.onclick=pasteNodeStyle;ui.resetStyleBtn.onclick=resetNodeStyle;ui.frameToggleBtn.onclick=toggleBranchFrame;[ui.frameTitle,ui.frameFontSize,ui.frameFontFamily,ui.frameFontWeight,ui.frameItalic,ui.frameTextColor,ui.frameBorderColor,ui.frameBackgroundColor,ui.frameOpacity,ui.frameBorderStyle].forEach(x=>x.addEventListener("input",updateBranchFrame));
+  ui.copyStyleBtn.onclick=copyNodeStyle;ui.pasteStyleBtn.onclick=pasteNodeStyle;ui.resetStyleBtn.onclick=resetNodeStyle;ui.frameToggleBtn.onclick=toggleBranchFrame;ui.frameFitBtn.onclick=fitSelectedFrame;ui.frameCaptureBtn.onclick=captureFrameMembers;[ui.frameTitle,ui.frameFontSize,ui.frameFontFamily,ui.frameFontWeight,ui.frameItalic,ui.frameTextColor,ui.frameBorderColor,ui.frameBackgroundColor,ui.frameOpacity,ui.frameBorderStyle,ui.frameWidth,ui.frameHeight,ui.frameLocked].forEach(x=>{x.addEventListener("input",updateBranchFrame);x.addEventListener("change",updateBranchFrame)});
   ui.openResource.onclick=()=>openResource(selectedResource());ui.linkBtn.onclick=linkMode;ui.collapseBtn.onclick=toggleCollapse;ui.deleteBtn.onclick=deleteSelected;[ui.visualText,ui.visualShape,ui.visualWidth,ui.visualHeight,ui.visualFontSize,ui.visualFontFamily,ui.visualFontWeight,ui.visualTextAlign,ui.visualItalic,ui.visualTextColor,ui.visualFill,ui.visualStroke,ui.visualImageFit,ui.visualImageOpacity,ui.visualImageRadius].forEach(x=>{x.addEventListener("input",updateVisualObject);x.addEventListener("change",updateVisualObject)});ui.deleteVisualBtn.onclick=deleteVisualObject;[ui.edgeLabel,ui.edgeColor,ui.edgeWidth,ui.edgeLineStyle,ui.edgeArrow,ui.edgeCurvature].forEach(x=>{x.addEventListener("input",updateEdgeStyle);x.addEventListener("change",updateEdgeStyle)});ui.deleteEdgeBtn.onclick=deleteSelectedEdge;
   ui.folderFallback.onchange=async()=>{const f=ui.folderFallback.files;ui.folderFallback.value="";await loadFallback(f)};ui.imageObjectClose.onclick=()=>ui.imageObjectDialog.close();ui.imageObjectSearch.oninput=renderImageObjectList;ui.previewClose.onclick=()=>ui.preview.close();ui.preview.addEventListener("close",clearPreviewSafe);
   ui.exclusionsClose.onclick=()=>ui.exclusionsDialog.close();ui.exclusionForm.onsubmit=e=>{e.preventDefault();if(addExclusionRule(ui.exclusionPattern.value)){ui.exclusionPattern.value="";renderExclusionsList();setStatus("Règle d’exclusion ajoutée","ok")}};ui.excludeBakPreset.onclick=()=>{addExclusionRule("*.bak");renderExclusionsList()};ui.excludeNppPreset.onclick=()=>{addExclusionRule("nppBackup/**");renderExclusionsList()};
