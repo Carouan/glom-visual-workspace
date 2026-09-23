@@ -348,7 +348,7 @@ function newDraftWorkspace(){
   const raw=prompt("Nom du nouvel espace de travail :","Nouvel espace de travail");if(raw===null)return;
   const name=(raw||"").trim()||"Nouvel espace de travail";clearNodeImageCache();
   const w=newWorkspace(name),root={id:"root-"+w.id,type:"root",path:"",title:name,tags:[],notes:"",missing:false,size:0,lastModified:null},r=[root],v=freshView(r);
-  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,selectedEdge:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
+  Object.assign(state,{mode:"draft",handle:null,fallbackFiles:new Map(),workspace:w,resources:r,views:[v],view:v,selected:v.nodes[0]?.id||null,selectedVisual:null,selectedEdge:null,selectedFrame:null,linkSource:null,canWrite:false,dirty:true,scanTruncated:false});
   initTreeExpansion();show();fit();markProductAdopted();setStatus("Espace de travail brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
 }
 async function addFolder(){
