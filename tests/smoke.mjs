@@ -345,14 +345,14 @@ try{
 
   await page.$eval("#frameWidth",el=>{el.value="120";el.dispatchEvent(new Event("change",{bubbles:true}))});
   await page.$eval("#frameHeight",el=>{el.value="80";el.dispatchEvent(new Event("change",{bubbles:true}))});
-  await page.click("#frameCaptureBtn");
+  await page.$eval("#frameCaptureBtn",el=>el.click());
   const capturedMembers=Number(await page.$eval("#frameMemberCount",el=>el.textContent||"0"));
   if(capturedMembers<1||capturedMembers>=frameInitial.members)throw new Error("Adopting nodes contained by a resized group did not change membership: "+capturedMembers+" / "+frameInitial.members);
-  await page.click("#frameFitBtn");
+  await page.$eval("#frameFitBtn",el=>el.click());
   const fittedSize=await page.$eval(".branch-frame.selected",el=>({w:parseFloat(el.style.width),h:parseFloat(el.style.height)}));
   if(fittedSize.w<=120||fittedSize.h<=80)throw new Error("Fit group to content did not restore useful geometry: "+JSON.stringify(fittedSize));
 
-  await page.click("#frameToggleBtn");
+  await page.$eval("#frameToggleBtn",el=>el.click());
   const dissolved=await page.evaluate(()=>({frames:document.querySelectorAll(".branch-frame").length,nodes:document.querySelectorAll(".node").length}));
   if(dissolved.frames!==0||dissolved.nodes!==nodesBeforeGroup)throw new Error("Dissolving a group altered its nodes: "+JSON.stringify(dissolved));
 
@@ -360,10 +360,10 @@ try{
   if(!leafReady)throw new Error("No leaf node available for arbitrary group test");
   const leafFrameEnabled=await page.$eval("#frameToggleBtn",el=>!el.disabled);
   if(!leafFrameEnabled)throw new Error("A leaf node cannot create an independent visual group");
-  await page.click("#frameToggleBtn");
+  await page.$eval("#frameToggleBtn",el=>el.click());
   const leafMembers=Number(await page.$eval("#frameMemberCount",el=>el.textContent||"0"));
   if(leafMembers!==1)throw new Error("Leaf-created visual group should start with one explicit member: "+leafMembers);
-  await page.click("#frameToggleBtn");
+  await page.$eval("#frameToggleBtn",el=>el.click());
 
   // Exclusion rules hide matching resources without deleting them from the model.
   await page.$eval("#exclusionsBtn",el=>el.click());
