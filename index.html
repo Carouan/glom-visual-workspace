@@ -110,7 +110,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.14</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.15</span></div>
   </header>
 
   <main class="shell">
@@ -133,7 +133,7 @@
           <button id="mapFolderBtn" type="button" title="Créer un dossier enfant" aria-label="Créer un dossier"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg></button>
           <button id="mapIdeaBtn" type="button" title="Créer une idée" aria-label="Créer une idée"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg></button>
           <button id="mapRelationBtn" type="button" title="Créer une relation depuis le nœud sélectionné" aria-label="Créer une relation"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg></button>
-          <button id="mapFrameBtn" type="button" title="Créer ou retirer un cadre de branche" aria-label="Cadre de branche"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg></button>
+          <button id="mapFrameBtn" type="button" title="Créer ou sélectionner un groupe visuel" aria-label="Groupe visuel"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg></button>
           <span class="palette-divider"></span>
           <button id="mapShapeBtn" type="button" title="Ajouter une forme libre" aria-label="Ajouter une forme"><svg class="ui-icon" aria-hidden="true"><use href="#i-shape"></use></svg></button>
           <button id="mapTextBtn" type="button" title="Ajouter une annotation texte" aria-label="Ajouter du texte"><svg class="ui-icon" aria-hidden="true"><use href="#i-text"></use></svg></button>
@@ -285,7 +285,7 @@
               <button type="button" id="contextFolderBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-folder-plus"></use></svg><span class="button-label">Dossier enfant</span></button>
               <button type="button" id="contextIdeaBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Idée liée</span></button>
               <button type="button" id="contextRelationBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg><span class="button-label">Relation</span></button>
-              <button type="button" id="contextFrameBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre de branche</span></button>
+              <button type="button" id="contextFrameBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre / groupe visuel</span></button>
               <button type="button" id="contextExcludeBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-eye-off"></use></svg><span class="button-label">Exclure du workspace</span></button>
             </div>
           </details>
@@ -345,7 +345,7 @@
         <details class="inspector-section" id="branchFrameSection">
           <summary><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre de branche</span></summary>
           <div class="frame-controls">
-            <button type="button" id="frameToggleBtn">＋ Créer un cadre autour de cette branche</button>
+            <button type="button" id="frameToggleBtn">＋ Créer un groupe depuis cette branche</button>
             <div id="frameFields" class="style-grid hidden">
               <label>Titre du cadre<input id="frameTitle" type="text" placeholder="Nom du groupe"></label>
               <label>Taille du titre
@@ -367,6 +367,18 @@
               <label>Style
                 <select id="frameBorderStyle"><option value="solid">Plein</option><option value="dashed">Pointillé</option></select>
               </label>
+              <div class="group-meta">
+                <span>Membres</span><strong id="frameMemberCount">0</strong>
+              </div>
+              <div class="group-size-grid">
+                <label>Largeur<input id="frameWidth" type="number" min="120" step="10" value="320"></label>
+                <label>Hauteur<input id="frameHeight" type="number" min="80" step="10" value="180"></label>
+              </div>
+              <label class="check-row"><input id="frameLocked" type="checkbox"> Verrouiller le groupe</label>
+              <div class="group-actions">
+                <button type="button" id="frameFitBtn">↔ Ajuster au contenu</button>
+                <button type="button" id="frameCaptureBtn">⊞ Adopter les nœuds contenus</button>
+              </div>
             </div>
           </div>
         </details>
