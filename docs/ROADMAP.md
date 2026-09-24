@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.16 stable.**
+**État actuel : v0.3.17 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -303,15 +303,28 @@ Issue #6 terminée par cette version.
 
 Issue #63 terminée par cette version. La demande UX générale reste suivie par #62.
 
+### V0.3.17 — branches volumineuses ✅
+
+- seuil de repli automatique stocké dans les paramètres du workspace ;
+- valeur par défaut : **20 enfants directs** ;
+- une nouvelle carte replie uniquement les branches contenant **plus de** ce seuil ;
+- le repli automatique peut être désactivé ;
+- modifier le seuil ne change pas rétroactivement l’état des cartes existantes ;
+- commande explicite **Appliquer à la carte active** pour replier les branches dépassant le seuil sans en déplier d’autres ;
+- les branches repliées affichent un badge rond avec leur nombre d’enfants directs ;
+- les nouveaux nœuds introduits dans une carte existante peuvent utiliser le réglage sans écraser l’état des nœuds déjà présents ;
+- règles de seuil isolées dans un module testable et mises en cache pour le mode hors ligne.
+
+Issue #65 terminée par cette version. La méta-issue UX reste suivie par #62.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.16 :
+Ordre de travail proposé après v0.3.17 :
 
-1. **#65 — branches volumineuses : repli automatique, compteur et seuil configurable** ;
-2. **#64 — layouts configurables par carte et par branche** ;
-3. **#8 — plusieurs occurrences visuelles d'une même ressource dans une carte** ;
-4. **sélection multiple** ;
-5. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+1. **#64 — layouts configurables par carte et par branche** ;
+2. **#8 — plusieurs occurrences visuelles d'une même ressource dans une carte** ;
+3. **sélection multiple** ;
+4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
