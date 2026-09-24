@@ -75,7 +75,7 @@ try{
   if(version.trim()!=="v0.3.16")throw new Error("Unexpected UI version: "+version);
   const pinchResult=await page.evaluate(()=>{
     const vp=document.getElementById("viewport"),world=document.getElementById("world"),r=vp.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-    const read=()=>{const m=world.style.transform.match(/translate\(([-+\deE.]+)px,([-+\deE.]+)px\) scale\(([-+\deE.]+)\)/);return m?{x:Number(m[1]),y:Number(m[2]),z:Number(m[3])}:null};
+    const read=()=>{const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);return{x:m.e,y:m.f,z:m.a}};
     const fire=(type,id,x,y,isPrimary=false)=>vp.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:"touch",isPrimary,button:0,buttons:type==="pointerup"?0:1,clientX:x,clientY:y}));
     const before=read(),anchorBefore={x:(cx-r.left-before.x)/before.z,y:(cy-r.top-before.y)/before.z};
     fire("pointerdown",501,cx-40,cy,true);fire("pointerdown",502,cx+40,cy,false);
