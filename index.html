@@ -46,6 +46,7 @@
     <symbol id="i-markdown" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M6 15V9l3 3 3-3v6M15 12h4M17 10l2 2-2 2"/></symbol>
     <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.5 6.2A10.5 10.5 0 0 1 12 6c6 0 9.5 6 9.5 6a16 16 0 0 1-2.2 3"/><path d="M6.1 7.1C3.7 8.8 2.5 12 2.5 12S6 18 12 18c1.1 0 2.1-.2 3-.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
     <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></symbol>
   </svg>
   <header class="topbar">
     <div class="brand">
@@ -62,6 +63,7 @@
           <span class="menu-divider"></span>
           <button id="scanBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-refresh"></use></svg><span class="button-label">Rescanner le dossier</span></button>
           <button id="exclusionsBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-filter"></use></svg><span class="button-label">Exclusions…</span></button>
+          <button id="settingsBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span class="button-label">Paramètres…</span></button>
           <span class="menu-divider"></span>
           <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
         </div>
@@ -110,7 +112,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.16</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.17</span></div>
   </header>
 
   <main class="shell">
@@ -444,6 +446,22 @@
       <label class="search"><span>⌕</span><input id="imageObjectSearch" type="search" placeholder="Nom ou chemin de l’image…"></label>
       <div id="imageObjectList" class="image-picker-list"></div>
     </div>
+  </dialog>
+
+  <dialog id="settingsDialog" class="small-dialog">
+    <header><div><strong>Paramètres de l’espace de travail</strong><small>Comportement des cartes MindSpark</small></div><button id="settingsClose">×</button></header>
+    <form id="settingsForm" class="settings-panel">
+      <label class="check-row"><input id="autoCollapseEnabled" type="checkbox"> Replier automatiquement les branches volumineuses</label>
+      <label class="settings-field">Seuil d’enfants directs
+        <input id="autoCollapseThreshold" type="number" min="1" max="9999" step="1" inputmode="numeric">
+        <small>Une nouvelle carte replie une branche si elle contient plus que ce nombre d’enfants directs.</small>
+      </label>
+      <p>Les cartes existantes conservent leurs choix de repli lors d’un rescan. Le bouton ci-dessous ne fait que replier les branches qui dépassent le seuil ; il ne déplie rien.</p>
+      <div class="settings-actions">
+        <button id="settingsApplyCurrentBtn" type="button">Appliquer à la carte active</button>
+        <button type="submit" class="primary">Enregistrer</button>
+      </div>
+    </form>
   </dialog>
 
   <dialog id="exclusionsDialog" class="small-dialog">
