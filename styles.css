@@ -689,3 +689,8 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 .branch-layout-controls select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.42rem .5rem;background:var(--bg);color:var(--text)}
 .branch-layout-controls small{color:var(--muted);font-size:.74rem;line-height:1.4}
 .branch-layout-controls button{min-height:40px}
+
+
+/* V0.3.19 — multiple visual occurrences */
+.node.alias{box-shadow:0 0 0 1px color-mix(in srgb,var(--primary) 26%,transparent),var(--shadow)}
+.node-occurrence-badge{position:absolute;right:-8px;top:-8px;z-index:5;display:grid;place-items:center;width:22px;height:22px;border:1px solid color-mix(in srgb,var(--primary) 45%,var(--border));border-radius:999px;background:var(--surface);color:var(--primary);font-size:.72rem;font-weight:900;box-shadow:0 2px 6px rgba(15,23,42,.14);pointer-events:none}
