@@ -72,7 +72,30 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.15")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.16")throw new Error("Unexpected UI version: "+version);
+  const pinchResult=await page.evaluate(()=>{
+    const vp=document.getElementById("viewport"),world=document.getElementById("world"),r=vp.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const read=()=>{const m=world.style.transform.match(/translate\(([-+\deE.]+)px,([-+\deE.]+)px\) scale\(([-+\deE.]+)\)/);return m?{x:Number(m[1]),y:Number(m[2]),z:Number(m[3])}:null};
+    const fire=(type,id,x,y,isPrimary=false)=>vp.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:"touch",isPrimary,button:0,buttons:type==="pointerup"?0:1,clientX:x,clientY:y}));
+    const before=read(),anchorBefore={x:(cx-r.left-before.x)/before.z,y:(cy-r.top-before.y)/before.z};
+    fire("pointerdown",501,cx-40,cy,true);fire("pointerdown",502,cx+40,cy,false);
+    fire("pointermove",501,cx-80,cy,true);fire("pointermove",502,cx+80,cy,false);
+    fire("pointerup",502,cx+80,cy,false);fire("pointerup",501,cx-80,cy,true);
+    const after=read(),anchorAfter={x:(cx-r.left-after.x)/after.z,y:(cy-r.top-after.y)/after.z};
+    return{before,after,anchorBefore,anchorAfter,label:document.getElementById("zoomValue")?.textContent||""}
+  });
+  if(!pinchResult.before||!pinchResult.after||pinchResult.after.z<=pinchResult.before.z*1.35)throw new Error("Pinch-to-zoom did not increase zoom: "+JSON.stringify(pinchResult));
+  if(Math.abs(pinchResult.anchorAfter.x-pinchResult.anchorBefore.x)>1||Math.abs(pinchResult.anchorAfter.y-pinchResult.anchorBefore.y)>1)throw new Error("Pinch zoom did not preserve its gesture anchor: "+JSON.stringify(pinchResult));
+  await page.setViewport({width:360,height:220,deviceScaleFactor:1});
+  await new Promise(resolve=>setTimeout(resolve,80));
+  await page.$eval("#fitBtn",el=>el.click());
+  const mobileFit=await page.$eval("#zoomValue",el=>parseFloat(el.textContent||"100"));
+  if(!(mobileFit<20))throw new Error("Fit all is still effectively clamped near 20% on a small viewport: "+mobileFit);
+  const fitLabel=await page.$eval("#fitBtn .button-label",el=>el.textContent||"");
+  if(fitLabel!=="Ajuster toute la carte")throw new Error("Fit command label is ambiguous: "+fitLabel);
+  await page.setViewport({width:1440,height:900,deviceScaleFactor:1});
+  await new Promise(resolve=>setTimeout(resolve,80));
+  await page.$eval("#fitBtn",el=>el.click());
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -504,6 +527,7 @@ try{
   if(!freeImageSvg.includes("<image ")||!freeImageSvg.includes('preserveAspectRatio="xMidYMid slice"')||!freeImageSvg.includes('opacity="0.75"')||!freeImageSvg.includes("data:image/svg+xml;base64"))throw new Error("Free image object was not preserved in SVG export");
 
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
+  if(!canvasSource.includes("installTouchNavigation")||!canvasSource.includes("touchGesture")||!canvasSource.includes("frames=(state.view.frames||[]).map(f=>ensureFrameGeometry(f))"))throw new Error("Mobile pinch / full-map fit implementation is incomplete");
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
   if(canvasSource.includes("limite de sécurité de la V0.1")||canvasSource.includes("entries.length>=1200")||canvasSource.includes("depth>10"))throw new Error("Legacy V0.1 scan limits are still present");
   const scanLimitMatch=canvasSource.match(/SCAN_MAX_ENTRIES=(\d+),SCAN_MAX_DEPTH=(\d+)/);
