@@ -1,5 +1,5 @@
-const CACHE="glom-v0.3.16";
-const CORE=["./","./index.html","./styles.css","./manifest.webmanifest","./icons/icon.svg","./src/app.js","./src/viewers/index.js","./src/exporters/mindmap.js","./src/exporters/workspace.js","./src/workspaces/recent.js"];
+const CACHE="glom-v0.3.17";
+const CORE=["./","./index.html","./styles.css","./manifest.webmanifest","./icons/icon.svg","./src/app.js","./src/viewers/index.js","./src/exporters/mindmap.js","./src/exporters/workspace.js","./src/workspaces/recent.js","./src/workspaces/settings.js"];
 
 async function precache(){
   const cache=await caches.open(CACHE);
