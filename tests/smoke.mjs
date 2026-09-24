@@ -86,15 +86,8 @@ try{
   });
   if(!pinchResult.before||!pinchResult.after||pinchResult.after.z<=pinchResult.before.z*1.35)throw new Error("Pinch-to-zoom did not increase zoom: "+JSON.stringify(pinchResult));
   if(Math.abs(pinchResult.anchorAfter.x-pinchResult.anchorBefore.x)>1||Math.abs(pinchResult.anchorAfter.y-pinchResult.anchorBefore.y)>1)throw new Error("Pinch zoom did not preserve its gesture anchor: "+JSON.stringify(pinchResult));
-  await page.setViewport({width:360,height:220,deviceScaleFactor:1});
-  await new Promise(resolve=>setTimeout(resolve,80));
-  await page.$eval("#fitBtn",el=>el.click());
-  const mobileFit=await page.$eval("#zoomValue",el=>parseFloat(el.textContent||"100"));
-  if(!(mobileFit<20))throw new Error("Fit all is still effectively clamped near 20% on a small viewport: "+mobileFit);
   const fitLabel=await page.$eval("#fitBtn .button-label",el=>el.textContent||"");
   if(fitLabel!=="Ajuster toute la carte")throw new Error("Fit command label is ambiguous: "+fitLabel);
-  await page.setViewport({width:1440,height:900,deviceScaleFactor:1});
-  await new Promise(resolve=>setTimeout(resolve,80));
   await page.$eval("#fitBtn",el=>el.click());
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
@@ -534,6 +527,16 @@ try{
   if(!scanLimitMatch||Number(scanLimitMatch[1])<10000||Number(scanLimitMatch[2])<32)throw new Error("Large-workspace scan guard is unexpectedly low: "+String(scanLimitMatch));
   const worldGeometry=await page.$eval(".world",el=>({w:getComputedStyle(el).width,h:getComputedStyle(el).height,overflow:getComputedStyle(el).overflow}));
   if(worldGeometry.w!=="1px"||worldGeometry.h!=="1px"||worldGeometry.overflow!=="visible")throw new Error("Canvas still exposes a finite workspace boundary: "+JSON.stringify(worldGeometry));
+
+  // Small-screen Fit all is isolated so responsive reflow cannot disturb desktop smoke scenarios.
+  const mobilePage=await browser.newPage();
+  await mobilePage.setViewport({width:360,height:220,deviceScaleFactor:1});
+  await mobilePage.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await mobilePage.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok"&&document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:10000});
+  await mobilePage.$eval("#fitBtn",el=>el.click());
+  const mobileFit=await mobilePage.$eval("#zoomValue",el=>parseFloat(el.textContent||"100"));
+  if(!(mobileFit<20))throw new Error("Fit all is still effectively clamped near 20% on a small viewport: "+mobileFit);
+  await mobilePage.close();
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
