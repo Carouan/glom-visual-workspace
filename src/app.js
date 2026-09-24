@@ -916,11 +916,11 @@ function updatePinch(){
 }
 function onTouchPointerDown(ev){
   if(ev.pointerType!=="touch")return;touchGesture.points.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-  if(touchGesture.points.size>=2){if(!touchGesture.pinching)beginPinch();ev.preventDefault();ev.stopPropagation()}
+  if(touchGesture.points.size>=2){if(!touchGesture.pinching)beginPinch();ev.preventDefault();ev.stopImmediatePropagation()}
 }
 function onTouchPointerMove(ev){
   if(ev.pointerType!=="touch"||!touchGesture.points.has(ev.pointerId))return;touchGesture.points.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-  if(touchGesture.blockUntilClear){ev.preventDefault();ev.stopPropagation();updatePinch()}
+  if(touchGesture.blockUntilClear){ev.preventDefault();ev.stopImmediatePropagation();updatePinch()}
 }
 function onTouchPointerEnd(ev){
   if(ev.pointerType!=="touch"||!touchGesture.points.has(ev.pointerId))return;touchGesture.points.delete(ev.pointerId);
@@ -932,7 +932,7 @@ function installTouchNavigation(){
   ui.viewport.addEventListener("pointermove",onTouchPointerMove,{capture:true});
   ui.viewport.addEventListener("pointerup",onTouchPointerEnd,{capture:true});
   ui.viewport.addEventListener("pointercancel",onTouchPointerEnd,{capture:true});
-  ui.viewport.addEventListener("click",ev=>{if(Date.now()<touchGesture.suppressClickUntil){ev.preventDefault();ev.stopPropagation()}},{capture:true})
+  ui.viewport.addEventListener("click",ev=>{if(Date.now()<touchGesture.suppressClickUntil){ev.preventDefault();ev.stopImmediatePropagation()}},{capture:true})
 }
 async function rememberRecentWorkspace(handle,workspace){
   try{const api=await getRecentApi();if(api){await api.rememberWorkspace(handle,workspace);await refreshWelcomeActions()}}catch(e){console.warn("Unable to remember workspace",e)}
