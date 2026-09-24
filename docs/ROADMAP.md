@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.17 stable.**
+**État actuel : v0.3.18 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -317,14 +317,29 @@ Issue #63 terminée par cette version. La demande UX générale reste suivie par
 
 Issue #65 terminée par cette version. La méta-issue UX reste suivie par #62.
 
+### V0.3.18 — layouts configurables ✅
+
+- cinq modes : **droite, gauche, bas, équilibré gauche/droite, radial/étoile** ;
+- moteur de layout déterministe isolé dans `src/mindmap/layouts.js` ;
+- chaque mindmap persiste son `layoutMode` ;
+- le workspace définit la disposition par défaut des nouvelles cartes ;
+- le menu **Vue** permet de changer puis appliquer le layout global ;
+- un nœud peut porter une surcharge de layout pour sa branche ;
+- les surcharges imbriquées sont recalculées du parent vers les descendants ;
+- le nœud racine de la zone réorganisée reste l’ancrage spatial ;
+- les nœuds verrouillés gardent leur position ;
+- objets libres et groupes visuels ne sont pas déplacés par le moteur de mindmap ;
+- compatibilité des anciennes vues : un layout absent est normalisé vers le réglage du workspace.
+
+Issue #64 terminée par cette version. Les trois sous-chantiers UX de #62 sont alors couverts.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.17 :
+Ordre de travail proposé après v0.3.18 :
 
-1. **#64 — layouts configurables par carte et par branche** ;
-2. **#8 — plusieurs occurrences visuelles d'une même ressource dans une carte** ;
-3. **sélection multiple** ;
-4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+1. **#8 — plusieurs occurrences visuelles d'une même ressource dans une carte** ;
+2. **sélection multiple** ;
+3. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
