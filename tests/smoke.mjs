@@ -72,7 +72,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.18")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.19")throw new Error("Unexpected UI version: "+version);
   const pinchResult=await page.evaluate(()=>{
     const vp=document.getElementById("viewport"),world=document.getElementById("world"),r=vp.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
     const read=()=>{const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);return{x:m.e,y:m.f,z:m.a}};
@@ -111,6 +111,22 @@ try{
   if(layoutRules.fallback!=="right"||layoutRules.right.a.x<=0||layoutRules.left.a.x>=0||layoutRules.down.a.y<=0||layoutRules.balanced.a.x*layoutRules.balanced.b.x>=0)throw new Error("Configurable layout directions are invalid: "+JSON.stringify(layoutRules));
   const radialA=layoutRules.radial.a,radialB=layoutRules.radial.b;
   if(!radialA||!radialB||Math.hypot(radialA.x,radialA.y)<100||Math.abs(radialA.x-radialB.x)+Math.abs(radialA.y-radialB.y)<50)throw new Error("Radial layout did not separate branches: "+JSON.stringify(layoutRules.radial));
+  const occurrenceRules=await page.evaluate(async()=>{
+    const api=await import("./src/mindmap/occurrences.js"),rid="r-test",fallback={id:"n-"+rid,resourceId:rid,x:0,y:0},existing=[
+      {id:"n-"+rid,resourceId:rid,x:10,y:20},
+      {id:"occ-1",resourceId:rid,occurrence:"alias",x:100,y:200}
+    ],merged=api.mergeOccurrenceGroup(existing,rid,fallback);
+    return{primary:merged.primary.id,aliases:merged.aliases.map(n=>n.id),secondary:api.isSecondaryOccurrence([...merged.aliases,merged.primary],merged.aliases[0])}
+  });
+  if(occurrenceRules.primary!=="n-r-test"||JSON.stringify(occurrenceRules.aliases)!==JSON.stringify(["occ-1"])||!occurrenceRules.secondary)throw new Error("Occurrence reconciliation rules are invalid: "+JSON.stringify(occurrenceRules));
+  const occurrenceExport=await page.evaluate(async()=>{
+    const ex=await import("./src/exporters/mindmap.js"),rid="r-export",resources=[{id:rid,type:"file",path:"same.txt",title:"Même ressource",tags:[]}],view={nodes:[
+      {id:"n-"+rid,resourceId:rid,x:0,y:0,occurrence:"primary",style:{}},
+      {id:"occ-export",resourceId:rid,x:360,y:0,occurrence:"alias",style:{}}
+    ],edges:[],frames:[],objects:[]},svg=ex.buildMindmapSvg(view,resources);
+    return(svg.match(/Même ressource/g)||[]).length
+  });
+  if(occurrenceExport!==2)throw new Error("SVG export did not preserve both visual occurrences: "+occurrenceExport);
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -212,7 +228,7 @@ try{
   await page.$eval(".node.root",el=>el.click());
   await page.waitForSelector("#form:not(.hidden)",{timeout:5000});
   const contextualActions=await page.$$eval(".context-actions button",els=>els.length);
-  if(contextualActions!==5)throw new Error("Contextual action group is incomplete: "+contextualActions);
+  if(contextualActions!==6)throw new Error("Contextual action group is incomplete: "+contextualActions);
   const relationEnabled=await page.$eval("#mapRelationBtn",el=>!el.disabled);
   if(!relationEnabled)throw new Error("Relation tool should be enabled for a selected node");
   const rightScroll=await page.$eval("#inspectorScroll",el=>({overflow:getComputedStyle(el).overflowY,gutter:getComputedStyle(el).scrollbarGutter,clientHeight:el.clientHeight,scrollHeight:el.scrollHeight}));
@@ -545,6 +561,7 @@ try{
   if(!canvasSource.includes("installTouchNavigation")||!canvasSource.includes("touchGesture")||!canvasSource.includes("frames=(state.view.frames||[]).map(f=>ensureFrameGeometry(f))"))throw new Error("Mobile pinch / full-map fit implementation is incomplete");
   if(!canvasSource.includes("shouldAutoCollapse")||!canvasSource.includes("visibleChildren")||!canvasSource.includes("settingsApplyCurrentBtn"))throw new Error("Large-branch workspace settings implementation is incomplete");
   if(!canvasSource.includes("computeTreeLayout")||!canvasSource.includes("applyNestedLayoutOverrides")||!canvasSource.includes("branchLayoutMode"))throw new Error("Configurable layout integration is incomplete");
+  if(!canvasSource.includes("duplicateSelectedOccurrence")||!canvasSource.includes("mergeOccurrenceGroup")||!canvasSource.includes("isAliasNode"))throw new Error("Multiple occurrence integration is incomplete");
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
   if(canvasSource.includes("limite de sécurité de la V0.1")||canvasSource.includes("entries.length>=1200")||canvasSource.includes("depth>10"))throw new Error("Legacy V0.1 scan limits are still present");
   const scanLimitMatch=canvasSource.match(/SCAN_MAX_ENTRIES=(\d+),SCAN_MAX_DEPTH=(\d+)/);
@@ -634,6 +651,44 @@ try{
   const newViewLayout=await layoutPage.$eval("#viewLayoutSelect",el=>el.value);
   if(newViewLayout!=="radial")throw new Error("New map did not use workspace default radial layout: "+newViewLayout);
   await layoutPage.close();
+
+  // Multiple visual occurrences share one resource but keep independent visual state.
+  const occurrencePage=await browser.newPage();
+  await occurrencePage.setViewport({width:1200,height:800,deviceScaleFactor:1});
+  await occurrencePage.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await occurrencePage.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok"&&document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:10000});
+  const resourceCountBefore=await occurrencePage.$eval("#count",el=>el.textContent||"");
+  await occurrencePage.evaluate(()=>{const n=[...document.querySelectorAll(".node")].find(el=>el.querySelector(".node-title")?.textContent==="Tennis for Two.pdf");n?.click()});
+  await occurrencePage.$eval("#contextDuplicateOccurrenceBtn",el=>el.click());
+  const duplicatedOccurrence=await occurrencePage.evaluate(()=>{
+    const same=[...document.querySelectorAll(".node")].filter(el=>el.querySelector(".node-title")?.textContent==="Tennis for Two.pdf"),primary=same.find(el=>!el.classList.contains("alias")),alias=same.find(el=>el.classList.contains("alias"));
+    return{count:same.length,badge:alias?.querySelector(".node-occurrence-badge")?.textContent||"",primaryX:parseFloat(primary?.style.left||"0"),aliasX:parseFloat(alias?.style.left||"0"),primaryBg:primary?.style.backgroundColor||"",aliasBg:alias?.style.backgroundColor||""}
+  });
+  if(duplicatedOccurrence.count!==2||duplicatedOccurrence.badge!=="↗"||Math.abs(duplicatedOccurrence.aliasX-duplicatedOccurrence.primaryX)<20)throw new Error("Visual occurrence duplication failed: "+JSON.stringify(duplicatedOccurrence));
+  const resourceCountAfterDuplicate=await occurrencePage.$eval("#count",el=>el.textContent||"");
+  if(resourceCountAfterDuplicate!==resourceCountBefore)throw new Error("Duplicating an occurrence changed the resource count");
+  await occurrencePage.$eval("#backgroundColor",el=>{el.value="#ff0000";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  const independentStyle=await occurrencePage.evaluate(()=>{
+    const same=[...document.querySelectorAll(".node")].filter(el=>el.querySelector(".node-title")?.textContent==="Tennis for Two.pdf"),primary=same.find(el=>!el.classList.contains("alias")),alias=same.find(el=>el.classList.contains("alias"));
+    return{primary:primary?.style.backgroundColor||"",alias:alias?.style.backgroundColor||""}
+  });
+  if(independentStyle.primary===independentStyle.alias||!independentStyle.alias.includes("255"))throw new Error("Occurrence style was not independent: "+JSON.stringify(independentStyle));
+  const edgesBeforeOccurrenceLink=await occurrencePage.$eval("#edges .edge-group",els=>els.length);
+  await occurrencePage.$eval("#linkBtn",el=>el.click());
+  await occurrencePage.evaluate(()=>{const n=[...document.querySelectorAll(".node")].find(el=>el.querySelector(".node-title")?.textContent==="Game design");n?.click()});
+  const edgesAfterOccurrenceLink=await occurrencePage.$eval("#edges .edge-group",els=>els.length);
+  if(edgesAfterOccurrenceLink!==edgesBeforeOccurrenceLink+1)throw new Error("Manual relation from secondary occurrence was not created");
+  await occurrencePage.evaluate(()=>{const n=[...document.querySelectorAll(".node.alias")].find(el=>el.querySelector(".node-title")?.textContent==="Tennis for Two.pdf");n?.click()});
+  const aliasInspector=await occurrencePage.$eval("#selectionKind",el=>el.textContent||"");
+  if(!aliasInspector.includes("occurrence secondaire"))throw new Error("Secondary occurrence is not identified in inspector: "+aliasInspector);
+  occurrencePage.once("dialog",d=>d.accept());
+  await occurrencePage.$eval("#deleteBtn",el=>el.click());
+  const afterAliasDelete=await occurrencePage.evaluate(()=>({
+    nodes:[...document.querySelectorAll(".node")].filter(el=>el.querySelector(".node-title")?.textContent==="Tennis for Two.pdf").length,
+    count:document.getElementById("count")?.textContent||""
+  }));
+  if(afterAliasDelete.nodes!==1||afterAliasDelete.count!==resourceCountBefore)throw new Error("Removing secondary occurrence affected the resource: "+JSON.stringify(afterAliasDelete));
+  await occurrencePage.close();
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
