@@ -38,11 +38,17 @@ Exemple conceptuel :
   "version": 1,
   "id": "uuid",
   "name": "Chef-d'œuvre — Les jeux vidéo",
-  "defaultView": "views/main-mindmap.json"
+  "defaultView": "views/main-mindmap.json",
+  "settings": {
+    "autoCollapseLargeBranches": true,
+    "autoCollapseThreshold": 20
+  }
 }
 ~~~
 
 Le champ version appartient au **format de données**, pas à la version de l'application.
+
+Le bloc `settings` contient les préférences qui doivent voyager avec le workspace. Depuis v0.3.17, il porte le repli automatique des branches volumineuses. Une absence de ce bloc reste compatible : MindSpark applique alors les valeurs par défaut.
 
 ## 3. resources.json
 
