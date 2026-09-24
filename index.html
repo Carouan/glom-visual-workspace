@@ -18,6 +18,7 @@
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
     <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
     <symbol id="i-file-plus" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
     <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3"/><path d="M7 16h10"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.5-2L20 8M4 16l2.4 2A7 7 0 0 0 18 16"/></symbol>
@@ -122,7 +123,7 @@
       <button id="showResourcesBtn" class="mobile-only">☰ Ressources</button>
       <button id="showInspectorBtn" class="mobile-only">ⓘ Détails</button>
     </nav>
-    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.18</span></div>
+    <div class="status"><span id="status">Prêt</span><span class="badge">v0.3.19</span></div>
   </header>
 
   <main class="shell">
@@ -298,6 +299,7 @@
               <button type="button" id="contextIdeaBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-lightbulb"></use></svg><span class="button-label">Idée liée</span></button>
               <button type="button" id="contextRelationBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-relation"></use></svg><span class="button-label">Relation</span></button>
               <button type="button" id="contextFrameBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-frame"></use></svg><span class="button-label">Cadre / groupe visuel</span></button>
+              <button type="button" id="contextDuplicateOccurrenceBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-copy"></use></svg><span class="button-label">Dupliquer l’occurrence</span></button>
               <button type="button" id="contextExcludeBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-eye-off"></use></svg><span class="button-label">Exclure du workspace</span></button>
             </div>
           </details>
