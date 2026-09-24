@@ -6,7 +6,7 @@
 
 MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.17.**
+**Version stable actuelle : v0.3.18.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -47,6 +47,8 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - **Ajuster toute la carte** avec dézoom très profond lorsque nécessaire, en tenant compte des nœuds, objets libres et groupes ;
 - repli automatique des branches volumineuses lors de la création d’une carte, seuil par défaut **20 enfants directs** et configurable par workspace ;
 - badge numérique sur les branches repliées pour indiquer leur nombre d’enfants directs ;
+- cinq dispositions de mindmap : **droite, gauche, bas, équilibrée gauche/droite et radiale/étoile** ;
+- disposition persistante par carte, avec surcharge possible sur un nœud et toute sa branche ;
 - nœuds redimensionnables ;
 - styles de nœud : police, taille, graisse, italique, alignement, couleurs, bordure et forme ;
 - icône/emoji personnalisé et aperçu d'une image dans un nœud ;
@@ -149,9 +151,9 @@ La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'u
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.17 :
+Priorités après v0.3.18 :
 
-- terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, images propres à la vue et layouts supplémentaires ;
+- terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple et images propres à la vue ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
 - améliorer la robustesse et retrouver les fichiers déplacés/renommés en V0.5 ;
 - préparer synchronisation et résolution de conflits en V0.6.
