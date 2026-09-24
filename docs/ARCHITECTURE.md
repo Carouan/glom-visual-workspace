@@ -41,14 +41,15 @@ Exemple conceptuel :
   "defaultView": "views/main-mindmap.json",
   "settings": {
     "autoCollapseLargeBranches": true,
-    "autoCollapseThreshold": 20
+    "autoCollapseThreshold": 20,
+    "defaultLayoutMode": "right"
   }
 }
 ~~~
 
 Le champ version appartient au **format de données**, pas à la version de l'application.
 
-Le bloc `settings` contient les préférences qui doivent voyager avec le workspace. Depuis v0.3.17, il porte le repli automatique des branches volumineuses. Une absence de ce bloc reste compatible : MindSpark applique alors les valeurs par défaut.
+Le bloc `settings` contient les préférences qui doivent voyager avec le workspace. Depuis v0.3.17, il porte le repli automatique des branches volumineuses ; v0.3.18 ajoute la disposition par défaut des nouvelles cartes. Une absence de ce bloc reste compatible : MindSpark applique alors les valeurs par défaut.
 
 ## 3. resources.json
 
@@ -86,10 +87,11 @@ La vue ne duplique pas la ressource. Elle ne stocke que sa représentation :
   "format": "glom-view",
   "version": 1,
   "type": "mindmap",
+  "layoutMode": "down",
   "pan": {"x": 40, "y": 40},
   "zoom": 0.9,
   "nodes": [
-    {"id":"n-1","resourceId":"r-abc123","x":820,"y":260,"collapsed":false}
+    {"id":"n-1","resourceId":"r-abc123","x":820,"y":260,"collapsed":false,"layoutMode":"left"}
   ],
   "edges": [
     {"id":"m-1","from":"n-parent","to":"n-1","kind":"manual"}
@@ -98,6 +100,8 @@ La vue ne duplique pas la ressource. Elle ne stocke que sa représentation :
 ~~~
 
 Depuis v0.3.11, un workspace peut contenir plusieurs mindmaps dans `views/*.json`. `workspace.json/defaultView` désigne la carte active par défaut. Une même `resourceId` peut donc être représentée et stylée différemment dans plusieurs vues sans dupliquer le fichier physique.
+
+Depuis v0.3.18, `layoutMode` peut être défini au niveau de la vue et, facultativement, au niveau d’un nœud. La valeur du nœud est une surcharge locale pour sa branche ; elle n’affecte ni `resources.json` ni l’arborescence physique.
 
 Dans une vue donnée, v0.3.11 conserve encore une occurrence principale par ressource ; les occurrences multiples dans une même carte sont une évolution distincte.
 
