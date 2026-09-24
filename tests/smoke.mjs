@@ -72,7 +72,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.17")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.18")throw new Error("Unexpected UI version: "+version);
   const pinchResult=await page.evaluate(()=>{
     const vp=document.getElementById("viewport"),world=document.getElementById("world"),r=vp.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
     const read=()=>{const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);return{x:m.e,y:m.f,z:m.a}};
@@ -100,6 +100,17 @@ try{
     }
   });
   if(branchRules.defaultThreshold!==20||branchRules.at20||!branchRules.at21||!branchRules.custom||branchRules.disabled)throw new Error("Large-branch threshold rules are invalid: "+JSON.stringify(branchRules));
+  const layoutRules=await page.evaluate(async()=>{
+    const api=await import("./src/mindmap/layouts.js"),nodes=["root","a","b","aa","bb"].map(id=>({id})),edges=[
+      {kind:"hierarchy",from:"root",to:"a"},{kind:"hierarchy",from:"root",to:"b"},
+      {kind:"hierarchy",from:"a",to:"aa"},{kind:"hierarchy",from:"b",to:"bb"}
+    ];
+    const run=mode=>Object.fromEntries(api.computeTreeLayout(nodes,edges,{rootId:"root",mode,anchor:{x:0,y:0}}));
+    return{right:run("right"),left:run("left"),down:run("down"),balanced:run("balanced"),radial:run("radial"),fallback:api.normalizeLayoutMode("unknown")};
+  });
+  if(layoutRules.fallback!=="right"||layoutRules.right.a.x<=0||layoutRules.left.a.x>=0||layoutRules.down.a.y<=0||layoutRules.balanced.a.x*layoutRules.balanced.b.x>=0)throw new Error("Configurable layout directions are invalid: "+JSON.stringify(layoutRules));
+  const radialA=layoutRules.radial.a,radialB=layoutRules.radial.b;
+  if(!radialA||!radialB||Math.hypot(radialA.x,radialA.y)<100||Math.abs(radialA.x-radialB.x)+Math.abs(radialA.y-radialB.y)<50)throw new Error("Radial layout did not separate branches: "+JSON.stringify(layoutRules.radial));
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -533,6 +544,7 @@ try{
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
   if(!canvasSource.includes("installTouchNavigation")||!canvasSource.includes("touchGesture")||!canvasSource.includes("frames=(state.view.frames||[]).map(f=>ensureFrameGeometry(f))"))throw new Error("Mobile pinch / full-map fit implementation is incomplete");
   if(!canvasSource.includes("shouldAutoCollapse")||!canvasSource.includes("visibleChildren")||!canvasSource.includes("settingsApplyCurrentBtn"))throw new Error("Large-branch workspace settings implementation is incomplete");
+  if(!canvasSource.includes("computeTreeLayout")||!canvasSource.includes("applyNestedLayoutOverrides")||!canvasSource.includes("branchLayoutMode"))throw new Error("Configurable layout integration is incomplete");
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
   if(canvasSource.includes("limite de sécurité de la V0.1")||canvasSource.includes("entries.length>=1200")||canvasSource.includes("depth>10"))throw new Error("Legacy V0.1 scan limits are still present");
   const scanLimitMatch=canvasSource.match(/SCAN_MAX_ENTRIES=(\d+),SCAN_MAX_DEPTH=(\d+)/);
@@ -559,9 +571,10 @@ try{
   await branchPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
   const defaultBranchSettings=await branchPage.evaluate(()=>({
     enabled:document.getElementById("autoCollapseEnabled")?.checked,
-    threshold:document.getElementById("autoCollapseThreshold")?.value
+    threshold:document.getElementById("autoCollapseThreshold")?.value,
+    layout:document.getElementById("defaultLayoutMode")?.value
   }));
-  if(!defaultBranchSettings.enabled||defaultBranchSettings.threshold!=="20")throw new Error("Default workspace branch settings are wrong: "+JSON.stringify(defaultBranchSettings));
+  if(!defaultBranchSettings.enabled||defaultBranchSettings.threshold!=="20"||defaultBranchSettings.layout!=="right")throw new Error("Default workspace settings are wrong: "+JSON.stringify(defaultBranchSettings));
   await branchPage.$eval("#autoCollapseThreshold",el=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))});
   await branchPage.$eval("#settingsForm",el=>el.requestSubmit());
   const existingViewPreserved=await branchPage.evaluate(()=>({
@@ -589,6 +602,38 @@ try{
   const persistedThreshold=await branchPage.$eval("#autoCollapseThreshold",el=>el.value);
   if(persistedThreshold!=="1")throw new Error("Workspace threshold was not persisted in state: "+persistedThreshold);
   await branchPage.close();
+
+  // Global and branch-specific layouts are tested independently from the historical desktop flow.
+  const layoutPage=await browser.newPage();
+  await layoutPage.setViewport({width:1200,height:800,deviceScaleFactor:1});
+  await layoutPage.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await layoutPage.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok"&&document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:10000});
+  const initialLayoutMode=await layoutPage.$eval("#viewLayoutSelect",el=>el.value);
+  if(initialLayoutMode!=="right")throw new Error("Initial map layout should inherit workspace default right: "+initialLayoutMode);
+  await layoutPage.$eval("#viewLayoutSelect",el=>{el.value="down";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  const downPositions=await layoutPage.evaluate(()=>{
+    const nodes=[...document.querySelectorAll(".node")],find=title=>nodes.find(n=>n.querySelector(".node-title")?.textContent===title),root=document.querySelector(".node.root"),history=find("Histoire");
+    return{rootY:parseFloat(root?.style.top||"0"),childY:parseFloat(history?.style.top||"0"),mode:document.getElementById("viewLayoutSelect")?.value}
+  });
+  if(downPositions.mode!=="down"||downPositions.childY<=downPositions.rootY)throw new Error("Global down layout was not applied: "+JSON.stringify(downPositions));
+  await layoutPage.evaluate(()=>{const n=[...document.querySelectorAll(".node")].find(el=>el.querySelector(".node-title")?.textContent==="Histoire");n?.click()});
+  await layoutPage.$eval("#branchLayoutMode",el=>{el.value="left";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await layoutPage.$eval("#branchLayoutApplyBtn",el=>el.click());
+  const branchPositions=await layoutPage.evaluate(()=>{
+    const nodes=[...document.querySelectorAll(".node")],find=title=>nodes.find(n=>n.querySelector(".node-title")?.textContent===title),history=find("Histoire"),child=find("Premiers jeux");
+    return{rootX:parseFloat(history?.style.left||"0"),childX:parseFloat(child?.style.left||"0"),global:document.getElementById("viewLayoutSelect")?.value,branch:document.getElementById("branchLayoutMode")?.value}
+  });
+  if(branchPositions.global!=="down"||branchPositions.branch!=="left"||branchPositions.childX>=branchPositions.rootX)throw new Error("Branch-specific left layout was not applied over global down layout: "+JSON.stringify(branchPositions));
+  await layoutPage.$eval("#settingsBtn",el=>el.click());
+  await layoutPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
+  await layoutPage.$eval("#defaultLayoutMode",el=>{el.value="radial";el.dispatchEvent(new Event("change",{bubbles:true}))});
+  await layoutPage.$eval("#settingsForm",el=>el.requestSubmit());
+  layoutPage.once("dialog",d=>d.accept("Radiale par défaut"));
+  await layoutPage.$eval("#newViewBtn",el=>el.click());
+  await layoutPage.waitForFunction(()=>document.getElementById("viewSelect")?.selectedOptions?.[0]?.textContent==="Radiale par défaut",{timeout:3000});
+  const newViewLayout=await layoutPage.$eval("#viewLayoutSelect",el=>el.value);
+  if(newViewLayout!=="radial")throw new Error("New map did not use workspace default radial layout: "+newViewLayout);
+  await layoutPage.close();
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
