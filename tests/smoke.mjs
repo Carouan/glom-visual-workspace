@@ -47,7 +47,7 @@ try{
   const directRangeValue=await page.$eval("#fontSize",el=>el.value);
   if(directRangeValue!=="31")throw new Error("Direct numeric slider input did not update range: "+directRangeValue);
   const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
-  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Charger la démo"];
+  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Paramètres…","Charger la démo"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
   await page.$eval("#workspaceMenu > summary",el=>el.click());
   await page.click("#demoBtn");
@@ -72,7 +72,7 @@ try{
   if(!snapshot.workspace.includes("Les jeux vidéo"))throw new Error("Demo workspace not rendered: "+JSON.stringify(snapshot));
   if(!snapshot.nodes.includes("Tennis for Two.pdf"))throw new Error("Demo nodes not rendered: "+JSON.stringify(snapshot));
   const version=await page.$eval(".badge",el=>el.textContent||"");
-  if(version.trim()!=="v0.3.16")throw new Error("Unexpected UI version: "+version);
+  if(version.trim()!=="v0.3.17")throw new Error("Unexpected UI version: "+version);
   const pinchResult=await page.evaluate(()=>{
     const vp=document.getElementById("viewport"),world=document.getElementById("world"),r=vp.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
     const read=()=>{const m=new DOMMatrixReadOnly(getComputedStyle(world).transform);return{x:m.e,y:m.f,z:m.a}};
@@ -89,6 +89,17 @@ try{
   const fitLabel=await page.$eval("#fitBtn .button-label",el=>el.textContent||"");
   if(fitLabel!=="Ajuster toute la carte")throw new Error("Fit command label is ambiguous: "+fitLabel);
   await page.$eval("#fitBtn",el=>el.click());
+  const branchRules=await page.evaluate(async()=>{
+    const api=await import("./src/workspaces/settings.js");
+    return{
+      defaultThreshold:api.normalizeWorkspaceSettings({}).autoCollapseThreshold,
+      at20:api.shouldAutoCollapse(20,{}),
+      at21:api.shouldAutoCollapse(21,{}),
+      custom:api.shouldAutoCollapse(3,{autoCollapseThreshold:2}),
+      disabled:api.shouldAutoCollapse(999,{autoCollapseLargeBranches:false,autoCollapseThreshold:1})
+    }
+  });
+  if(branchRules.defaultThreshold!==20||branchRules.at20||!branchRules.at21||!branchRules.custom||branchRules.disabled)throw new Error("Large-branch threshold rules are invalid: "+JSON.stringify(branchRules));
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -521,6 +532,7 @@ try{
 
   const canvasSource=await page.evaluate(()=>fetch("./src/app.js").then(r=>r.text()));
   if(!canvasSource.includes("installTouchNavigation")||!canvasSource.includes("touchGesture")||!canvasSource.includes("frames=(state.view.frames||[]).map(f=>ensureFrameGeometry(f))"))throw new Error("Mobile pinch / full-map fit implementation is incomplete");
+  if(!canvasSource.includes("shouldAutoCollapse")||!canvasSource.includes("visibleChildren")||!canvasSource.includes("settingsApplyCurrentBtn"))throw new Error("Large-branch workspace settings implementation is incomplete");
   if(canvasSource.includes("n.x=Math.max(0")||canvasSource.includes("o.x=Math.max(0"))throw new Error("Canvas movement is still clamped at coordinate zero");
   if(canvasSource.includes("limite de sécurité de la V0.1")||canvasSource.includes("entries.length>=1200")||canvasSource.includes("depth>10"))throw new Error("Legacy V0.1 scan limits are still present");
   const scanLimitMatch=canvasSource.match(/SCAN_MAX_ENTRIES=(\d+),SCAN_MAX_DEPTH=(\d+)/);
@@ -537,6 +549,46 @@ try{
   const mobileFit=await mobilePage.$eval("#zoomValue",el=>parseFloat(el.textContent||"100"));
   if(!(mobileFit<20))throw new Error("Fit all is still effectively clamped near 20% on a small viewport: "+mobileFit);
   await mobilePage.close();
+
+  // Large-branch settings are isolated from the main desktop smoke scenario.
+  const branchPage=await browser.newPage();
+  await branchPage.setViewport({width:1200,height:800,deviceScaleFactor:1});
+  await branchPage.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await branchPage.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok"&&document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:10000});
+  await branchPage.$eval("#settingsBtn",el=>el.click());
+  await branchPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
+  const defaultBranchSettings=await branchPage.evaluate(()=>({
+    enabled:document.getElementById("autoCollapseEnabled")?.checked,
+    threshold:document.getElementById("autoCollapseThreshold")?.value
+  }));
+  if(!defaultBranchSettings.enabled||defaultBranchSettings.threshold!=="20")throw new Error("Default workspace branch settings are wrong: "+JSON.stringify(defaultBranchSettings));
+  await branchPage.$eval("#autoCollapseThreshold",el=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await branchPage.$eval("#settingsForm",el=>el.requestSubmit());
+  const existingViewPreserved=await branchPage.evaluate(()=>({
+    rootCollapsed:!!document.querySelector(".node.root .collapse-count"),
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(existingViewPreserved.rootCollapsed||!existingViewPreserved.historyVisible)throw new Error("Changing the threshold retroactively altered the existing map: "+JSON.stringify(existingViewPreserved));
+  branchPage.once("dialog",d=>d.accept("Seuil test"));
+  await branchPage.$eval("#newViewBtn",el=>el.click());
+  await branchPage.waitForFunction(()=>document.getElementById("viewSelect")?.selectedOptions?.[0]?.textContent==="Seuil test",{timeout:3000});
+  const collapsedLargeBranch=await branchPage.evaluate(()=>({
+    count:document.querySelector(".node.root .collapse-count")?.textContent||"",
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(collapsedLargeBranch.count!=="5"||collapsedLargeBranch.historyVisible)throw new Error("New map did not auto-collapse the large root branch: "+JSON.stringify(collapsedLargeBranch));
+  await branchPage.click(".node.root .collapse");
+  await branchPage.waitForFunction(()=>[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire"),{timeout:3000});
+  const manualExpand=await branchPage.evaluate(()=>({
+    countVisible:!!document.querySelector(".node.root .collapse-count"),
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(manualExpand.countVisible||!manualExpand.historyVisible)throw new Error("Manual expansion of an auto-collapsed branch failed: "+JSON.stringify(manualExpand));
+  await branchPage.$eval("#settingsBtn",el=>el.click());
+  await branchPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
+  const persistedThreshold=await branchPage.$eval("#autoCollapseThreshold",el=>el.value);
+  if(persistedThreshold!=="1")throw new Error("Workspace threshold was not persisted in state: "+persistedThreshold);
+  await branchPage.close();
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
