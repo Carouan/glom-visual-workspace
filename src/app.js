@@ -1,6 +1,6 @@
 import {normalizeWorkspaceSettings,shouldAutoCollapse} from "./workspaces/settings.js";
 import {computeTreeLayout,hierarchyDepths,hierarchyRootId,normalizeLayoutMode} from "./mindmap/layouts.js";
-import {nodesForResource as occurrenceNodesForResource,primaryOccurrence,isSecondaryOccurrence} from "./mindmap/occurrences.js";
+import {nodesForResource as occurrenceNodesForResource,primaryOccurrence,isSecondaryOccurrence,mergeOccurrenceGroup} from "./mindmap/occurrences.js";
 
 let viewerApi=null,viewerLoadFailed=false,exporterApi=null,workspaceExporterApi=null,recentApi=null;
 async function getWorkspaceExporterApi(){if(workspaceExporterApi)return workspaceExporterApi;try{workspaceExporterApi=await import("./exporters/workspace.js");return workspaceExporterApi}catch(e){console.error("Workspace exporter failed to load",e);setStatus("Export workspace indisponible","bad");return null}}
@@ -239,9 +239,9 @@ function mergeView(view,resources,workspace=state.workspace){
   for(const oldNode of view.nodes||[]){if(!oldGroups.has(oldNode.resourceId))oldGroups.set(oldNode.resourceId,[]);oldGroups.get(oldNode.resourceId).push(oldNode)}
   const primaries=[],aliases=[];
   for(const r of resources){
-    const group=oldGroups.get(r.id)||[],fb=fallback.get(r.id),oldPrimary=primaryOccurrence(group,r.id),n=Object.assign({},oldPrimary||fb);
-    if(typeof n.collapsed!=="boolean")n.collapsed=!!fb?.collapsed;if(n.layoutMode)n.layoutMode=normalizeLayoutMode(n.layoutMode);n.occurrence="primary";n.style=Object.assign({},n.style||{});primaries.push(n);
-    for(const oldNode of group){if(oldNode===oldPrimary)continue;const alias=Object.assign({},oldNode,{occurrence:"alias",style:Object.assign({},oldNode.style||{})});if(alias.layoutMode)delete alias.layoutMode;aliases.push(alias)}
+    const group=oldGroups.get(r.id)||[],fb=fallback.get(r.id),merged=mergeOccurrenceGroup(group,r.id,fb),n=merged.primary;
+    if(typeof n.collapsed!=="boolean")n.collapsed=!!fb?.collapsed;if(n.layoutMode)n.layoutMode=normalizeLayoutMode(n.layoutMode);n.style=Object.assign({},n.style||{});primaries.push(n);
+    for(const sourceAlias of merged.aliases){const alias=Object.assign({},sourceAlias,{style:Object.assign({},sourceAlias.style||{})});if(alias.layoutMode)delete alias.layoutMode;aliases.push(alias)}
   }
   const nodes=primaries.concat(aliases),ids=new Set(nodes.map(n=>n.id)),primaryByResource=new Map(primaries.map(n=>[n.resourceId,n])),autoById=new Map(auto.nodes.map(n=>[n.id,n])),oldEdges=new Map((view.edges||[]).map(e=>[e.id,e]));
   const hierarchy=auto.edges.map(e=>{const fromRid=autoById.get(e.from)?.resourceId,toRid=autoById.get(e.to)?.resourceId,prev=oldEdges.get(e.id);return Object.assign({},e,{from:primaryByResource.get(fromRid)?.id||e.from,to:primaryByResource.get(toRid)?.id||e.to},prev?{label:prev.label||"",style:Object.assign({},prev.style||{})}:{})});
