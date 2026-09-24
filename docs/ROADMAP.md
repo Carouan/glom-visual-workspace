@@ -2,7 +2,7 @@
 
 > Gratuit · Libre · Open-source · Multi-plateforme
 
-**État actuel : v0.3.15 stable.**
+**État actuel : v0.3.16 stable.**
 
 Cette roadmap distingue désormais ce qui est déjà livré de ce qui reste à construire. Le principe reste inchangé : **les fichiers réels restent la source de vérité** ; MindSpark ajoute une couche de métadonnées, de visualisation et de navigation dans `.glom/`.
 
@@ -290,14 +290,28 @@ Le tutoriel #55 reste sans numéro de version figé tant que les derniers élém
 
 Issue #6 terminée par cette version.
 
+### V0.3.16 — navigation mobile et cadrage complet ✅
+
+- pinch-to-zoom à deux doigts sans dépendance externe ;
+- ancrage du zoom sur le centre du geste et déplacement simultané possible avec deux doigts ;
+- neutralisation des déplacements concurrents pendant un pinch, puis reprise propre après relâchement ;
+- dézoom minimal fortement abaissé pour les cartes très étendues ;
+- affichage lisible des niveaux de zoom inférieurs à 10 % ;
+- commande **Ajuster toute la carte** avec marges adaptatives ;
+- calcul du cadrage sur les nœuds visibles, objets libres et cadres/groupes ;
+- boutons +/−, molette et persistance de la vue conservés.
+
+Issue #63 terminée par cette version. La demande UX générale reste suivie par #62.
+
 ### Prochaines priorités V0.3.x
 
-Ordre de travail proposé après v0.3.15 :
+Ordre de travail proposé après v0.3.16 :
 
-1. **plusieurs occurrences visuelles d'une même ressource dans une carte** ;
-2. **sélection multiple** ;
-3. **auto-layout horizontal, vertical et radial** ;
-4. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
+1. **#65 — branches volumineuses : repli automatique, compteur et seuil configurable** ;
+2. **#64 — layouts configurables par carte et par branche** ;
+3. **#8 — plusieurs occurrences visuelles d'une même ressource dans une carte** ;
+4. **sélection multiple** ;
+5. styles/thèmes réutilisables et duplication rapide d'un style sur une branche.
 
 ### Backlog V0.3.x
 
