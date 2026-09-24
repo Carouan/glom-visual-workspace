@@ -6,7 +6,7 @@
 
 MindSpark est un **atelier visuel local-first** : les vrais fichiers restent dans une arborescence normale, tandis que l'application stocke séparément leur représentation visuelle, les annotations, les tags, les styles et les relations.
 
-**Version stable actuelle : v0.3.16.**
+**Version stable actuelle : v0.3.17.**
 
 Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 
@@ -45,6 +45,8 @@ Démo / PWA publiée : https://carouan.github.io/glom-visual-workspace/
 - déplacement, zoom, pan, recentrage et repli de branches ;
 - **pinch-to-zoom tactile** à deux doigts, centré sur le geste, sans casser le pan ou le déplacement des objets ;
 - **Ajuster toute la carte** avec dézoom très profond lorsque nécessaire, en tenant compte des nœuds, objets libres et groupes ;
+- repli automatique des branches volumineuses lors de la création d’une carte, seuil par défaut **20 enfants directs** et configurable par workspace ;
+- badge numérique sur les branches repliées pour indiquer leur nombre d’enfants directs ;
 - nœuds redimensionnables ;
 - styles de nœud : police, taille, graisse, italique, alignement, couleurs, bordure et forme ;
 - icône/emoji personnalisé et aperçu d'une image dans un nœud ;
@@ -147,7 +149,7 @@ La compatibilité est détectée à l'exécution : MindSpark ne suppose pas qu'u
 
 La roadmap détaillée est dans [docs/ROADMAP.md](docs/ROADMAP.md) et les tâches restantes sont suivies dans les issues GitHub.
 
-Priorités après v0.3.16 :
+Priorités après v0.3.17 :
 
 - terminer le mindmapping avancé : plusieurs occurrences d'une ressource dans une carte, sélection multiple, images propres à la vue et layouts supplémentaires ;
 - enrichir les métadonnées et vues (Kanban, timeline, graphe) en V0.4 ;
