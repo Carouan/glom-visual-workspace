@@ -379,7 +379,7 @@ function newDraftWorkspace(){
   initTreeExpansion();show();fit();markProductAdopted();setStatus("Espace de travail brouillon — créez des dossiers puis exportez ou matérialisez-le","ok")
 }
 async function addFolder(){
-  if(!state.workspace||!state.view)return;
+  if(!state.workspace||!state.view)return;if(isAliasNode(selectedNode())){setStatus("Une occurrence secondaire ne modifie pas l’arborescence physique","bad");return}
   if(state.mode==="fallback"){alert("La création de dossiers n’est pas disponible en mode compatibilité lecture seule.");return}
   const selected=selectedResource(),parent=(selected&&["root","folder"].includes(selected.type)?selected:(selected?parentOf(selected,state.resources):null))||workspaceRoot();
   if(!parent)return;
@@ -412,7 +412,7 @@ async function saveTextResource(r,text){
   return{size:file.size,lastModified:file.lastModified}
 }
 async function addLocalTextFile(ext){
-  if(state.mode!=="fs"||!state.handle){alert("La création directe de fichiers nécessite un workspace local ouvert.");return}
+  if(isAliasNode(selectedNode())){setStatus("Une occurrence secondaire ne modifie pas l’arborescence physique","bad");return}if(state.mode!=="fs"||!state.handle){alert("La création directe de fichiers nécessite un workspace local ouvert.");return}
   if(!(await ensureWritePermission()))return;const parent=insertionParent();if(!parent)return;
   const raw=prompt(ext==="md"?"Nom du fichier Markdown :":"Nom du fichier texte :",ext==="md"?"Notes.md":"Notes.txt");if(raw===null)return;
   const name=safeFileName(raw,ext),path=parent.path?parent.path+"/"+name:name;if(pathExcluded(path)){alert("Ce chemin correspond à une règle d’exclusion du workspace.");return}
@@ -530,7 +530,7 @@ async function save(quiet){
 }
 function updateActionStates(){
   const ok=!!(state.workspace&&state.view),r=selectedResource(),n=selectedNode(),alias=!!(n&&isAliasNode(n)),folderSelected=!!(r&&["root","folder"].includes(r.type)&&!alias),hasSelection=!!(r&&n),hasFrame=!!(selectedFrameObject()||(n&&frameForNode(n.id))),canCreateLocalText=ok&&state.mode==="fs"&&!alias;
-  if(ui.mapFolderBtn)ui.mapFolderBtn.disabled=!ok||state.mode==="fallback";
+  if(ui.mapFolderBtn)ui.mapFolderBtn.disabled=!ok||state.mode==="fallback"||alias;if(ui.folderBtn)ui.folderBtn.disabled=!ok||state.mode==="fallback"||alias;
   if(ui.mapIdeaBtn)ui.mapIdeaBtn.disabled=!ok;if(ui.textFileBtn)ui.textFileBtn.disabled=!canCreateLocalText;if(ui.markdownFileBtn)ui.markdownFileBtn.disabled=!canCreateLocalText;
   if(ui.mapRelationBtn){ui.mapRelationBtn.disabled=!hasSelection;ui.mapRelationBtn.classList.toggle("active",!!state.linkSource)}
   if(ui.mapFrameBtn){ui.mapFrameBtn.disabled=!hasSelection;ui.mapFrameBtn.classList.toggle("active",hasFrame)}
@@ -742,7 +742,7 @@ function makeNode(n,r){
   const main=document.createElement("div");main.className="node-main";const ic=document.createElement("div");ic.className="node-icon";ic.textContent=s.icon||icon(r);if(s.showImage&&isImageResource(r))attachNodeImage(ic,r);
   const txt=document.createElement("div");txt.className="node-text";txt.style.textAlign=s.textAlign||"left";const tt=document.createElement("div");tt.className="node-title";tt.textContent=r.title;tt.style.fontSize=(Number(s.fontSize)||14)+"px";tt.style.fontFamily=FONT_STACKS[s.fontFamily]||FONT_STACKS.system;tt.style.fontWeight=s.fontWeight||"650";tt.style.fontStyle=s.italic?"italic":"normal";tt.style.color=s.textColor||"#172033";
   const meta=document.createElement("div");meta.className="node-meta";meta.textContent=r.missing?"Ressource absente":r.tags&&r.tags.length?r.tags.map(t=>"#"+t).join(" "):typeLabel(r);txt.append(tt,meta);
-  const ch=visibleChildren(n.id),side=document.createElement(ch.length?"button":"span");if(ch.length){side.className="collapse";const arrow=document.createElement("span");arrow.className="collapse-arrow";arrow.textContent=n.collapsed?"▸":"▾";side.append(arrow);if(n.collapsed){const count=document.createElement("span");count.className="collapse-count";count.textContent=String(ch.length);count.title=ch.length+" enfant"+(ch.length>1?"s":"")+" direct"+(ch.length>1?"s":"");side.append(count)}side.onpointerdown=x=>x.stopPropagation();side.onclick=x=>{x.stopPropagation();n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}}else{side.className="node-badge";side.textContent=s.locked?"🔒":r.type==="file"?"fichier":r.type==="virtual"?"idée":r.type==="url"?"web":""}main.append(ic,txt,side);e.append(main);
+  const ch=visibleChildren(n.id),side=document.createElement(ch.length?"button":"span");if(ch.length){side.className="collapse";const arrow=document.createElement("span");arrow.className="collapse-arrow";arrow.textContent=n.collapsed?"▸":"▾";side.append(arrow);if(n.collapsed){const count=document.createElement("span");count.className="collapse-count";count.textContent=String(ch.length);count.title=ch.length+" enfant"+(ch.length>1?"s":"")+" direct"+(ch.length>1?"s":"");side.append(count)}side.onpointerdown=x=>x.stopPropagation();side.onclick=x=>{x.stopPropagation();n.collapsed=!n.collapsed;setDirty();renderMap();renderInspector()}}else{side.className="node-badge";side.textContent=s.locked?"🔒":r.type==="file"?"fichier":r.type==="virtual"?"idée":r.type==="url"?"web":""}main.append(ic,txt,side);e.append(main);if(isAliasNode(n)){e.classList.add("alias");const badge=document.createElement("span");badge.className="node-occurrence-badge";badge.textContent="↗";badge.title="Occurrence visuelle secondaire — même ressource";badge.setAttribute("aria-label","Occurrence visuelle secondaire");e.append(badge)}
   e.onclick=x=>{x.stopPropagation();if(state.linkSource&&state.linkSource!==n.id){manualEdge(state.linkSource,n.id);state.linkSource=null;ui.hint.textContent="Lien créé";render();return}select(n.id)};e.ondblclick=x=>{x.stopPropagation();openResource(r)};e.onpointerdown=x=>dragNode(x,n,e);return e
 }
 function renderEdges(){
@@ -869,10 +869,10 @@ function duplicateSelectedOccurrence(){
   const source=selectedNode(),r=selectedResource();if(!source||!r||!state.view)return;
   const clone=typeof structuredClone==="function"?structuredClone(source):JSON.parse(JSON.stringify(source));clone.id="occ-"+uuid();clone.occurrence="alias";clone.x=Number(source.x||0)+48;clone.y=Number(source.y||0)+48;clone.collapsed=false;delete clone.layoutMode;clone.style=Object.assign({},source.style||{});state.view.nodes.push(clone);state.selected=clone.id;state.selectedFrame=null;state.selectedVisual=null;state.selectedEdge=null;state.linkSource=null;setDirty(true);render();setStatus("Occurrence visuelle ajoutée — la ressource reste unique","ok")
 }
-function removeNodeReferences(ids){
-  const remove=new Set(ids);state.view.nodes=state.view.nodes.filter(n=>!remove.has(n.id));state.view.edges=state.view.edges.filter(e=>!remove.has(e.from)&&!remove.has(e.to));state.view.frames=(state.view.frames||[]).filter(fr=>!remove.has(fr.rootNodeId)).map(fr=>Object.assign({},fr,{memberNodeIds:frameMemberIds(fr).filter(id=>!remove.has(id))}));if(remove.has(state.linkSource))state.linkSource=null
+function removeNodeReferences(ids,view=state.view){
+  if(!view)return;const remove=new Set(ids);view.nodes=view.nodes.filter(n=>!remove.has(n.id));view.edges=view.edges.filter(e=>!remove.has(e.from)&&!remove.has(e.to));view.frames=(view.frames||[]).filter(fr=>!remove.has(fr.rootNodeId)).map(fr=>Object.assign({},fr,{memberNodeIds:(Array.isArray(fr.memberNodeIds)?fr.memberNodeIds:[]).filter(id=>!remove.has(id))}));if(view===state.view&&remove.has(state.linkSource))state.linkSource=null
 }
-function deleteSelected(){const r=selectedResource(),n=selectedNode();if(!r||!n)return;if(isAliasNode(n)){if(!confirm("Retirer cette occurrence visuelle de « "+r.title+" » ?"))return;removeNodeReferences([n.id]);state.selected=null;state.selectedFrame=null;setDirty();render();setStatus("Occurrence visuelle retirée — ressource conservée","ok");return}if(!["virtual","url"].includes(r.type))return;const occurrences=nodesForResource(r.id),suffix=occurrences.length>1?" et ses "+occurrences.length+" occurrences visuelles":"";if(!confirm("Supprimer la ressource « "+r.title+" »"+suffix+" ?"))return;state.resources=state.resources.filter(x=>x.id!==r.id);removeNodeReferences(occurrences.map(x=>x.id));state.selected=null;state.selectedFrame=null;state.linkSource=null;setDirty();render()}
+function deleteSelected(){const r=selectedResource(),n=selectedNode();if(!r||!n)return;if(isAliasNode(n)){if(!confirm("Retirer cette occurrence visuelle de « "+r.title+" » ?"))return;removeNodeReferences([n.id]);state.selected=null;state.selectedFrame=null;setDirty();render();setStatus("Occurrence visuelle retirée — ressource conservée","ok");return}if(!["virtual","url"].includes(r.type))return;const occurrences=nodesForResource(r.id),suffix=occurrences.length>1?" et ses "+occurrences.length+" occurrences visuelles":"";if(!confirm("Supprimer la ressource « "+r.title+" »"+suffix+" ?"))return;state.resources=state.resources.filter(x=>x.id!==r.id);for(const v of allViews())removeNodeReferences(nodesForResource(r.id,v).map(x=>x.id),v);state.selected=null;state.selectedFrame=null;state.linkSource=null;setDirty();render()}
 function linkMode(){const n=selectedNode();if(!n)return;if(state.linkSource===n.id){state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue"}else{state.linkSource=n.id;ui.hint.textContent="Cliquez sur le nœud à relier"}renderInspector();updateActionStates()}
 function updateEdgeStyle(){
   const edgeId=ui.edgeForm.dataset.edgeId||state.selectedEdge,ed=edge(edgeId);if(!ed)return;
