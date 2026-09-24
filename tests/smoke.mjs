@@ -100,40 +100,6 @@ try{
     }
   });
   if(branchRules.defaultThreshold!==20||branchRules.at20||!branchRules.at21||!branchRules.custom||branchRules.disabled)throw new Error("Large-branch threshold rules are invalid: "+JSON.stringify(branchRules));
-  await page.$eval("#settingsBtn",el=>el.click());
-  await page.waitForSelector("#settingsDialog[open]",{timeout:3000});
-  const defaultBranchSettings=await page.evaluate(()=>({
-    enabled:document.getElementById("autoCollapseEnabled")?.checked,
-    threshold:document.getElementById("autoCollapseThreshold")?.value
-  }));
-  if(!defaultBranchSettings.enabled||defaultBranchSettings.threshold!=="20")throw new Error("Default workspace branch settings are wrong: "+JSON.stringify(defaultBranchSettings));
-  await page.$eval("#autoCollapseThreshold",el=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))});
-  await page.$eval("#settingsForm",el=>el.requestSubmit());
-  const existingViewPreserved=await page.evaluate(()=>({
-    rootCollapsed:!!document.querySelector(".node.root .collapse-count"),
-    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
-  }));
-  if(existingViewPreserved.rootCollapsed||!existingViewPreserved.historyVisible)throw new Error("Changing the threshold retroactively altered the existing map: "+JSON.stringify(existingViewPreserved));
-  page.once("dialog",d=>d.accept("Seuil test"));
-  await page.$eval("#newViewBtn",el=>el.click());
-  await page.waitForFunction(()=>document.getElementById("viewSelect")?.selectedOptions?.[0]?.textContent==="Seuil test",{timeout:3000});
-  const collapsedLargeBranch=await page.evaluate(()=>({
-    count:document.querySelector(".node.root .collapse-count")?.textContent||"",
-    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
-  }));
-  if(collapsedLargeBranch.count!=="5"||collapsedLargeBranch.historyVisible)throw new Error("New map did not auto-collapse the large root branch: "+JSON.stringify(collapsedLargeBranch));
-  await page.click(".node.root .collapse");
-  await page.waitForFunction(()=>[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire"),{timeout:3000});
-  const manualExpand=await page.evaluate(()=>({
-    countVisible:!!document.querySelector(".node.root .collapse-count"),
-    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
-  }));
-  if(manualExpand.countVisible||!manualExpand.historyVisible)throw new Error("Manual expansion of an auto-collapsed branch failed: "+JSON.stringify(manualExpand));
-  await page.$eval("#settingsBtn",el=>el.click());
-  await page.waitForSelector("#settingsDialog[open]",{timeout:3000});
-  const persistedThreshold=await page.$eval("#autoCollapseThreshold",el=>el.value);
-  if(persistedThreshold!=="1")throw new Error("Workspace threshold was not persisted in state: "+persistedThreshold);
-  await page.click("#settingsClose");
   const recentVisible=await page.$eval("#recentBtn",el=>!!el);
   if(!recentVisible)throw new Error("Recent workspaces command is missing");
   const menuCount=await page.$$eval(".toolbar-menu",els=>els.length);
@@ -583,6 +549,46 @@ try{
   const mobileFit=await mobilePage.$eval("#zoomValue",el=>parseFloat(el.textContent||"100"));
   if(!(mobileFit<20))throw new Error("Fit all is still effectively clamped near 20% on a small viewport: "+mobileFit);
   await mobilePage.close();
+
+  // Large-branch settings are isolated from the main desktop smoke scenario.
+  const branchPage=await browser.newPage();
+  await branchPage.setViewport({width:1200,height:800,deviceScaleFactor:1});
+  await branchPage.goto("http://127.0.0.1:4173/?demo=1",{waitUntil:"networkidle0",timeout:30000});
+  await branchPage.waitForFunction(()=>document.documentElement.dataset.glomBoot==="ok"&&document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:10000});
+  await branchPage.$eval("#settingsBtn",el=>el.click());
+  await branchPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
+  const defaultBranchSettings=await branchPage.evaluate(()=>({
+    enabled:document.getElementById("autoCollapseEnabled")?.checked,
+    threshold:document.getElementById("autoCollapseThreshold")?.value
+  }));
+  if(!defaultBranchSettings.enabled||defaultBranchSettings.threshold!=="20")throw new Error("Default workspace branch settings are wrong: "+JSON.stringify(defaultBranchSettings));
+  await branchPage.$eval("#autoCollapseThreshold",el=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))});
+  await branchPage.$eval("#settingsForm",el=>el.requestSubmit());
+  const existingViewPreserved=await branchPage.evaluate(()=>({
+    rootCollapsed:!!document.querySelector(".node.root .collapse-count"),
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(existingViewPreserved.rootCollapsed||!existingViewPreserved.historyVisible)throw new Error("Changing the threshold retroactively altered the existing map: "+JSON.stringify(existingViewPreserved));
+  branchPage.once("dialog",d=>d.accept("Seuil test"));
+  await branchPage.$eval("#newViewBtn",el=>el.click());
+  await branchPage.waitForFunction(()=>document.getElementById("viewSelect")?.selectedOptions?.[0]?.textContent==="Seuil test",{timeout:3000});
+  const collapsedLargeBranch=await branchPage.evaluate(()=>({
+    count:document.querySelector(".node.root .collapse-count")?.textContent||"",
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(collapsedLargeBranch.count!=="5"||collapsedLargeBranch.historyVisible)throw new Error("New map did not auto-collapse the large root branch: "+JSON.stringify(collapsedLargeBranch));
+  await branchPage.click(".node.root .collapse");
+  await branchPage.waitForFunction(()=>[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire"),{timeout:3000});
+  const manualExpand=await branchPage.evaluate(()=>({
+    countVisible:!!document.querySelector(".node.root .collapse-count"),
+    historyVisible:[...document.querySelectorAll(".node-title")].some(el=>el.textContent==="Histoire")
+  }));
+  if(manualExpand.countVisible||!manualExpand.historyVisible)throw new Error("Manual expansion of an auto-collapsed branch failed: "+JSON.stringify(manualExpand));
+  await branchPage.$eval("#settingsBtn",el=>el.click());
+  await branchPage.waitForSelector("#settingsDialog[open]",{timeout:3000});
+  const persistedThreshold=await branchPage.$eval("#autoCollapseThreshold",el=>el.value);
+  if(persistedThreshold!=="1")throw new Error("Workspace threshold was not persisted in state: "+persistedThreshold);
+  await branchPage.close();
 
   if(errors.length)console.warn(errors.join("\n"));
   console.log("Browser smoke test OK",JSON.stringify(snapshot));
