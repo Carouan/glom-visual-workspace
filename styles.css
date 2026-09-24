@@ -676,8 +676,16 @@ button:has(>.ui-icon){display:inline-flex;align-items:center;justify-content:cen
 .settings-panel .check-row{display:flex;align-items:center;gap:.55rem;color:var(--text);font-weight:600}
 .settings-panel .check-row input{width:18px;height:18px}
 .settings-field{display:grid;gap:.35rem;color:var(--muted);font-size:.82rem;font-weight:650}
-.settings-field input[type="number"]{width:140px;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums}
+.settings-field input[type="number"]{width:140px;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums}.settings-field select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem;background:var(--bg);color:var(--text)}
 .settings-field small,.settings-panel p{margin:0;color:var(--muted);font-size:.78rem;line-height:1.45}
 .settings-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem}
 .settings-actions button{min-height:42px}
 @media(max-width:560px){.settings-actions{grid-template-columns:1fr}.settings-field input[type="number"]{width:100%}}
+
+
+/* V0.3.18 — configurable layouts */
+.branch-layout-controls{padding:.7rem;display:grid;gap:.65rem}
+.branch-layout-controls label{display:grid;gap:.3rem;font-size:.75rem;color:var(--muted);font-weight:650}
+.branch-layout-controls select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:8px;padding:.42rem .5rem;background:var(--bg);color:var(--text)}
+.branch-layout-controls small{color:var(--muted);font-size:.74rem;line-height:1.4}
+.branch-layout-controls button{min-height:40px}
