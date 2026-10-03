@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "projectId": "mindspark",
+  "name": "MindSpark — Atelier visuel",
+  "summary": "Atelier visuel local-first pour organiser, relier et créer avec des fichiers, ressources et idées.",
+  "tags": [
+    "pwa",
+    "local-first",
+    "visual-workspace",
+    "mindmap"
+  ],
+  "ide": {
+    "enabled": true,
+    "autoImport": true
+  },
+  "app": {
+    "type": "pwa",
+    "url": "https://carouan.github.io/glom-visual-workspace/"
+  },
+  "feedback": {
+    "enabled": true,
+    "protocol": "dev-cmd-v1",
+    "transport": "github-issues"
+  }
+}
