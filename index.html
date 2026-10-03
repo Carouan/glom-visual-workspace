@@ -66,6 +66,8 @@
           <button id="settingsBtn" disabled><svg class="ui-icon" aria-hidden="true"><use href="#i-settings"></use></svg><span class="button-label">Paramètres…</span></button>
           <span class="menu-divider"></span>
           <button id="demoBtn"><svg class="ui-icon" aria-hidden="true"><use href="#i-flask"></use></svg><span class="button-label">Charger la démo</span></button>
+          <span class="menu-divider"></span>
+          <button id="feedbackBtn" type="button"><span aria-hidden="true">💬</span><span class="button-label">Retour / DEV-CMD…</span></button>
         </div>
       </details>
 
@@ -499,6 +501,31 @@
         <button id="settingsApplyCurrentBtn" type="button">Appliquer à la carte active</button>
         <button type="submit" class="primary">Enregistrer</button>
       </div>
+    </form>
+  </dialog>
+
+  <dialog id="feedbackDialog" class="small-dialog feedback-dialog">
+    <header><div><strong>Retour / DEV-CMD</strong><small>Signaler un bug ou demander une action sur MindSpark</small></div><button id="feedbackClose" type="button">×</button></header>
+    <form id="feedbackForm" class="feedback-panel">
+      <label>Type de demande
+        <select id="feedbackAction">
+          <option value="ISSUE">Signaler un problème</option>
+          <option value="ANALYZE">Demander une analyse</option>
+          <option value="FIX">Demander une correction</option>
+          <option value="CONTINUE">Continuer le développement</option>
+          <option value="REVIEW">Demander une revue</option>
+        </select>
+      </label>
+      <label>Description
+        <textarea id="feedbackDescription" rows="7" required placeholder="Décris précisément ce que tu observes ou ce que tu souhaites."></textarea>
+      </label>
+      <p class="feedback-help">La commande inclut automatiquement le projet, le dépôt, la version et un REQUEST-ID unique. Aucun contenu de ton workspace n’est joint.</p>
+      <div class="feedback-actions">
+        <button id="feedbackGithub" type="button" class="primary">Créer une issue GitHub</button>
+        <button id="feedbackCopy" type="button">Copier DEV-CMD</button>
+        <button id="feedbackMail" type="button">Préparer un e-mail</button>
+      </div>
+      <p id="feedbackStatus" class="feedback-status" aria-live="polite"></p>
     </form>
   </dialog>
 
