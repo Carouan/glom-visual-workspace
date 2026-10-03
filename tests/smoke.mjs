@@ -47,8 +47,18 @@ try{
   const directRangeValue=await page.$eval("#fontSize",el=>el.value);
   if(directRangeValue!=="31")throw new Error("Direct numeric slider input did not update range: "+directRangeValue);
   const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
-  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Paramètres…","Charger la démo"];
+  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Paramètres…","Charger la démo","💬Retour / DEV-CMD…"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
+  await page.$eval("#workspaceMenu > summary",el=>el.click());
+  await page.click("#feedbackBtn");
+  await page.waitForSelector("#feedbackDialog[open]",{timeout:3000});
+  const feedbackState=await page.evaluate(async()=>({
+    action:document.getElementById("feedbackAction")?.value,
+    hasDescription:!!document.getElementById("feedbackDescription"),
+    module:(await import("./src/dev-cmd.js")).createDevCmdBlock({action:"ISSUE",description:"Smoke",version:"0.3.18"})
+  }));
+  if(feedbackState.action!=="ISSUE"||!feedbackState.hasDescription||!feedbackState.module.includes("PROJECT: mindspark-visual-workshop")||!feedbackState.module.includes("VERSION: 0.3.18"))throw new Error("DEV-CMD feedback is not wired correctly: "+JSON.stringify(feedbackState));
+  await page.click("#feedbackClose");
   await page.$eval("#workspaceMenu > summary",el=>el.click());
   await page.click("#demoBtn");
   await page.waitForFunction(()=>document.getElementById("workspaceName")?.textContent?.includes("Les jeux vidéo"),{timeout:5000});
