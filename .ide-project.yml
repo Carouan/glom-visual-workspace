@@ -1,0 +1,14 @@
+version: 1
+project:
+  id: "mindspark-visual-workshop"
+  name: "MindSpark — Atelier visuel"
+ide:
+  enabled: true
+app:
+  type: "pwa"
+  url: "https://carouan.github.io/glom-visual-workspace/"
+feedback:
+  enabled: true
+  protocol: "dev-cmd-v1"
+  transport: "github-issues"
+  label: "dev-cmd"
