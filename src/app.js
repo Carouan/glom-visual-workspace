@@ -1,3 +1,4 @@
+import {buildGitHubIssueUrl,buildMailUrl,createDevCmdBlock} from "./dev-cmd.js";
 import {normalizeWorkspaceSettings,shouldAutoCollapse} from "./workspaces/settings.js";
 import {computeTreeLayout,hierarchyDepths,hierarchyRootId,normalizeLayoutMode} from "./mindmap/layouts.js";
 
@@ -10,6 +11,7 @@ function clearPreviewSafe(){try{viewerApi&&viewerApi.clearPreview&&viewerApi.cle
 const el=id=>document.getElementById(id);
 const ui={
   workspaceName:el("workspaceName"),count:el("count"),tree:el("tree"),search:el("search"),status:el("status"),shell:document.querySelector(".shell"),stageTools:el("stageTools"),workspaceMenu:el("workspaceMenu"),insertionMenu:el("insertionMenu"),viewMenu:el("viewMenu"),
+  feedbackBtn:el("feedbackBtn"),feedbackDialog:el("feedbackDialog"),feedbackClose:el("feedbackClose"),feedbackForm:el("feedbackForm"),feedbackAction:el("feedbackAction"),feedbackDescription:el("feedbackDescription"),feedbackGithub:el("feedbackGithub"),feedbackCopy:el("feedbackCopy"),feedbackMail:el("feedbackMail"),feedbackStatus:el("feedbackStatus"),
   openBtn:el("openBtn"),newWorkspaceBtn:el("newWorkspaceBtn"),recentBtn:el("recentBtn"),demoBtn:el("demoBtn"),scanBtn:el("scanBtn"),exclusionsBtn:el("exclusionsBtn"),settingsBtn:el("settingsBtn"),saveMenu:el("saveMenu"),saveMenuSummary:el("saveMenuSummary"),saveNowBtn:el("saveNowBtn"),saveExportBtn:el("saveExportBtn"),exportBtn:el("exportBtn"),folderBtn:el("folderBtn"),textFileBtn:el("textFileBtn"),markdownFileBtn:el("markdownFileBtn"),ideaBtn:el("ideaBtn"),urlBtn:el("urlBtn"),viewSelect:el("viewSelect"),viewLayoutSelect:el("viewLayoutSelect"),newViewBtn:el("newViewBtn"),duplicateViewBtn:el("duplicateViewBtn"),renameViewBtn:el("renameViewBtn"),fitBtn:el("fitBtn"),autoLayoutBtn:el("autoLayoutBtn"),toggleResourcesBtn:el("toggleResourcesBtn"),toggleInspectorBtn:el("toggleInspectorBtn"),mapPalette:el("mapPalette"),mapSelectBtn:el("mapSelectBtn"),mapFolderBtn:el("mapFolderBtn"),mapIdeaBtn:el("mapIdeaBtn"),mapRelationBtn:el("mapRelationBtn"),mapFrameBtn:el("mapFrameBtn"),mapShapeBtn:el("mapShapeBtn"),mapTextBtn:el("mapTextBtn"),mapImageBtn:el("mapImageBtn"),
   welcome:el("welcome"),welcomeNew:el("welcomeNew"),welcomeOpen:el("welcomeOpen"),welcomeRecent:el("welcomeRecent"),welcomeDemo:el("welcomeDemo"),viewport:el("viewport"),world:el("world"),frames:el("frames"),visualObjects:el("visualObjects"),nodes:el("nodes"),edges:el("edges"),compat:el("compat"),
   zoomOut:el("zoomOut"),zoomIn:el("zoomIn"),zoomValue:el("zoomValue"),hint:el("hint"),
@@ -27,6 +29,36 @@ function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-
 function hash(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)}return(h>>>0).toString(36)}
 function base(path){const p=(path||"").split("/");return p[p.length-1]||"Espace de travail"}
 function setStatus(t,c){ui.status.textContent=t;ui.status.style.color=c==="bad"?"#b42318":c==="ok"?"#027a48":""}
+function feedbackPayload(){
+  return {
+    action: ui.feedbackAction?.value || "ISSUE",
+    description: ui.feedbackDescription?.value || "",
+    version: APP
+  }
+}
+function openFeedbackDialog(){
+  closeToolbarMenus();
+  if(ui.feedbackStatus)ui.feedbackStatus.textContent="";
+  ui.feedbackDialog?.showModal()
+}
+async function copyFeedbackCommand(){
+  const text=createDevCmdBlock(feedbackPayload());
+  try{
+    await navigator.clipboard.writeText(text);
+    if(ui.feedbackStatus)ui.feedbackStatus.textContent="Commande DEV-CMD copiée."
+  }catch{
+    if(ui.feedbackStatus)ui.feedbackStatus.textContent="Copie automatique impossible sur ce navigateur."
+  }
+}
+function openFeedbackIssue(){
+  if(!ui.feedbackDescription?.value.trim()){ui.feedbackDescription?.focus();return}
+  window.open(buildGitHubIssueUrl(feedbackPayload()),"_blank","noopener,noreferrer")
+}
+function openFeedbackMail(){
+  if(!ui.feedbackDescription?.value.trim()){ui.feedbackDescription?.focus();return}
+  location.href=buildMailUrl(feedbackPayload())
+}
+
 function setButtonLabel(button,label){
   if(!button)return;
   const span=button.querySelector(".button-label");
@@ -1092,6 +1124,12 @@ async function materializeWorkspace(){
 function closePanels(){ui.resourcesPanel.classList.remove("open");ui.inspectorPanel.classList.remove("open")}
 function closeToolbarMenus(except=null){document.querySelectorAll("[data-menu][open]").forEach(m=>{if(m!==except)m.removeAttribute("open")})}
 function wire(){
+  ui.feedbackBtn?.addEventListener("click",openFeedbackDialog);
+  ui.feedbackClose?.addEventListener("click",()=>ui.feedbackDialog?.close());
+  ui.feedbackGithub?.addEventListener("click",openFeedbackIssue);
+  ui.feedbackCopy?.addEventListener("click",copyFeedbackCommand);
+  ui.feedbackMail?.addEventListener("click",openFeedbackMail);
+  ui.feedbackForm?.addEventListener("submit",e=>e.preventDefault());
   ui.openBtn.onclick=openWorkspace;ui.newWorkspaceBtn.onclick=newDraftWorkspace;ui.recentBtn.onclick=openRecentDialog;ui.exclusionsBtn.onclick=openExclusionsDialog;ui.settingsBtn.onclick=openSettingsDialog;ui.recentClose.onclick=()=>ui.recentDialog.close();ui.viewSelect.onchange=()=>activateView(ui.viewSelect.value);ui.viewLayoutSelect.onchange=updateViewLayoutMode;ui.newViewBtn.onclick=createView;ui.duplicateViewBtn.onclick=duplicateView;ui.renameViewBtn.onclick=renameView;ui.welcomeNew.onclick=newDraftWorkspace;ui.welcomeOpen.onclick=openWorkspace;ui.welcomeRecent.onclick=openRecentDialog;const runDemo=()=>{try{demo()}catch(e){console.error("Demo rendering failed",e);setStatus("Erreur de rendu de la démo","bad");alert("Impossible d’afficher la démo : "+(e.message||e))}};ui.demoBtn.onclick=runDemo;ui.welcomeDemo.onclick=runDemo;ui.scanBtn.onclick=rescan;ui.saveNowBtn.onclick=()=>save(false);ui.saveExportBtn.onclick=openExportDialog;ui.exportBtn.onclick=openExportDialog;ui.exportClose.onclick=()=>ui.exportDialog.close();ui.exportSvgBtn.onclick=()=>runExport("svg");ui.exportPngBtn.onclick=()=>runExport("png");ui.exportPrintBtn.onclick=()=>runExport("print");ui.zipWorkspaceBtn.onclick=exportWorkspaceZip;ui.materializeBtn.onclick=materializeWorkspace;ui.folderBtn.onclick=addFolder;ui.textFileBtn.onclick=()=>addLocalTextFile("txt");ui.markdownFileBtn.onclick=()=>addLocalTextFile("md");ui.ideaBtn.onclick=addIdea;ui.urlBtn.onclick=addUrl;ui.fitBtn.onclick=()=>{fit();setDirty()};ui.autoLayoutBtn.onclick=autoLayout;ui.zoomIn.onclick=()=>zoom((state.view&&state.view.zoom||1)*1.15);ui.zoomOut.onclick=()=>zoom((state.view&&state.view.zoom||1)/1.15);
   ui.mapSelectBtn.onclick=()=>{state.linkSource=null;ui.hint.textContent="Glisser le fond pour déplacer la vue";updateActionStates();renderInspector()};
   ui.mapFolderBtn.onclick=addFolder;ui.mapIdeaBtn.onclick=addIdea;ui.mapRelationBtn.onclick=linkMode;ui.mapFrameBtn.onclick=selectOrCreateFrame;ui.mapShapeBtn.onclick=addShape;ui.mapTextBtn.onclick=addTextObject;ui.mapImageBtn.onclick=openImageObjectDialog;
