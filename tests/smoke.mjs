@@ -47,7 +47,7 @@ try{
   const directRangeValue=await page.$eval("#fontSize",el=>el.value);
   if(directRangeValue!=="31")throw new Error("Direct numeric slider input did not update range: "+directRangeValue);
   const workspaceOrder=await page.$$eval("#workspaceMenu .toolbar-menu-panel button",els=>els.map(el=>el.textContent.trim()));
-  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Paramètres…","Charger la démo"];
+  const expectedWorkspaceOrder=["Nouveau","Récents","Ouvrir","Rescanner le dossier","Exclusions…","Paramètres…","Signaler un problème / retour","Charger la démo"];
   if(JSON.stringify(workspaceOrder)!==JSON.stringify(expectedWorkspaceOrder))throw new Error("Unexpected Espace de travail menu order: "+JSON.stringify(workspaceOrder));
   await page.$eval("#workspaceMenu > summary",el=>el.click());
   await page.click("#demoBtn");
